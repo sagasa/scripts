@@ -1,0 +1,24 @@
+#ロスト防止アイテム
+
+on death of player:
+	if player has permission "amulet.use":
+		if player have paper of fortune 10 named "&2護符":
+			remove a paper of fortune 10 named "&2護符" from player
+			set {_n} to 0
+			loop 40 times:
+				set {inventory.%player%::%{_n}%} to slot {_n} of player's inventory
+				add 1 to {_n}
+			clear drops
+
+on player respawn:
+	if {inventory.%player%::*} is set:
+		set {_n} to 0
+		loop 40 times:
+			set slot {_n} of player's inventory to {inventory.%player%::%{_n}%}
+			add 1 to {_n}
+		clear {inventory.%player%::*}
+
+command /giveitem:
+	permission: amulet.give
+	trigger:
+		give 10 paper of fortune 10 named "&2護符" to player

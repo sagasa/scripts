@@ -1,0 +1,6 @@
+on leftclick with iron sword:
+	loop blocks in radius 5 around event-block:
+		if loop-block is any tall grass:
+			set loop-block to air
+		if loop-block is any flower:
+			set loop-block to air

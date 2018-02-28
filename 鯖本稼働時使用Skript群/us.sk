@@ -1,0 +1,341 @@
+variables:
+	{uushop.id} = 1
+
+on right click on sign:
+	if line 1 of event-block is "[SHOP]":
+		set {_temp} to line 4 of event-block
+		if {signowner.%location of event-block%} is {_temp}: 
+			open chest with 1 row named "&1%{_temp}%shop" to player
+			set {_count} to 0
+			set {openus.%player%} to 1
+			wait a tick
+			loop 8 times:
+				if {uuamount.%{_temp}%::%{_count}%} is not set:
+					format slot {_count} of player with {uusell.%{_temp}%::%{_count}%} with lore "&a購入価格 : &f鉄%{uuprice.%{_temp}%::%{_count}%}%個" to close then run "sellitembuy %player% %{_count}% %{_temp}%"
+				else:
+					format slot {_count} of player with {uusell.%{_temp}%::%{_count}%} with lore "&c売却価格 : &f鉄%{uuprice.%{_temp}%::%{_count}%}%個" to close then run "buyitembuy %player% %{_count}% %{_temp}%"
+				add 1 to {_count}
+			if {_temp} is player:
+				format slot 8 of player with iron bar named "&f売り上げを回収する" with lore "&f現在の売り上げ%{shopuriage.%player%}%" to close then run "selluriage %player%"
+	else if line 1 of event-block is "[AdminSHOP]":
+		set {_temp} to {signowner.%location of event-block%}
+		if player is op:
+			set {_op} to 1
+		else:
+			set {_op} to 0
+		open chest with 1 row named "&1AdminShop%{_temp}%" to player
+		set {_count} to 0
+		set {openus.%player%} to 1
+		wait a tick
+		loop 8 times:
+			if {uuamount.%{_temp}%::%{_count}%} is not set:
+				format slot {_count} of player with {uusell.%{_temp}%::%{_count}%} with lore "&a購入価格 : &f鉄%{uuprice.%{_temp}%::%{_count}%}%個" to run "sellitembuyadmin %player% %{_count}% %{_temp}% %{_op}%"
+			else:
+				format slot {_count} of player with {uusell.%{_temp}%::%{_count}%} with lore "&c売却価格 : &f鉄%{uuprice.%{_temp}%::%{_count}%}%個" to run "buyitembuyadmin %player% %{_count}% %{_temp}% %{_op}%"
+			add 1 to {_count}
+	
+command /selluriage <player>:
+	permission: shop.sk
+	trigger:
+		if {shopuriage.%arg 1%} = 0:
+			drop 64 iron bar
+			message "&b[shop]&f売り上げはありません" to arg 1
+		else:
+			drop {shopuriage.%arg 1%} of iron bar at arg 1
+			set {shopuriage.%arg 1%} to 0
+			message "&b[shop]&f売り上げを回収しました" to arg 1
+
+command /sellitembuy <player> <number> <text>:
+	permission: shop.sk
+	trigger:
+		if {uuprice.%arg 3%::%arg 2%} is not set:
+			message "&b[shop]&4そのアイテムは売却済みです" to arg 1
+			stop
+		if arg 3 = arg 1:
+			drop {uusell.%arg 3%::%arg 2%} at arg 1
+			delete {uusell.%arg 3%::%arg 2%}
+			delete {uuprice.%arg 3%::%arg 2%}
+			message "&b[shop]&aアイテムを回収しました" to arg 1
+			stop
+		set {_cost} to {uuprice.%arg 3%::%arg 2%}
+		if arg 1 has {_cost} of iron bar:
+			drop {uusell.%arg 3%::%arg 2%} at arg 1
+			add {uuprice.%arg 3%::%arg 2%} to {shopuriage.%arg 3%}
+			remove {_cost} of iron ingot from the arg 1
+			delete {uusell.%arg 3%::%arg 2%}
+			delete {uuprice.%arg 3%::%arg 2%}
+			message "&b[shop]&aアイテムを購入しました" to arg 1
+		else:
+			message "&b[shop]&4所持鉄が足りません" to arg 1
+command /buyitembuy <player> <number> <text>:
+	permission: shop.sk
+	trigger:
+		if arg 3 = arg 1:
+			message "&b[shop]&a%{uure.%arg 3%::%arg 2%}%セット回収しました" to arg 1
+			loop {uure.%arg 3%::%arg 2%} times:
+				drop {uusell.%arg 3%::%arg 2%} at arg 1
+			delete {uusell.%arg 3%::%arg 2%}
+			delete {uuprice.%arg 3%::%arg 2%}
+			delete {uuamount.%arg 3%::%arg 2%}
+			delete {uure.%arg 3%::%arg 2%}
+			delete {uuname.%arg 3%::%arg 2%}
+			message "&b[shop]&aアイテムを回収しました" to arg 1
+			stop
+		if {shopuriage.%arg 3%} is more than {uuprice.%arg 3%::%arg 2%} - 1:
+			message "%{uuamount.%arg 3%::%arg 2%}% of %{uuname.%arg 3%::%arg 2%}%" to arg 1
+			if arg 1 has {uuamount.%arg 3%::%arg 2%} of {uuname.%arg 3%::%arg 2%}:
+				add -1 * {uuprice.%arg 3%::%arg 2%} to {shopuriage.%arg 3%}
+				drop {uuprice.%arg 3%::%arg 2%} of iron ingot at arg 1
+				remove {uuamount.%arg 3%::%arg 2%} of {uuname.%arg 3%::%arg 2%} from the arg 1
+				add 1 to {uure.%arg 3%::%arg 2%}
+				message "&b[shop]&aアイテムを売却しました" to arg 1
+			else:
+				message "&b[shop]&4該当アイテムが不足しています" to arg 1
+		else:
+			message "&b[shop]&4出品者の所持鉄が不足しています" to arg 1
+
+command /sellitembuyadmin <player> <number> <text> <number>:
+	permission: shop.sk
+	trigger:
+		if arg 4 = 1:
+			delete {uusell.%arg 3%::%arg 2%}
+			delete {uuprice.%arg 3%::%arg 2%}
+			message "&b[shop]&aアイテムを削除しました" to arg 1
+			stop
+		set {_cost} to {uuprice.%arg 3%::%arg 2%}
+		if arg 1 has {_cost} of iron bar:
+			drop {uusell.%arg 3%::%arg 2%} at arg 1
+			add {uuprice.%arg 3%::%arg 2%} to {shopuriage.%arg 3%}
+			remove {_cost} of iron ingot from the arg 1
+			message "&b[shop]&aアイテムを購入しました" to arg 1
+		else:
+			message "&b[shop]&4所持鉄が足りません" to arg 1
+command /buyitembuyadmin <player> <number> <text> <number>:
+	permission: shop.sk
+	trigger:
+		if arg 4 = 1:
+			delete {uusell.%arg 3%::%arg 2%}
+			delete {uuprice.%arg 3%::%arg 2%}
+			delete {uuamount.%arg 3%::%arg 2%}
+			delete {uure.%arg 3%::%arg 2%}
+			delete {uuname.%arg 3%::%arg 2%}
+			message "&b[shop]&aアイテムを削除しました" to arg 1
+			stop
+		if arg 1 has {uuamount.%arg 3%::%arg 2%} of {uuname.%arg 3%::%arg 2%}:
+			drop {uuprice.%arg 3%::%arg 2%} of iron ingot at arg 1
+			remove {uuamount.%arg 3%::%arg 2%} of {uuname.%arg 3%::%arg 2%} from the arg 1
+			message "&b[shop]&aアイテムを売却しました" to arg 1
+		else:
+			message "&b[shop]&4該当アイテムが不足しています" to arg 1
+
+on inventory close:
+	if {openus.%player%} is 1:
+		wait 2 tick
+		set {openus.%player%} to 0
+		set {_count} to 0
+		loop 35 times:
+			set {_slot} to slot {_count} of player's current inventory
+			set {_lore} to lore of {_slot}
+			if {_lore} contains "価格":
+				set slot {_count} of player's inventory to air
+			add 1 to {_count}
+	
+on right click with redstone:
+	if line 1 of event-block is "":
+		stop
+	if event-block is sign:
+		if line 1 of event-block is "%player%":
+			set line 1 of event-block to "[SHOP]"
+			set line 2 of event-block to "右クリックで"
+			set line 3 of event-block to "商品を見る"
+			set line 4 of event-block to "%player%"
+			message "&b[shop]&ashopを作成しました"
+			set {signowner.%location of event-block%} to "%player%"
+			if {shopuriage.%player%} is not set:
+				set {shopuriage.%player%} to 0
+			stop
+		if player is op:
+			set {_temp} to line 1 of event-block
+			set line 1 of event-block to "[AdminSHOP]"
+			set line 2 of event-block to "右クリックで"
+			set line 3 of event-block to "商品を見る"
+			set line 4 of event-block to "Adminshop%{_temp}%"
+			message "&b[shop]&aAdminshopを作成しました"
+			set {signowner.%location of event-block%} to "%{_temp}%"
+			
+
+on break of sign:
+	set {signowner.%location of event-block%} to "none"
+	
+on place of sign:
+	set {signowneradmin.%location of event-block%} to -1
+	
+command /deposit [<number>]:
+	permission: shop.sk
+	trigger:
+		if arg 1 is not set:
+			message "&b[shop]&4価格が設定されていません"
+			stop
+		if arg 1 is less than 1:
+			message "&b[shop]&4この価格での振込はできません"
+			stop
+		if player has arg 1 of iron ingot:
+			remove arg 1 of iron bar from player
+			add arg 1 to {shopuriage.%player%}
+			message "&b[shop]&a%arg 1%個の鉄を振込ました"
+		else:
+			message "&b[shop]&4該当アイテムが不足しています"
+		
+command /sell [<number>] [<number>]:
+	trigger:
+		if player is not op:
+			if {land.%chunk at location of player%} is not set:
+				set {land.%chunk at location of player%} to 0
+			if {land.%chunk at location of player%} = 0:
+				message "&b[shop]&4このコマンドは国内でのみ使用できます"
+				stop
+			if {land.%chunk at location of player%} is not {myhome.%player%}:
+				message "&b[shop]&4このコマンドは国内でのみ使用できます"
+				stop
+		if arg 2 is not set:
+			set {_arg2} to -1
+		else:
+			if player is not op:
+				set {_arg2} to -1
+			else:
+				set {_arg2} to arg 2
+		if arg 1 is not set:
+			message "&b[shop]&4価格が設定されていません"
+			stop
+		if arg 1 is less than 1:
+			message "&b[shop]&4この価格では販売できません"
+			stop
+		
+		set {_count} to 0
+		loop 36 times:
+			set {_inv.%player%.%{_count}%} to slot {_count} of player's inventory
+			add 1 to {_count}
+		open chest with 4 row named "&1どのアイテムを鉄%arg 1%個で売却しますか？" to player
+		wait a tick
+		set {_count} to 0
+		loop 36 times:
+			format slot {_count} of player with {_inv.%player%.%{_count}%} to close then run "sellitem %player% %{_count}% %arg 1% %{_arg2}%"
+			add 1 to {_count}
+command /buy [<number>] [<number>]:
+	permission: shop.sk
+	trigger:
+		if arg 2 is not set:
+			set {_arg2} to -1
+		else:
+			if player is not op:
+				set {_arg2} to -1
+			else:
+				set {_arg2} to arg 2
+		if arg 1 is not set:
+			message "&b[shop]&4価格が設定されていません"
+			stop
+		if arg 1 is less than 1:
+			message "&b[shop]&4この価格では買取できません"
+			stop
+		set {_count} to 0
+		loop 36 times:
+			set {_inv.%player%.%{_count}%} to slot {_count} of player's inventory
+			add 1 to {_count}
+		open chest with 4 row named "&1どのアイテムを鉄%arg 1%個で買取ますか？" to player
+		wait a tick
+		set {_count} to 0
+		loop 36 times:
+			format slot {_count} of player with {_inv.%player%.%{_count}%} to close then run "buyitem %player% %{_count}% %arg 1% %{_arg2}%"
+			add 1 to {_count}
+					
+command /sellitem <player> <number> <number> [<number>]:
+	permission: shop.sk
+	trigger:
+		set {_inv.sell} to slot arg 2 of arg 1's inventory
+		if {_inv.sell} is not air:
+			set {_count} to 0
+			set {_lock} to 0
+			if arg 4 = -1:
+				loop 8 times:
+					if {_lock} = 0:
+						if {uusell.%arg 1%::%{_count}%} is not set:
+							set {uusell.%arg 1%::%{_count}%} to {_inv.sell}
+							set {uuprice.%arg 1%::%{_count}%} to arg 3
+							message "&b[shop]&fshopに商品を並べました" to arg 1
+							set slot arg 2 of arg 1's inventory to air
+							set {_lock} to 1
+						add 1 to {_count}
+				if {_lock} = 0:
+					message "&b[shop]&4これ以上アイテムを並べることはできません" to arg 1
+					stop
+			else:
+				loop 8 times:
+					if {_lock} = 0:
+						if {uusell.%arg 4%::%{_count}%} is not set:
+							set {uusell.%arg 4%::%{_count}%} to {_inv.sell}
+							set {uuprice.%arg 4%::%{_count}%} to arg 3
+							message "&b[shop]&fAdminSHOP%arg 4%に商品を並べました" to arg 1
+							set slot arg 2 of arg 1's inventory to air
+							set {_lock} to 1
+						add 1 to {_count}
+				if {_lock} = 0:
+					message "&b[shop]&4これ以上アイテムを並べることはできません" to arg 1
+					stop
+		else:
+			message "&b[shop]&4このアイテムを並べることはできません" to arg 1
+command /buyitem <player> <number> <number> [<number>]:
+	permission: shop.sk
+	trigger:
+		set {_inv.sell} to slot arg 2 of arg 1's inventory
+		if {_inv.sell} is not air:
+			#message "buyitem2 %arg 1% %arg 2% %arg 3% %arg 4% ts %{_inv.sell}%" to arg 1
+			execute console command "buyitem2 %arg 1% %arg 2% %arg 3% %arg 4% ts %{_inv.sell}%"
+command /buyitem2 <player> <number> <number> [<number>] <text>  [<number>] <item> [<number>]:
+	permission: shop.sk
+	trigger:
+		#message "buyitem2 %arg 1% %arg 2% %arg 3% %arg 4% %arg 5% %arg 6% %arg 7% %arg 8%" to arg 1
+		if arg 6 is not set:
+			set {_arg6} to 1
+		else:
+			set {_arg6} to arg 6
+		if arg 8 is set:
+			message "&b[shop]&4エンチャント済みアイテムを買い取ることはできません" to arg 1
+			stop
+		set {_inv.sell} to slot arg 2 of arg 1's inventory
+		if {_inv.sell} is not air:
+			set {_count} to 0
+			set {_lock} to 0
+			if arg 4 = -1:
+				loop 8 times:
+					if {_lock} = 0:
+						if {uusell.%arg 1%::%{_count}%} is not set:
+							set {uusell.%arg 1%::%{_count}%} to {_inv.sell}
+							set {uuprice.%arg 1%::%{_count}%} to arg 3
+							set {uuamount.%arg 1%::%{_count}%} to {_arg6}
+							set {uuname.%arg 1%::%{_count}%} to arg 7
+							set {uure.%arg 1%::%{_count}%} to 1
+							message "&b[shop]&fshopに商品を並べました" to arg 1
+							set slot arg 2 of arg 1's inventory to air
+							set {_lock} to 1
+						add 1 to {_count}
+				if {_lock} = 0:
+					message "&b[shop]&4これ以上アイテムを並べることはできません" to arg 1
+					stop
+			else:
+				loop 8 times:
+					if {_lock} = 0:
+						if {uusell.%arg 4%::%{_count}%} is not set:
+							set {uusell.%arg 4%::%{_count}%} to {_inv.sell}
+							set {uuprice.%arg 4%::%{_count}%} to arg 3
+							set {uuamount.%arg 4%::%{_count}%} to {_arg6}
+							set {uuname.%arg 4%::%{_count}%} to arg 7
+							set {uure.%arg 4%::%{_count}%} to 1
+							message "&b[shop]&fAdminSHOP%arg 4%に商品を並べました" to arg 1
+							set slot arg 2 of arg 1's inventory to air
+							set {_lock} to 1
+						add 1 to {_count}
+				if {_lock} = 0:
+					message "&b[shop]&4これ以上アイテムを並べることはできません" to arg 1
+					stop
+		else:
+			message "&b[shop]&4このアイテムを並べることはできません" to arg 1

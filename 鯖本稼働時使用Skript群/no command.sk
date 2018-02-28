@@ -1,0 +1,44 @@
+on command "/ban":
+	if {nc.%player%.ban} is false:
+		send "そのコマンドは利用できません。"
+		cancel event
+	if {nc.%player%.ban} is not set:
+		send "そのコマンドは利用できません。"
+		cancel event
+
+on command "/kick":
+	if {nc.%player%.kick} is false:
+		send "そのコマンドは利用できません。"
+		cancel event
+	if {nc.%player%.kick} is not set:
+		send "そのコマンドは利用できません。"
+		cancel event
+		
+on command "//calc":
+	cancel event
+		
+
+command /setperm <player> <text> :
+	trigger:
+		if arg 2 is "ban":
+			if {nc.%arg 1%.ban} is not set:
+				set {nc.%arg 1%.ban} to true
+				send "%arg 1%のBAN権限を%{nc.%arg 1%.ban}%にしました。"
+			else if {nc.%arg 1%.ban} is false:
+				set {nc.%arg 1%.ban} to true
+				send "%arg 1%のBAN権限を%{nc.%arg 1%.ban}%にしました。"
+			else if {nc.%arg 1%.ban} is true:
+				set {nc.%arg 1%.ban} to false
+				send "%arg 1%のBAN権限を%{nc.%arg 1%.ban}%にしました。"
+
+		if arg 2 is "kick":
+			if {nc.%arg 1%.kick} is not set:
+				set {nc.%arg 1%.kick} to true
+				send "%arg 1%のKick権限を%{nc.%arg 1%.kick}%にしました。"
+			else if {nc.%arg 1%.kick} is false:
+				set {nc.%arg 1%.kick} to true
+				send "%arg 1%のKick権限を%{nc.%arg 1%.kick}%にしました。"
+			else if {nc.%arg 1%.kick} is true:
+				set {nc.%arg 1%.kick} to false
+				send "%arg 1%のKick権限を%{nc.%arg 1%.kick}%にしました。"
+

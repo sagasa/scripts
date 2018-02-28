@@ -1,0 +1,9 @@
+#ダメージ取得用
+
+every 1 tick:
+	loop all players:
+		if {damageWatcher.%loop-player%} is not health of loop-player:
+			set {_damage} to {damageWatcher.%loop-player%} - health of loop-player
+			if {_damage} >= 0:
+				broadcast "&c[Damage]&3«%{_damage} * 2%»&f--->> &c&l†&f&l%loop-player%&c&l†"
+			set {damageWatcher.%loop-player%} to health of loop-player

@@ -1,0 +1,30 @@
+on join:
+	loop {hideList::*}:
+		if {show.%loop-value%} is false:
+			execute console command "/gamemode 1"
+			hide loop-value from player
+	else:
+		stop
+		
+command /hidelist [<player>]:
+	permission: hide.sk
+	trigger:
+		if arg-1 is set:
+			set {hideList::%arg-1's name%} to arg-1
+			send "%{hideList::%arg-1's name%}%"
+		
+		if arg-1 is not set:
+			set {hideList::%player's name%} to player
+			send "%{hideList::%player's name%}%"
+
+command /hide:
+	permission: hide.sk
+	trigger:
+		set {show.%player%} to false
+		hide player from all players
+
+command /show:
+	permission: hide.sk
+	trigger:
+		set {show.%player%} to true
+		reveal player from all players

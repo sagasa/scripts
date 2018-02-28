@@ -1,0 +1,1101 @@
+#ユーザーレイプ！支配者と化した運営.sk ver.5.3.0
+
+
+
+#　　　　　　　　　　　　　 ,,,z=~'ﾞ'+''ｯ彡ｯ,､
+#　　　　　　　　　　　　,ｨ´ 　　　　　 "':';:;ｯ;,
+#　　　　　　　　 ,　' ﾞ´`ﾞﾐﾞｯ,　　　　　　　 "',`,
+#　　　　　　 ,／ 　　　 `､ﾞミ　　　　　　　　 ﾞ:;:,
+#　　　　　 /　　　　　 _ =ヾ､ﾞｼｼ=;,z,、　　　 ﾞ;ｼ::ﾐ
+#　　　　 /　　　　 ,ｒ,´　　 /　´`ヽ ゛ﾞ`　 　　,ﾞ彡:ﾐ
+#　　　 / 　　　, '-､_`ヽ_/,　　　　　　　 　 ﾐ;::彡;:
+#　　 ,'　　　,ｼ´｀｀ ヽ`i｀!　　　　　　　　 ,,彡;::ｼ:彡　
+#　　;i　　､（´ ￣`ヽ / '　　　　　　　　シ:ｼ;:ﾐ::ｼ"
+#　ノ:!､　 ヽ｀`ｰ =;ｨ'　　　　　　　　,,ｼ:;彡;ｼﾞ
+#´:::::.ヾ. 　　　￣´　　　　　　　　' `,ｼﾐﾞ
+#:::::::::::::.`:ヽ､_　　　　　　　...:;'＿,ソ'ﾞ''
+#::::::::::::::::::::::::::｀:::::::::::::::-=''"／
+
+
+command /flyspeed <number>:
+	trigger:
+		if arg-1 <= 3:
+			set player's fly speed to arg-1
+		else:
+			message "3までの数字にしてください"
+
+command /gmode:
+	trigger:
+		if player's gamemode is survival:
+			set player's game mode to creative
+		else:
+			set player's game mode to survival
+
+command /usrtp <player>:
+	trigger:
+		teleport player to arg-1
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+options:
+	maxpenalty : 10
+	weekbanpenalty : 5
+	weekbandays : 7
+	penaltyreduce : 7
+	ruller.version : 5.2.7
+	ruller.add1 : プレイヤーのエンダーチェストを開けられるよう修正
+	ruller.add2 : notset
+	ruller.add3	: notset
+	ruller.fix1 : メッセージ関連の軽微なバグを修正
+	ruller.fix2 : notset
+	ruller.fix3 : notset
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+command /rullerenable <offlineplayer>:
+	permission: Skript.OP
+	trigger:
+		if name of player is "pc12ugo" or "KILOSiberia" or "seasiba":
+			if arg-1 is not "console":
+				set {ruller.a.%arg-1%} to true
+			else:
+				set {ruller.a.console} to true
+			message "&e[Ruller]&6%arg-1%にruller使用権限を授けました。"
+		else:
+			message "&e[Ruller]&cこのコマンドを実行できるのは運営のみです。"
+
+command /rullerdisable <offlineplayer>:
+	permission: Skript.OP
+	trigger:
+		if name of player is "pc12ugo" or "KILOSiberia" or "seasiba":
+			if arg-1 is not "console":
+				set {ruller.a.%arg-1%} to false
+			else:
+				set {ruller.a.console} to false
+			message "&e[Ruller]&6%arg-1%のruller使用権限を剥奪しました。"
+		else:
+			message "&e[Ruller]&cこのコマンドを実行できるのは運営のみです。"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+command /rullersign <player> [<text>] [<text>]:
+	permission: skript.OP
+	trigger:
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is not set:
+			if player is OP:
+				if player is holding nether star named "&dコマンド埋め込み管理ツール":
+					set {ruller.sign.%{_player}%} to true
+					set {_location} to location of {_player}'s target block
+					set {ruller.signlocate.%{_player}%} to "%{_location}%"
+					if {ruller.cscmd.%{ruller.signlocate.%player%}%::*} is not set:
+						if {ruller.command.%{ruller.signlocate.%player%}%::*} is not set:
+							clear {ruller.allcheck.%{ruller.signlocate.%player%}%}
+					wait 2 tick
+					open chest with 1 row named "&8&lRuller command menu" to {_player}
+					wait a tick
+					format slot 3 of {_player} with diamond spade named "&aコマンドを埋め込む" to close then run "rullersign %{_player}% select"
+					format slot 4 of {_player} with sugar named "&bコマンドを選択して削除する" to close then run "rullersign %{_player}% rpc"
+					format slot 5 of {_player} with fire named "&c埋め込まれたコマンドを全て削除する" to close then run "rullersign %{_player}% check"
+					format slot 8 of {_player} with map named "&d埋め込まれたコマンドの情報を表示する" to close then run "rullersign %{_player}% info %{_location}%"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "select":
+			wait 2 tick
+			open chest with 1 row named "&8&lRuller command menu" to {_player}
+			wait a tick
+			format slot 3 of {_player} with book and quill named "&dプレイヤー実行のコマンドを埋め込む" to close then run "rullersign %{_player}% playercmd"
+			format slot 5 of {_player} with command block named "&9コンソール実行のコマンドを埋め込む" to close then run "rullersign %{_player}% consolecmd"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "playercmd":
+			if {ruller.sign.%{_player}%} is true:
+				if {ruller.command.%{ruller.signlocate.%{_player}%}%::*} is not set:
+					set {ruller.set1.%{_player}%} to true
+					message "&e[Ruller]&d次に入力したプレイヤー実行コマンドをブロックに埋め込みます。" to {_player}
+				else:
+					set {_number} to 1
+					loop {ruller.command.%{ruller.signlocate.%{_player}%}%::*}:
+						add 1 to {_number}
+					if {_number} is greater than 8:
+						message "&e[Ruller]&c埋込できるコマンドの制限数を超えています。" to {_player}
+						stop
+					else:
+						set {ruller.set1.%{_player}%} to true
+						message "&e[Ruller]&d次に入力したプレイヤー実行コマンドをブロックに埋め込みます。" to {_player}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "consolecmd":
+			if {ruller.sign.%{_player}%} is true:
+				if {ruller.cscmd.%{ruller.signlocate.%{_player}%}%::*} is not set:
+					set {ruller.set2.%{_player}%} to true
+					message "&e[Ruller]&d次に入力したコンソール実行コマンドをブロックに埋め込みます。" to {_player}
+
+				else:
+					set {_number} to 1
+					loop {ruller.cscmd.%{ruller.signlocate.%{_player}%}%::*}:
+						add 1 to {_number}
+					if {_number} is greater than 8:
+						message "&e[Ruller]&c埋込できるコマンドの制限数を超えています。" to {_player}
+						stop
+
+					else:
+						set {ruller.set2.%{_player}%} to true
+						message "&e[Ruller]&d次に入力したコンソール実行コマンドをブロックに埋め込みます。" to {_player}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "rpc":
+			if {ruller.sign.%{_player}%} is true:
+				wait 2 tick
+				open chest with 2 row named "Ruller command manager" to {_player}
+				set {_count} to 1
+				wait a tick
+				loop {ruller.command.%{ruller.signlocate.%{_player}%}%::*}:
+					format slot 0 of {_player} with light green glass named "&aプレイヤー実行コマンド" to close
+					format slot {_count} of {_player} with book named "%loop-value%" with lore "クリックでプレイヤー実行コマンドを削除" to close then run "rullersign %{_player}% removecmd %loop-value%"
+					add 1 to {_count}
+				set {_count} to 10
+				loop {ruller.cscmd.%{ruller.signlocate.%{_player}%}%::*}:
+					format slot 9 of {_player} with black glass named "&7コンソール実行コマンド" to close
+					format slot {_count} of {_player} with enchanted book named "%loop-value%" with lore "クリックでコンソール実行コマンドを削除" to close then run "rullersign %{_player}% removecscmd %loop-value%"
+					add 1 to {_count}
+
+		if arg-2 is "removecmd":
+			remove arg-3 from {ruller.command.%{ruller.signlocate.%{_player}%}%::*}
+			message "&e[Ruller]&a%{ruller.signlocate.%{_player}%}%&rから&d%arg-3%&rのコマンドを&c削除&rしました。" to {_player}
+
+		if arg-2 is "removecscmd":
+			remove arg-3 from {ruller.cscmd.%{ruller.signlocate.%{_player}%}%::*}
+			message "&e[Ruller]&a%{ruller.signlocate.%{_player}%}%&rから&d%arg-3%&rのコマンドを&c削除&rしました。" to {_player}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "check":
+			wait 2 tick
+			open chest with 1 row named "&cこうかいしませんね？" to {_player}
+			wait a tick
+			format slot 3 of {_player} with wool:14 named "&cやっぱりやめる" to close
+			format slot 5 of {_player} with wool:5 named "&a消し飛ばす" to close then run "rullersign %{_player}% clear"
+
+		if arg-2 is "clear":
+			clear {ruller.cscmd.%{ruller.signlocate.%{_player}%}%::*}
+			clear {ruller.command.%{ruller.signlocate.%{_player}%}%::*}
+			message "&c爆散！！！！！！" to {_player}
+			remove {ruller.signlocate.%{_player}%} from {ruller.locate.all::*}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "info":
+			wait 2 tick
+			open chest with 3 row named "Ruller command manager" to {_player}
+			set {_count} to 1
+			wait a tick
+			set {location.cache.%{_player}%} to "%arg-3%"
+
+			loop {ruller.command.%arg-3%::*}:
+				format slot 0 of {_player} with light green glass named "&7プレイヤー実行コマンド" to close
+				format slot {_count} of {_player} with book named "%loop-value%" with lore "クリックでCT設定/コマンド削除" to close then run "rullersign %{_player}% infomation %loop-value%"
+				add 1 to {_count}
+
+			set {_count} to 10
+			loop {ruller.cscmd.%arg-3%::*}:
+				format slot 9 of {_player} with black glass named "&7コンソール実行コマンド" to close
+				format slot {_count} of {_player} with enchanted book named "%loop-value%" with lore "クリックでCT設定/コマンド削除" to close then run "rullersign %{_player}% infomationcs %loop-value%"
+				add 1 to {_count}
+
+			if {ruller.checkenable.%{location.cache.%{_player}%}%} is true:
+				format slot 24 of {_player} with wool:14 named "&7%arg-3%コマンドの無効化" to close then run "rullersign %{_player}% toggle"
+			else if {ruller.checkenable.%{location.cache.%{_player}%}%} is false:
+				format slot 24 of {_player} with wool:5 named "&7%arg-3%コマンドの有効化" to close then run "rullersign %{_player}% toggle"
+			else if {ruller.checkenable.%{location.cache.%{_player}%}%} is not set:
+				format slot 24 of {_player} with wool:5 named "&7%arg-3%コマンドの有効化" to close then run "rullersign %{_player}% toggle"
+
+			format slot 26 of {_player} with fire named "&cコマンド全削除" to close then run "rullersign %{_player}% destroy %{location.cache.%{_player}%}%"
+
+		if arg-2 is "infomation":
+			wait 2 tick
+			open chest with 1 row named "Ruller command manager" to {_player}
+			wait a tick
+			format slot 3 of {_player} with packed ice named "&7%arg-3%コマンドにCT埋込" to close then run "rullersign %{_player}% ct %arg-3%"
+			format slot 5 of {_player} with fire named "&7%arg-3%コマンドの削除" to close then run "rullersign %{_player}% rmvplcmd %arg-3%"
+
+		if arg-2 is "infomationcs":
+			wait 2 tick
+			open chest with 1 row named "Ruller command manager" to {_player}
+			wait a tick
+			format slot 3 of {_player} with packed ice named "&7%arg-3%コマンドにCT埋込" to close then run "rullersign %{_player}% ct %arg-3%"
+			format slot 5 of {_player} with fire named "&7%arg-3%コマンドの削除" to close then run "rullersign %{_player}% rmvcscmd %arg-3%"
+
+		if arg-2 is "rmvplcmd":
+			remove arg-3 from {ruller.command.%{location.cache.%{_player}%}%::*}
+			message "&e[Ruller]&a%{location.cache.%{_player}%}%&rのから&d%arg-3%&rのコマンドを&c削除&rしました。" to {_player}
+			loop {ruller.command.%{location.cache.%{_player}%}%::*}:
+				if loop-value is not set:
+					remove {location.cache.%{_player}%} from {ruller.locate.all::*}
+			clear {location.cache.%{_player}%}
+
+		if arg-2 is "rmvcscmd":
+			remove arg-3 from {ruller.cscmd.%{location.cache.%{_player}%}%::*}
+			message "&e[Ruller]&a%{location.cache.%{_player}%}%&rのから&d%arg-3%&rのコマンドを&c削除&rしました。" to {_player}
+			loop {ruller.cscmd.%{location.cache.%{_player}%}%::*}:
+				if loop-value is not set:
+					remove {location.cache.%{_player}%} from {ruller.locate.all::*}
+			clear {location.cache.%{_player}%}
+
+		if arg-2 is "destroy":
+			message "&e[Ruller]&r<&d%arg-3%&r>に埋め込まれたコマンドを全削除しました。" to {_player}
+			clear {ruller.command.%arg-3%::*}
+			clear {ruller.cscmd.%arg-3%::*}
+			remove arg-3 from {ruller.locate.all::*}
+			clear {location.cache.%{_player}%}
+
+		if arg-2 is "ct":
+			set {_location} to {location.cache.%{_player}%}
+			set {ruller.signlocate.%{_player}%} to "%{_location}%"
+			set {ruller.ctset.%{ruller.signlocate.%{_player}%}%} to arg-3 
+			message "&e[Ruller]&a/ctset <number>で入力された文字列が<&d%arg-3%&r>&aのCTになります。" to {_player}
+			message "&e[Ruller]&c高すぎる値を設定しないよう十分注意してください。" to {_player}
+			message "&e[Ruller]&b値を0でCTを削除します。" to {_player}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "toggle":
+			if {ruller.checkenable.%{location.cache.%{_player}%}%} is true:
+				set {ruller.checkenable.%{location.cache.%{_player}%}%} to false
+				message "%{location.cache.%{_player}%}%の埋め込みを無効化しました。" to {_player}
+			else if {ruller.checkenable.%{location.cache.%{_player}%}%} is false:
+				set {ruller.checkenable.%{location.cache.%{_player}%}%} to true
+				message "%{location.cache.%{_player}%}%の埋め込みを有効化しました。" to {_player}
+			if {ruller.checkenable.%{location.cache.%{_player}%}%} is not set:
+				set {ruller.checkenable.%{location.cache.%{_player}%}%} to true
+				message "%{location.cache.%{_player}%}%の埋め込みを有効化しました。" to {_player}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+on command:
+	if {ruller.set1.%player%} is true:
+		cancel event
+		set {ruller.check.player.%{ruller.signlocate.%player%}%} to true
+		add "/%complete command%" to {ruller.command.%{ruller.signlocate.%player%}%::*}
+		message "&e[Ruller]&d</%complete command%>&rコマンドを&a%{ruller.signlocate.%player%}%&rに埋め込みました。"
+		clear {ruller.sign.%player%}
+		clear {ruller.set1.%player%}
+		if {ruller.allcheck.%{ruller.signlocate.%player%}%} is false:
+			stop
+		else:
+			add {ruller.signlocate.%player%} to {ruller.locate.all::*}
+		set {ruller.allcheck.%{ruller.signlocate.%player%}%} to false
+		clear {ruller.signlocate.%player%}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+	else if {ruller.set2.%player%} is true:
+		cancel event
+		set {ruller.check.console.%{ruller.signlocate.%player%}%} to true
+		add "%complete command%" to {ruller.cscmd.%{ruller.signlocate.%player%}%::*}
+		message "&e[Ruller]&d</%complete command%>&rコマンドを&a%{ruller.signlocate.%player%}%&rに埋め込みました。"
+		clear {ruller.sign.%player%}
+		clear {ruller.set2.%player%}
+		if {ruller.allcheck.%{ruller.signlocate.%player%}%} is false:
+			stop
+		else:
+			add {ruller.signlocate.%player%} to {ruller.locate.all::*}
+		set {ruller.allcheck.%{ruller.signlocate.%player%}%} to false
+		clear {ruller.signlocate.%player%}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+command /ctset <number>:
+	permission: Skript.OP
+	trigger:
+		if {ruller.ctset.%{ruller.signlocate.%player%}%} is set:
+			if arg-1 is greater than 0:
+				set {_location} to {ruller.signlocate.%player%}
+				set {_command} to {ruller.ctset.%{ruller.signlocate.%player%}%}
+				set {ruller.ctint.%{_location}%::%{_command}%} to arg-1
+				message "&e[Ruller]&a%{_location}%&rの&d%{_command}%&rのCTを&b%arg-1%秒&rに設定しました。"
+				clear {ruller.ctset.%{ruller.signlocate.%player%}%}
+				clear {ruller.signlocate.%player%}
+			else if arg-1 is 0:
+				message "&e[Ruller]&bCTを削除しました。"
+				delete {ruller.ctset.%{ruller.signlocate.%player%}%}
+				delete {ruller.signlocate.%player%}
+				delete {ruller.ctint.%{_location}%::%{_command}%}
+			else:
+				message "&e[Ruller]&bCTは自然数である必要があります。"
+				delete {ruller.ctset.%{ruller.signlocate.%player%}%}
+				delete {ruller.signlocate.%player%}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+on rightclick:
+	if player is not holding nether star named "&dコマンド埋め込み管理ツール":
+		player is not holding ink sack named "&d看板編集ツール"
+		set {_location} to "%location of event-block%"
+		if {ruller.check.player.%{_location}%} is true:
+			{ruller.checkenable.%{_location}%} is true
+			cancel event
+			loop {ruller.command.%{_location}%::*}:
+				set {_command} to loop-value
+				if {ruller.ctint.%{_location}%::%{_command}%} is set:
+					set {_ct} to {ruller.ctint.%{_location}%::%{_command}%}
+				set {_locationx} to x-location of location of event-block
+				set {_locationy} to y-location of location of event-block
+				set {_locationz} to z-location of location of event-block
+				set {_locationx} to floor({_locationx})
+				set {_locationy} to floor({_locationy})
+				set {_locationz} to floor({_locationz})
+				set {_enable} to {ruller.ctenable.%{_location}%.%{_command}%}
+				set {_count} to {ruller.ctcount.%{_location}%.%{_command}%}
+
+				if {_enable} is false:
+					message "&e[Command]&b%{_command}%の残りクールタイムは%{_count}%秒です。"
+
+				else if {_enable} is true:
+					if {_command} contain "@p":
+						replace "@p" in {_command} with "%player%"
+					execute player command "%{_command}%"
+					if {_ct} is set:
+						execute console command "ctcheck %{_ct}% %{_locationx}% %{_locationy}% %{_locationz}% %{_command}%"
+
+				else if {_enable} is not set:
+					if {_command} contain "@p":
+						replace "@p" in {_command} with "%player%"
+					execute player command "%{_command}%"
+					if {_ct} is set:
+						execute console command "ctcheck %{_ct}% %{_locationx}% %{_locationy}% %{_locationz}% %{_command}%"
+
+				clear {_ct}
+
+		if {ruller.check.console.%{_location}%} is true:
+			{ruller.checkenable.%{_location}%} is true
+			cancel event
+			loop {ruller.cscmd.%{_location}%::*}:
+				set {_command} to loop-value
+				set {_ct} to {ruller.ctint.%{_location}%::%{_command}%}
+				set {_locationx} to x-location of location of event-block
+				set {_locationy} to y-location of location of event-block
+				set {_locationz} to z-location of location of event-block
+				set {_locationx} to floor({_locationx})
+				set {_locationy} to floor({_locationy})
+				set {_locationz} to floor({_locationz})
+				set {_enable} to {ruller.ctenable.%{_location}%.%{_command}%}
+				set {_count} to {ruller.ctcount.%{_location}%.%{_command}%}
+
+				if {_enable} is false:
+					message "&e[Command]&b%{_command}%の残りクールタイムは%{_count}%秒です。"
+
+				else if {_enable} is true:
+					if {_command} contain "@p":
+						replace "@p" in {_command} with "%player%"
+					execute console command "%{_command}%"
+					if {_ct} is set:
+						execute console command "ctcheck %{_ct}% %{_locationx}% %{_locationy}% %{_locationz}% %{_command}%"
+
+				else if {_enable} is not set:
+					if {_command} contain "@p":
+						replace "@p" in {_command} with "%player%"
+					execute console command "%{_command}%"
+					if {_ct} is set:
+						execute console command "ctcheck %{_ct}% %{_locationx}% %{_locationy}% %{_locationz}% %{_command}%"
+
+				clear {_ct}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+	else:
+		player is OP:
+			cancel event
+			execute player command "/rullersign %player%"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+command /ctcheck [<number>] [<text>] [<text>] [<text>] [<text>]:
+	trigger:
+		log "Num:%arg-1%,Loc:x,%arg-2% y,%arg-3% z,%arg-4% Cmd:%arg-5%"
+		set {_location} to "x: %arg-2%, y: %arg-3%, z: %arg-4%"
+		set {_command} to arg-5
+		set {ruller.ctcount.%{_location}%.%{_command}%} to arg-1
+		loop arg-1 times:
+			set {ruller.ctenable.%{_location}%.%{_command}%} to false
+			wait 1 second
+			remove 1 from {ruller.ctcount.%{_location}%.%{_command}%}
+		set {ruller.ctenable.%{_location}%.%{_command}%} to true
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				ここまでコマンド埋め込み処理
+#※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※
+#			   　ここから看板設定処理
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+on rightclick on sign:
+	if player is holding ink sack named "&d看板編集ツール":
+		cancel event
+		set {signlct.%player%} to event-block
+		set {_count} to 1
+		loop 3 times:
+			add line {_count} of event-block to {signsave.%{signlct.%player%}%::%{_count}%}
+			add 1 to {_count}
+		wait a tick
+		open chest with 1 row named "&8[Ruller]&dSignEdit Menu" to player
+		wait 2 tick
+		format slot 1 of player with leather helmet named "&11ライン目を編集" to close then run "signedit %player% 1"
+		format slot 3 of player with iron chestplate named "&22ライン目を編集" to close then run "signedit %player% 2"
+		format slot 5 of player with gold legs named "&33ライン目を編集" to close then run "signedit %player% 3"
+		format slot 7 of player with diamond boots named "&44ライン目を編集" to close then run "signedit %player% 4"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+command /signedit <player> [<number>]:
+	trigger:
+		if arg-2 is 1:
+			set {line1.%arg-1%} to true
+		if arg-2 is 2:
+			set {line2.%arg-1%} to true
+		if arg-2 is 3:
+			set {line3.%arg-1%} to true
+		if arg-2 is 4:
+			set {line4.%arg-1%} to true
+		message "&e[Ruller]&r次にチャット入力した文字列を看板&d%arg-2%&r行目に書き込みます。" to arg-1
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+on chat:
+	if {line1.%player%} is true:
+		cancel event
+		set line 1 of {signlct.%player%} to colored "%message%"
+		set {_count} to 2
+		loop 2 times:
+			set line {_count} of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::%{_count}%}
+			add 1 to {_count}
+		clear {signsave.%{signlct.%player%}%::*}
+		clear {line1.%player%}
+		clear {signlct.%player%}
+		message "&e[Ruller]&d1&r行目を&a%message%&rに書き換えました。"
+	if {line2.%player%} is true:
+		cancel event
+		set line 2 of {signlct.%player%} to colored "%message%"
+		set line 1 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::1}
+		set line 3 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::3}
+		set line 4 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::4}
+		clear {signsave.%{signlct.%player%}%::*}
+		clear {line2.%player%}
+		clear {signlct.%player%}
+		message "&e[Ruller]&d2&r行目を&a%message%&rに書き換えました。"
+	if {line3.%player%} is true:
+		cancel event
+		set line 3 of {signlct.%player%} to colored "%message%"
+		set line 1 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::1}
+		set line 2 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::2}
+		set line 4 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::4}
+		clear {signsave.%{signlct.%player%}%::*}
+		clear {line3.%player%}
+		clear {signlct.%player%}
+		message "&e[Ruller]&d3&r行目を&a%message%&rに書き換えました。"
+	if {line4.%player%} is true:
+		cancel event
+		set line 4 of {signlct.%player%} to colored "%message%"
+		set line 1 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::1}
+		set line 2 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::2}
+		set line 3 of {signlct.%player%} to colored {signsave.%{signlct.%player%}%::3}
+		clear {signsave.%{signlct.%player%}%::*}
+		clear {line4.%player%}
+		clear {signlct.%player%}
+		message "&e[Ruller]&d4&r行目を&a%message%&rに書き換えました。"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				ここまで看板設定処理
+#※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※
+#				ここからメインコマンド処理
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#コマンドレイプ！ルーラーと化した運営
+command /ruller [<offlineplayer>] [<text>] [<player>] [<number>] [<offlineplayer>]:
+	permission: skript.OP
+	usage: /ruller info
+	trigger:
+		if player is not console:
+			{ruller.a.%player%} is true:
+
+			else if {ruller.a.%player%} is not set:
+				stop
+			else if {ruller.a.%player%} is false:
+				stop
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   GUI処理
+		if arg-2 is not set:
+			open chest with 5 row named "&8&lRuller %{_player}% menu" to player
+			wait a tick
+			format slot 35 of player with ender chest named "&b%{_player}%のエンダーチェストを開く" with lore "-プレイヤーのエンダーチェストを開きます。|| 操作も可能です。" to close then run "ruller %{_player}% einv %player%"
+			format slot 36 of player with chest named "&b%{_player}%のインベントリを開く" with lore "-インベントリを開きます。|| オフラインのプレイヤーの操作も可能です。" to close then run "ruller %{_player}% inv %player%"
+			format slot 10 of player with packed ice named "&c%{_player}%をミュートにする" with lore "-プレイヤーをミュート状態にします。|| ミュート状態のプレイヤーはチャット及び/meコマンドが|| 使用不可能になる他、observerへの発言表示がされます。" to close then run "ruller %{_player}% mute %player%"
+			format slot 19 of player with fire named "&c%{_player}%のミュートを解除" with lore "-プレイヤーのミュート状態を解除します。" to close then run "ruller %{_player}% unmute %player%"
+			format slot 9 of player with eye of ender named "&2%{_player}%にオブザーバー権限を追加" with lore "-プレイヤーにオブザーバー権限を追加します。|| オブザーバー権限では、プレイヤーのコマンド監視及び|| ミュートプレイヤーの発言を見ることが可能です。" to close then run "ruller %{_player}% observer %player%"
+			format slot 18 of player with ender pearl named "&2%{_player}%のオブザーバー権限を剥奪" with lore "-プレイヤーからオブザーバー権限を剥奪します。" to close then run "ruller %{_player}% dep %player%"
+			format slot 14 of player with bars named "&4%{_player}%を投獄" with lore "-プレイヤーを投獄します。|| 予め牢獄の位置の指定が必要です。" to close then run "ruller %{_player}% prison %player%"
+			format slot 23 of player with feather named "&4%{_player}%を牢獄から解放" with lore "-牢獄から開放し、元いた位置に戻します。" to close then run "ruller %{_player}% prisonesc %player%"
+			format slot 12 of player with blaze powder named "&5%{_player}%に罰点を付与" with lore "-プレイヤーに罰点を付与します。|| 慎重に行ってください。" to close then run "ruller %{_player}% penalty %player%"
+			format slot 21 of player with water bucket named "&5%{_player}%から罰点を減少" with lore "-プレイヤーから罰点を減少させます。|| ミス時や一週間経過による罰点減少に使用してください。" to close then run "ruller %{_player}% mistake %player%"
+			format slot 16 of player with gold helmet named "&6%{_player}%に帽子を被せる" with lore "-ネタ機能その1|| プレイヤーにブロックの帽子を被せます。" to close then run "ruller %{_player}% hat %player%"
+			format slot 25 of player with human's skull named "&6%{_player}%の首を狩る" with lore "-ネタ機能その2|| プレイヤーの御首頂戴します。|| 斬首されたプレイヤーは生き続けます。" to close then run "ruller %{_player}% head %player%"
+			format slot 41 of player with command block named "&e%{_player}%のかわりにコマンド/メッセージを実行" with lore "-プレイヤーになりきってコマンド及びチャットを実行します。|| コマンドは権限を無視しません。|| 悪用禁止！" to close then run "ruller %{_player}% execute %player%"
+			format slot 44 of player with book and quill named "&d%{_player}%の情報を表示" with lore "-罰点や権限の有無などを確認します。|| 週間BANの残り時間もここに表示されます。" to close then run "ruller %{_player}% info %player%"
+
+#   GUI処理その2（プレイヤーが指定されていない場合自らを指定する処理）
+		if arg-1 is not set:
+			open chest with 5 row named "&8&lRuller %{_player}% menu" to player
+			wait a tick
+			format slot 44 of player with book and quill named "&d自分の情報を表示" with lore "-罰点や権限の有無などを確認します。|| 週間BANの残り時間もここに表示されます。" to close then run "ruller  %{_player}% info %player%"
+			format slot 11 of player with packed ice named "&c自分をミュートにする" with lore "-プレイヤーをミュート状態にします。|| ミュート状態のプレイヤーはチャット及び/meコマンドが|| 使用不可能になる他、observerへの発言表示がされます。" to close then run "ruller %{_player}% mute %player%"
+			format slot 20 of player with fire named "&c自分のミュートを解除" with lore "-プレイヤーのミュート状態を解除します。" to close then run "ruller %{_player}% unmute %player%"
+			format slot 10 of player with eye of ender named "&2自分にオブザーバー権限を追加" with lore "-プレイヤーにオブザーバー権限を追加します。|| オブザーバー権限では、プレイヤーのコマンド監視及び|| ミュートプレイヤーの発言を見ることが可能です。" to close then run "ruller %{_player}% observer %player%"
+			format slot 19 of player with ender pearl named "&2自分のオブザーバー権限を剥奪" with lore "-プレイヤーからオブザーバー権限を剥奪します。" to close then run "ruller %{_player}% dep %player%"
+			format slot 14 of player with bars named "&4自分を投獄" with lore "-プレイヤーを投獄します。|| 予め牢獄の位置の指定が必要です。" to close then run "ruller %{_player}% prison %player%"
+			format slot 23 of player with feather named "&4自分を牢獄から解放" with lore "-牢獄から開放し、元いた位置に戻します。" to close then run "ruller %{_player}% prisonesc %player%"
+			format slot 32 of player with map named "&4牢獄の位置を指定" with lore "-牢獄の位置を設定します。|| 投獄の際に使用します。" to close then run "ruller %{_player}% prisonset"
+			format slot 27 of player with nether star named "&eコマンド埋め込み管理ツールを取得" with lore "-コマンドを埋め込むのに必要なツールを取得します。" to close then run "ruller %{_player}% signcmd %player%"
+			format slot 36 of player with command block named "&aコマンド埋め込み情報を表示" with lore "-埋め込まれたコマンドの座標とデータを確認します。" to close then run "ruller %{_player}% signinfo %player%"
+			format slot 12 of player with blaze powder named "&5自分に罰点を付与" with lore "-プレイヤーに罰点を付与します。|| 慎重に行ってください。" to close then run "ruller %{_player}% penalty %player%"
+			format slot 21 of player with water bucket named "&5自分から罰点を減少" with lore "-プレイヤーから罰点を減少させます。|| ミス時や一週間経過による罰点減少に使用してください。" to close then run "ruller %{_player}% mistake %player%"
+			format slot 16 of player with gold helmet named "&6自分に帽子を被せる" with lore "-ネタ機能その1|| プレイヤーにブロックの帽子を被せます。" to close then run "ruller %{_player}% hat %player%"
+			format slot 25 of player with human's skull named "&6自分の首を狩る" with lore "-ネタ機能その2|| プレイヤーの御首頂戴します。|| 斬首されたプレイヤーは生き続けます。" to close then run "ruller %{_player}% head %player%"
+			format slot 38 of player with ink sack named "&e看板設定ツールを取得" with lore "-看板を編集するためのツールを取得します。|| ツールを持って看板を右クリックすることで|| 編集が可能になります。" to close then run "ruller %{_player}% editsign %player%"
+			format slot 42 of player with beacon named "&6次のコマンドを全体化" with lore "-次のコマンドを全プレイヤーに使用させます。|| プレイヤー名の入る場所に”@a”で全体化可能です。" to close then run "ruller %{_player}% all %player%"
+			format slot 39 of player with clock named "&bClanhome運営メニューを開く" with lore "-Clanhomeの運営メニューを開きます。||アドミンクロックをクリックしたときと同じ動作をします。" to close then run "ch-admin menu 0 0 0 %player%"
+			format slot 40 of player with ender chest named "&b運営チェストを開く" with lore "-チェスト形式で運営でアイテムを共有できます。" to close then run "ruller %{_player}% chest %player%"
+			format slot 8 of player with quartz ore named "&4警告リストを表示" with lore "-IP一致の警告を表示します。" to close then run "ruller %{_player}% warning"
+			format slot 35 of player with enchanted book named "&dRullerの情報を表示" with lore "-アップデート情報などを表示します。" to close then run "ruller %{_player}% updateinfo"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   プレイヤーの発するチャットをミュート   
+		if arg-2 is "mute":
+			set {mute.%{_player}%} to false
+			message "&e[Ruller] &d%{_player}%&rを&b発言禁止&rにしました。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   プレイヤーのミュートを解除
+		if arg-2 is "unmute":
+			set {mute.%{_player}%} to true
+			message "&e[Ruller] &d%{_player}%&rを&c発言可能&rにしました。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   プレイヤーに監視者権限を追加
+		if arg-2 is "observer":
+			if {observer.%{_player}%} is true:
+				message "&e[Ruller] &cそのプレイヤーは既に追加されています。" to arg-3
+	
+			else:
+				add {_player} to {observer::*}
+				set {observer.%{_player}%} to true
+				message "&e[Ruller] &d%{_player}%&rに&c監視者権限を付与&rしました。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   プレイヤーの監視者権限を剥奪
+		if arg-2 is "dep":
+			remove {_player} from {observer::*}
+			set {observer.%{_player}%} to false
+			message "&e[Ruller] &d%{_player}%&rの&b監視者権限を剥奪&rしました。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   プレイヤーを投獄
+		if arg-2 is "prison":
+			set {prisonbreak.%{_player}%} to {_player}'s location
+			teleport {_player} to {prison.location}
+			broadcast "&d%{_player}%&rは&4豚箱にぶち込まれた&r"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   プレイヤーを解放
+		if arg-2 is "prisonesc":
+			teleport {_player} to {prisonbreak.%{_player}%}
+			clear {prisonbreak.%{_player}%}
+			broadcast "&d%{_player}%&rは解放された"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   豚箱の位置を指定
+		if arg-2 is "prisonset":
+			set {prison.location} to location of {_player}
+			message "&4この場所に豚どもがぶち込まれるとなるとうずうずしてくる！" to {_player}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   罰点の付与
+		if arg-2 is "penalty":
+			wait 2 tick
+			open chest with 2 row named "&8&lRuller %{_player}% penalty" to arg-3
+			wait a tick
+			set {_count} to 1
+			loop 9 times:
+				format slot {_count}-1 of arg-3 with white wool named "%{_count}%点を付与する" to close then run "ruller %{_player}% setpenalty %arg-3% %{_count}%"
+				format slot 13 of arg-3 with creeper's skull named "10点を付与する" to close then run "ruller %{_player}% setpenalty %arg-3% 10"
+				add 1 to {_count}
+
+		if arg-2 is "setpenalty":
+			add arg-4 to {point.%{_player}%}
+
+			if {point.%{_player}%} is greater than {@maxpenalty} -1:
+				kick {_player} because "罰点が10点を超えたことで、永久BANされました。"
+				ban {_player} because "罰点が10点を超えたことで、永久BANされました。"
+				broadcast "&c罰点が付与されたことによって、%{_player}%が永久BANされました。"
+				set {penalty.%{_player}%} to now
+
+			else if {point.%{_player}%} is greater than {@weekbanpenalty} -1:
+				ban {_player} because "罰点が%{point.%{_player}%}%になったことで、1週間BANされました。"
+				kick {_player} because "罰点が%{point.%{_player}%}%になったことで、1週間BANされました。"
+				set {weekban.day.%{_player}%} to {@weekbandays} -1
+				set {weekban.hour.%{_player}%} to 24
+				add "%{_player}%" to {weekban::*}
+				execute console command "/weekbanset"
+				broadcast "&c罰点が付与されたことによって、%{_player}%が1週間BANされました。"
+				set {penalty.%{_player}%} to now
+
+			else:
+				message "&e[Ruller] &d%{_player}%&rに&a%arg-4%&r点の&4罰点を付与&rしました。" to arg-3
+				set {penalty.%{_player}%} to now
+
+			clear {playername.%{_player}%}
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   罰点の減点
+		if arg-2 is "mistake":
+			if {point.%{_player}%} is greater than 0:
+				wait 2 tick
+				open chest with 2 row named "&8&lRuller %{_player}% penalty" to arg-3
+				wait a tick
+				set {_count} to 1
+				loop 9 times:
+					format slot {_count}-1 of arg-3 with white wool named "%{_count}%点を減点する" to close then run "ruller %{_player}% takepoint %arg-3% %{_count}%"
+					format slot 13 of arg-3 with skeleton's skull named "10点を減点する" to close then run "ruller %{_player}% takepoint %arg-3% 10"
+					add 1 to {_count}
+			else:
+				message "&e[Ruller]&c指定したプレイヤーには罰点がありません。" to arg-3
+
+		if arg-2 is "takepoint":
+			remove arg-4 from {point.%{_player}%}
+			message "&e[Ruller] &d%{_player}%&rから&a%arg-4%&r点の&4罰点の減点&rをしました。" to arg-3
+			if {point.%{_player}%} is less than 1:
+				clear {point.%{_player}%}
+			if {_player} is banned:
+				if {point.%{_player}%} is less than 5:
+					unban {_player}
+					message "&e[Ruller] &d%{_player}%&rの罰点が&a%arg-4%&r点になったためBAN解除をしました。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   インベントリオープン処理
+		if arg-2 is "inv":
+			if {_player} is offline:
+				wait 2 tick
+#	 仮想チェストを開いて指定プレイヤーのインベントリの中身をぶち込む
+				open chest with 4 rows named "%{_player}%(オフライン)" to arg-3
+				wait 2 tick
+				set {_count} to 0
+				loop 36 times:
+					set slot {_count} of arg-3's current inventory to {ruller.inventory.%arg-1%::%{_count}%}
+					add 1 to {_count}
+	
+				set {ruller.inv.open.%arg-3%} to true
+				set {ruller.inv.name.%arg-3%} to {_player}
+			else:
+#	サーバーに指定プレイヤーが居る場合はSkriptの機能で開く
+				wait 2 tick
+				open {_player}'s inventory to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#	エンダーチェストを開く
+		if arg-2 is "einv":
+			wait 2 tick
+			open {_player}'s ender chest to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   数合わせその1 指定プレイヤーに帽子を被せる
+		if arg-2 is "hat":
+			if {_player} is online:
+				set {_block} to held item of arg-3
+				if id of {_block} is greater than 255:
+					message "&e[Ruller] 帽子を被せるにはブロックを持つことが必要です。" to arg-3
+		
+				else:
+					set helmet of {_player} to {_block}
+					message "&e[Ruller] &d%{_player}%&rに&b%{_block}%&rを&a被せました。" to arg-3
+		
+			else:
+				message "&e[Ruller] &dオンラインのプレイヤー&rにのみ、&a帽子を被せることが出来ます。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   数合わせその2 指定プレイヤーのお首頂戴致します
+		if arg-2 is "head":
+			give {_player}'s skull to arg-3
+			message "&0首討！！！" to arg-3
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   コマンド/チャット代理実行
+		if arg-2 is "execute":
+			set {execute.%arg-3%} to true
+			set {execute.name.%arg-3%} to {_player}
+			message "&e[Ruller]&d%{execute.name.%{_player}%}%のかわりにコマンド/メッセージ送信を実行します。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   コマンド全体化
+		if arg-2 is "all":
+			set {allplayer.%arg-3%} to true
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   OP用チェスト処理
+		if arg-2 is "chest":
+			wait 2 tick
+			open chest with 4 rows named "&e[Ruller]&5運営チェスト" to arg-3
+			wait 4 tick
+			set {_count} to 0
+			loop 36 times:
+				set slot {_count} of arg-3's current inventory to {ruller.op.chest::%{_count}%}
+				add 1 to {_count}
+			set {ruller.op.chest.%arg-3%} to true
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "signcmd":  
+			give nether star named "&dコマンド埋め込み管理ツール" to arg-3
+			message "&e[Ruller]&a管理ツールを取得しました。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "signinfo":
+			wait 2 tick
+			open chest with 4 row named "Ruller Command Location" to {_player}
+			wait a tick
+			set {_count} to 0
+			loop {ruller.locate.all::*}:
+				format slot {_count} of {_player} with map named "<%loop-value%>" to close then run "rullersign %{_player}% info %loop-value%"
+				add 1 to {_count}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "editsign":
+			give ink sack named "&d看板編集ツール" to arg-3
+			message "&e[Ruller]&a管理ツールを取得しました。" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "warning":
+			if {ruller.warning::*} is set:
+				wait 2 tick
+				open chest with 6 row named "違反リスト" to {_player}
+				set {_count} to 0
+				loop {ruller.warning::*}:
+					if {_count} is 27:
+						exit loop 
+					wait a tick
+					format slot {_count} of {_player} with quartz ore named "IP一致" with lore "%loop-value-1%||%loop-index-1%" to close
+					add 1 to {_count}
+				set {_count} to 27
+				loop {ruller.ngcmd::*}:
+					if {_count} is 54:
+						exit loop 
+						message "表示できない数の警告があります。"
+					wait a tick
+					format slot {_count} of {_player} with quartz ore named "不適切なコマンド" with lore "%loop-value%||%loop-index%" to close
+			else:
+				message "&e[Ruller]&a警告はありません。" to {_player}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#   コマンドリスト
+		if arg-2 is "info":
+			if arg-1 is not player:
+				message "&4*&e-----------------------------&b[Ruller] &aCommand List&e------------------------------&4*" 
+				message "&e/ruller &d[プレイヤー名]&r  -&aRullerのGUIを開く"
+				message "&4*&e------------------------------------------------------------------------------&4*"
+
+#		   プレイヤー情報
+			else:
+				set {_target} to arg-1
+				send modlist packet to {_target}
+				send ping packet to {_target}
+				message "&b[Ruller]&aパケットから情報を取得中です。" to arg-3
+				wait a second
+				message "&4*&e---------&b[Ruller] %{_target}%'s info&e---------&4*" to arg-3
+				message "&eUUID:%UUID of {_target}%" to arg-3
+				if {_target} is online:
+					message "&2IP:%ip of {_target}%" to arg-3
+					message "&9ping:%ping of last packet%" to arg-3
+					set {_modlist::*} to mod list of last packet
+					loop {_modlist::*}:
+						message "&aModList:%loop-value%" to arg-3
+				if {observer.%{_target}%} is true: 
+					message "&dobserver権限:所持" to arg-3
+				else: 
+					message "&aobserver権限:非所持" to arg-3
+				if {freeze.%{_target}%} is false: 
+					message "&b凍結中" to arg-3
+				else: 
+					message "&a凍結状態なし" to arg-3
+				if {mute.%{_target}%} is false: 
+					message "&c発言禁止中" to arg-3
+				else:
+					message "&a発言可能状態" to arg-3
+				if {point.%{_target}%} is not set:
+					message "&a罰点なし" to arg-3
+				else if {point.%{_target}%} is 0:
+					message "&a罰点なし" to arg-3
+				else if {point.%{_target}%} is greater than 0: 
+					if {point.%{_target}%} is greater than 9: 
+						message "&4永久BAN" to arg-3
+					else if {weekban.hour.%{_target}%} is 24: 
+						message "&41週間BAN" to arg-3
+						message "&dあと&e%{weekban.day.%{_target}%}+1%日" to arg-3
+					else if {point.%{_target}%} is greater than 4: 
+						message "&41週間BAN" to arg-3
+						message "&dあと&e%{weekban.day.%{_target}%}%日 &a%{weekban.hour.%{_target}%}%時間" to arg-3
+					message "&6罰点:%{point.%{_target}%}%点&b(付与日:%{penalty.%{_target}%}%)" to arg-3
+				message "&4*&e-----------------------------------------------&4*" to arg-3
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+		if arg-2 is "updateinfo":
+			wait 2 tick
+			open chest with 1 row named "Ruller info" to {_player}
+			wait a tick
+			format slot 0 of {_player} with gold nugget named "&bRuller Version" with lore "&a{@ruller.version}" to close
+			format slot 1 of {_player} with map named "&e機能追加" to close
+			if "{@ruller.add1}" is not "notset":
+				format slot 2 of {_player} with torch named "&e{@ruller.add1}" to close
+			if "{@ruller.add2}" is not "notset":
+				format slot 3 of {_player} with torch named "&e{@ruller.add2}" to close
+			if "{@ruller.add3}" is not "notset":
+				format slot 4 of {_player} with torch named "&e{@ruller.add3}" to close
+			format slot 5 of {_player} with book and quill named "&c機能調整" to close
+			if "{@ruller.fix1}" is not "notset":
+				format slot 6 of {_player} with redstone torch named "&c{@ruller.fix1}" to close
+			if "{@ruller.fix2}" is not "notset":
+				format slot 7 of {_player} with redstone torch named "&c{@ruller.fix2}" to close
+			if "{@ruller.fix3}" is not "notset":
+				format slot 8 of {_player} with redstone torch named "&c{@ruller.fix3}" to close
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				ここまで/ruller処理
+#※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※※  
+#				ここからrullerメイン処理
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				初期join時のTP
+on first join:
+	teleport player to location (0, 31, 500) in world "world"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				プレイヤーのコマンド監視
+on command:
+	player is set:
+		loop {observer::*}:
+			message "&7[&e*&r&7RULLER CMDLOG] %player% used /%complete command%" to loop-value
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				ミュート時の処理
+#ミュート時の処理(me)   
+on command:
+	if command is "me":
+		if {mute.%player%} is false:
+			message "&4あなたの発言は運営者によって禁止されています。"
+#	observerにのみメッセージを表示
+			loop {observer::*}:
+				message "[&4Mute&r] %player% used /%complete command%" to loop-value
+			cancel event
+
+#ミュート時の処理(チャット)
+on chat:
+	if {mute.%player%} is false:
+		message "&4あなたの発言は運営者によって禁止されています。"
+		log "[&4Mute&r]>:%message%"
+#   observerにのみメッセージを表示
+		loop {observer::*}:
+			message "[&4Mute&r] <%player%>: %message%" to loop-value
+		cancel event
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				コマンド代理実行処理
+on command:
+	if {execute.%player%} is true:
+		set {execute.%player%} to false
+		execute {execute.name.%player%} command "/%complete command%"
+		clear {execute.name.%player%}
+		cancel event
+
+#チャット代理実行処理
+on chat:
+	if {execute.%player%} is true:
+		cancel event
+		set {execute.%player%} to false
+		broadcast "<%{execute.name.%player%}%> %message%"
+		clear {execute.name.%player%}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				インベントリ操作処理
+#インベントリを閉じた際にインベントリ操作が真になっているか判定、真の場合は操作していたインベントリを保存
+on inventory close:
+	if {ruller.inv.open.%player%} is true:
+		set {_count} to 0
+		loop 36 times:
+			set {ruller.inventory.%{ruller.inv.name.%player%}%::%{_count}%} to slot {_count} of player's current inventory
+			add 1 to {_count}
+		clear {ruller.inv.name.%{ruller.inv.name.%player%}%}
+		clear {ruller.inv.open.%player%}
+
+
+#インベントリを保存
+	else if {ruller} is not set:
+		set {_count} to 0
+		loop 36 times:
+			set {ruller.inventory.%player%::%{_count}%} to slot {_count} of player's inventory
+			add 1 to {_count}
+
+#オンラインになった際に編集したインベントリをぶちこむ
+on join:
+	set {_count} to 0
+	loop 36 times:
+		set slot {_count} of player's inventory to {ruller.inventory.%player%::%{_count}%}
+		add 1 to {_count}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				コマンド全体化処理
+on command:
+	if {allplayer.%player%} is true:
+		set {_command} to "/%complete command%"
+		set {_replace} to {_command}
+		loop all players:
+			if {_command} contain "@a":
+				replace "@a" in {_command} with "%loop-value%"
+			execute console command "%{_command}%"
+			set {_command} to {_replace}
+		cancel event
+		clear {allplayer.%player%}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				OP用チェストの保存処理
+on inventory close:
+	{ruller.op.chest.%player%} is true:
+		set {_count} to 0
+		loop 36 times:
+			set {ruller.op.chest::%{_count}%} to slot {_count} of player's current inventory
+			add 1 to {_count}
+		clear {ruller.op.chest.%player%}
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				IP一致処理の検知処理
+on join:
+	if {ruller.checkip::%ip of player%} is not set:
+		set {ruller.checkip::%ip of player%} to name of player
+		set {ruller.checkname::%ip of player%} to ip of player
+	else if {ruller.checkip::%ip of player%} is name of player:
+		stop
+	else if {ruller.checkip::%ip of player%} is not name of player:
+		set {ruller.warning::%{ruller.checkip::%ip of player%}%} to name of player
+		loop all players:
+			if loop-value is op:
+				message "&e[Ruller]&c%player%と%{ruller.checkip::%ip of player%}%のIPが一致しています。" to loop-value
+
+	if {ruller.writeip::%ip of player%} is not set:
+		log "%player%:%ip of player%" to "player_iplist"
+		set {ruller.writeip::%ip of player%} to true
+
+	if {ruller.iplist::%player%} is not set:
+		set {ruller.iplist::%player%} to ip of player
+	if {ruller.iplist::%player%} is ip of player:
+		stop
+	else:
+		set {ruller.ipcount.%player%} to 1
+	if {ruller.ipcount.%player%} is 5:
+		set {ruller.vpn::%player%} to UUID of player
+		loop all players:
+			if loop-value is op:
+				message "&e[Ruller]&c%player%がVPNを使用しているおそれがあります" to loop-value
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				問題のあるコマンドが使用された時の処理
+on command:
+	if player don't have permission "Skript.OP":
+		if command is "op" or "gamemode" or "give" or "perdon" or "ban":
+			set {ruller.ngcmd::%player%} to "%complete command%"
+			log "%player% used %complete command%"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+#				以下週間BAN関連
+command /weekban:
+	permission: skript.OP
+	trigger:
+#   週間BAN者を検出
+		loop {weekban::*}:
+#	週間BAN者の残りBAN日数が0より大きい場合
+			if {weekban.day.%loop-value%} is more than 0:
+#	 残り0時ではない場合1時間減らす
+				if {weekban.hour.%loop-value%} is greater than 0:
+					remove 1 from {weekban.hour.%loop-value%}
+#	 残り0時の場合24時に戻す
+				else if {weekban.hour.%loop-value%} is 0:
+					set {weekban.hour.%loop-value%} to 24
+#	  戻した後、残り日数日数を減らす
+					remove 1 from {weekban.day.%loop-value%}
+#	週間BAN者の残りBAN日数が0の場合
+			else:
+#	 残り0時間の場合はBAN解除
+				if {weekban.hour.%loop-value%} is 0:
+					remove loop-value from {weekban::*} 
+					clear {weekban.day.%loop-value%}
+					clear {weekban.hour.%loop-value%}
+					execute console command "/pardon %loop-value%"
+					broadcast "1週間BANされていた%loop-value%のBANが解除されました。"
+					set {point.%loop-value%} to {@weekbanpenalty} -1
+#	 残り時間が0でない場合1時間減らす
+				else:
+					remove 1 from {weekban.hour.%loop-value%}
+
+
+
+command /weekbandebag:
+	permission: skript.OP
+	trigger:
+		loop {weekban::*}:
+			if hour = {weekban.debag.hour.%loop-value%}:
+				message "&a%loop-value%の時間の修正項目なし、日にちの修正をします。"
+
+#	 時間は同じで日にちだけ違う場合
+				if {@weekbandays} - {weekban.debag.day.%loop-value%} = {@weekbandays} - day:
+					message "&a%loop-value%の日にちの修正項目なし。修正を終了します。"
+					stop
+
+				else if {weekban.debag.day.%loop-value%} - day is less than 0:
+#	  落ちた日が残り6日、起動した日が残り5日できっかり前の時間と同じの場合,6-(6-5)=1となる
+#	  前述の式で出した日数差の分残り日数を減らす
+					add {weekban.debag.day.%loop-value%} - day to {weekban.day.%loop-value%}
+					message "&4残り週間BAN時間を修正しました。(%loop-value%:%{weekban.day.%loop-value%}%日%{weekban.hour.%loop-value%}%時間)"
+					stop
+
+#	時間が違う場合
+			else:
+
+#				例として1時に落ち、23時に起動した場合の処理 残り時間は5日10時間と仮定する
+#				24-1+23=46となり、24を超える
+				if 24 - {weekban.debag.hour.%loop-value%} + hour is greater than 24:	
+#					週間BAN残り日数値に落ちた時間と起動した時間との差を入れる
+#					23-1=22 が差となるため、差である2を残り時間に追加する
+#					22+10=33 が実際の数値、これを時間表記に直す
+					add hour - {weekban.debag.hour.%loop-value%} to {weekban.hour.%loop-value%}
+
+#					丸1日サーバー落ちしていた場合の処理 例として24日1時に落ち、25日23時に起動した場合 残り時間は24日の時点で5日10時間と仮定する
+#					24-25=-1
+					if {weekban.debag.day.%loop-value%} - day is less than -1:
+						add {weekban.debag.day.%loop-value%} - day to {weekban.day.%loop-value%}
+#					例として28日に落ち、1日に起動した場合 残り時間は24日の時点で5日10時間と仮定する
+#					28-1=27
+					else if {weekban.debag.day.%loop-value%} - day is greater than 0:
+#						30-28+1=3 で、3日分減らす。これでいいのだ
+						add {weekban.debag.day.%loop-value%} - day - 30 to {weekban.day.%loop-value%}
+
+#					24より大きくなってしまった場合
+					if {weekban.hour.%loop-value%} is greater than 24:
+#						残り日数を1引く
+						message "&2残り週間BAN時間を修正しました。(%loop-value%:%{weekban.day.%loop-value%}%日%{weekban.day.%loop-value%}%時間)"
+#						1日の時間を引く
+#						33-24=9 4日と8時間となる。これでいいのだ
+						set {weekban.hour.%loop-value%} to {weekban.hour.%loop-value%} - 24
+						stop
+
+#					例として2時に落ち、8時に起動した場合の処理
+#					24-2+8=30となり、24を超える
+#					しかし、8-2=6で、24(1日の時間)を超えないため、そのままにする
+					else if {weekban.hour.%loop-value%} is less than 25:
+						message "&1残り週間BAN時間を修正しました。(%loop-value%:%{weekban.day.%loop-value%}%日%{weekban.hour.%loop-value%}%時間)"
+						stop
+
+#					残り時間が1時間などで、24を超えない場合
+#					例：1時に落ち、23時に起動した場合 残り時間は5日1時間と仮定する
+					else:
+#						残り日数を1引く
+#						21+1=22となり、0から引く時間は22時間である
+#						よって、24-22+1=3となり、4日と3時間となる。これでいいのだ
+						set {weekban.hour.%loop-value%} to 24 - {weekban.hour.%loop-value%} + {weekban.debag.hour.%loop-value%}
+						message "&5残り週間BAN時間を修正しました。(%loop-value%:%{weekban.day.%loop-value%}%日%{weekban.hour.%loop-value%}%時間)"
+						stop
+
+#				例として21時に落ち、1時に起動した場合の処理 残り時間は5日10時間と仮定する
+#				24-21+1=4となり、24を超えない
+				else:
+#					週間BAN残り日数値に落ちた時間と起動した時間との差を入れる
+#					1-21-10
+					remove hour - {weekban.debag.hour.%loop-value%} from {weekban.hour.%loop-value%}
+
+
+					if {weekban.debag.day.%loop-value%} - day is less than 0:
+						add {weekban.debag.day.%loop-value%} - day to {weekban.day.%loop-value%}
+					else if {weekban.debag.day.%loop-value%} - day is greater than 0:
+						add {weekban.debag.day.%loop-value%} - day - 30 to {weekban.day.%loop-value%}
+
+#					負の値となった場合
+					if {weekban.hour.%loop-value%} is less than 0:
+#						(24-30)*-1=6 5日6時間となる。これでいいのだ
+						set {weekban.hour.%loop-value%} to (24 + {weekban.hour.%loop-value%}) *-1
+						if {weekban.hour.%loop-value%} is greater than 24:
+							set {weekban.hour.%loop-value%} to {weekban.hour.%loop-value%} - 24
+							add 1 to {weekban.day.%loop-value%}
+						message "&6残り週間BAN時間を修正しました。(%loop-value%:%{weekban.day.%loop-value%}%日%{weekban.hour.%loop-value%}%時間)"
+
+			if {weekban.day.%loop-value%} is less than 0:
+				remove loop-value from {weekban::*} 
+				clear {weekban.day.%loop-value%}
+				clear {weekban.hour.%loop-value%}
+				unban loop-value
+				broadcast "1週間BANされていた%loop-value%のBANが解除されました。"
+				set {point.%loop-value%} to {@weekbanpenalty} -1
+
+
+on skript start:
+	execute console command "/weekbandebag"
+
+
+on skript stop:
+	loop {weekban::*}:
+		set {weekban.debag.hour.%loop-value%} to hour
+		set {weekban.debag.day.%loop-value%} to day
+	broadcast "&6設定完了しました。"
+
+command /weekbaneveryhour:
+	permission: Skript.OP
+	trigger:
+		loop {weekban::*}:
+			set {weekban.debag.hour.%loop-value%} to hour
+			set {weekban.debag.day.%loop-value%} to day
+		log "設定完了しました。"
+#-----------------------------------------------------------------------------------------------------------------------------------------------------

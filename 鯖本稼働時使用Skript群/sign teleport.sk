@@ -1,0 +1,141 @@
+#看板テレポート
+#機能　ペアIDによるP2Pテレポート
+#機能 運営にTPできるモードを追加
+#仕様 看板の最大数は1000である
+
+on script load:
+	wait 4 second
+	set {_n} to 1
+	loop {signTP.go.list::*}:
+		loop blocks within {signTP.go.list::%{_n}%} to {signTP.go.list::%{_n}%}:
+			if loop-block is not sign:
+				broadcast "無効なTP先を削除"
+				clear {to.info%{signTP.go.list::%{_n}%}%}
+				clear {to.name%{signTP.go.list::%{_n}%}%}
+				clear {signTP.go.list::%{_n}%}
+		add 1 to {_n}
+
+
+#看板設置時に1行目が[test]の場合4行目にIDを入れる
+on sign change:
+	if line 1 is "[TP]":
+		#名前が空欄なら警告を返す
+		if line 2 is "":
+			message "&6名前を入力してください"
+			cancel event
+			stop
+		set {signTP.name%location of block%} to line 2
+		set line 1 to "[TP]"
+		set line 2 to "f.%line 2%"
+		set line 3 to "&4disconnect"
+	#[運営]か[unei]で運営行きゲート
+	if line 1 is "[運営]" or "[unei]":
+		set line 1 to "[運営]"
+		set line 2 to "[行先]"
+		set line 3 to "[]"
+	if line 1 is "[運営側ゲート]":
+		cancel event
+	if line 1 is "[signTP]":
+		if line 2 is "":
+			message "&6名前を入力してください"
+			cancel event
+			stop
+		message "緑の音楽ディスクで看板を破壊することでTPの可否を設定可能です"
+		set line 1 to "[運営側ゲート]"
+		set line 3 to "&4停止中"
+		set {to.info%location of block%} to "&4停止中"
+		set {to.name%location of block%} to line 2
+		add location of block to {signTP.go.list::*}
+
+on join:
+	clear {signTP.move.l%player%}
+
+on rightclick on sign:
+	if line 1 is "[TP]":
+		if line 3 is "&4disconnect":
+			if player is not Sneaking:
+				message "シフト+右クリックで登録作業開始"
+				stop
+			if {signTP.move.l%player%} is not set:
+				set line 3 to "&6Waiting"
+				set {signTP.move.l%player%} to location of block
+				message "接続したいTPをシフト＋右クリックしてください"
+			else:
+				set line 3 to "t.%{signTP.name%{signTP.move.l%player%}%}%"
+				set {signTP.to.l%location of block%} to {signTP.move.l%player%}
+				set {signTP.move2.l%player%} to location of block
+				teleport player to {signTP.to.l%location of block%}
+				message "前のTPをもう1度右クリックしてください"
+			stop
+		if line 3 is "&6Waiting":
+			if location of block is {signTP.move.l%player%}:
+				set line 3 to "t.%{signTP.name%{signTP.move2.l%player%}%}%"
+				set {signTP.to.l%location of block%} to {signTP.move2.l%player%}
+				message "TPの設定が完了しました %{signTP.name%{signTP.move.l%player%}%}%～%{signTP.name%{signTP.move2.l%player%}%}%間"
+				clear {signTP.move.l%player%}
+				clear {signTP.move2.l%player%}
+			stop
+		if {signTP.move.l%player%} is set:
+			message "設定が終わっていません"
+			stop
+		loop blocks within {signTP.to.l%location of block%} to {signTP.to.l%location of block%}:
+			if loop-block is not sign:
+				clear {signTP.name%location of loop-block%}
+		if {signTP.name%{signTP.to.l%location of block%}%} is set:
+			teleport player to {signTP.to.l%location of block%}
+		else:
+			message "&4相方のTPは破壊されました"
+			clear {signTP.name%location of block%}
+			clear line 1
+			clear line 2
+			clear line 3
+			clear line 4
+	if line 1 is "[運営]":
+		if line 4 is "[&2稼働中&0]":
+			teleport player to {signTP.go.list::%{pointer%location of block%}%}
+			set line 3 to "[]"
+			clear line 4
+			message "%{to.name%{signTP.go.list::%{pointer%location of block%}%}%}%にTPしました"
+			remove 1 from {pointer%location of block%}
+
+on leftclick on sign:	
+	if line 1 is "[運営]":
+		add 1 to {pointer%location of block%}
+		loop 25 times:
+			if {signTP.go.list::%{pointer%location of block%}%} is set:
+				exit loop
+			add 1 to {pointer%location of block%}
+			if {pointer%location of block%} > 20:
+				set {pointer%location of block%} to 1
+		set line 3 to "[%{to.name%{signTP.go.list::%{pointer%location of block%}%}%}%]"
+		set line 4 to "[%{to.info%{signTP.go.list::%{pointer%location of block%}%}%}%&0]"
+
+#看板破壊時にIDを戻す
+on mine of sign:
+	if line 1 is "[TP]" or "[運営]":
+		#クリエイティブならキャンセルイベント
+		if gamemode of player is creative:
+			player is not holding a bedrock:
+				cancel event
+				stop
+		if {signTP.ID::%{signTP.%line 4%.to}%} = 0:
+			set {signTP.ID::%{signTP.%line 4%.from}%} to 0
+		message "&4TPが撤去されました name%{signTP.name%location of block%}%"
+		clear {signTP.name%location of block%}
+	if line 1 is "[運営側ゲート]":
+		player is holding a bedrock:
+			message "&4TPが撤去されました name%{to.name%location of block%}%"
+			clear {to.info%location of block%}
+			clear {to.name%location of block%}
+			remove location of block from {signTP.go.list::*}
+			stop
+		else:
+			cancel event
+			if player is holding green music disc:
+				#トグル
+				if {to.info%location of block%} is "&4停止中":
+					set {to.info%location of block%} to "&2稼働中"
+					set line 3 to {to.info%location of block%}
+				else:
+					set {to.info%location of block%} to "&4停止中"
+					set line 3 to {to.info%location of block%}

@@ -1,0 +1,504 @@
+options:
+	tag : &9[&7--/&8UG&7/--&9]&a▼
+
+function items(p:player ,p2:player ,event:number ,n:number ,n2:number) :: number:
+	if {_event} = 1:
+		set {ug-item-d.%{_p}%} to "&8ボロのレーダー&f 耐久:30"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to name tag of fortune 1 named "&8ボロのレーダー&f 耐久:30" with lore "&f[探検セット]||&6付近の鉱石をサーチします"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 200
+		
+	else if {_event} = 2:
+		set {ug-item-d.%{_p}%} to "&bいいレーダー&f 耐久:80"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to name tag of fortune 2 named "&bいいレーダー&f 耐久:80" with lore "&f[探検セット]||&6付近の鉱石をサーチします"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 1000
+		
+	else if {_event} = 3:
+		set {ug-item-d.%{_p}%} to "&eすごいレーダー&f 耐久:150"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to name tag of fortune 3 named "&eすごいレーダー&f 耐久:150" with lore "&f[探検セット]||&6付近の鉱石をサーチします"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 1900
+		
+	else if {_event} = 4:
+		set {ug-item-d.%{_p}%} to "&8ボロのツルハシ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to stone hoe of fortune 1 named "&8ボロのツルハシ" with lore "&f[探検セット]||&6鉱石を掘ることができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 200
+		
+	else if {_event} = 5:
+		set {ug-item-d.%{_p}%} to "&bいいツルハシ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to iron hoe of fortune 2 named "&bいいツルハシ" with lore "&f[探検セット]||&6鉱石を掘ることができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 1000
+		
+	else if {_event} = 6:
+		set {ug-item-d.%{_p}%} to "&eすごいツルハシ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to diamond hoe of fortune 3 named "&eすごいツルハシ" with lore "&f[探検セット]||&6鉱石を掘ることができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 1900
+		
+	else if {_event} = 7:
+		set {ug-item-d.%{_p}%} to "&8ボロのハンマー"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to stone axe of fortune 1 named "&8ボロのハンマー" with lore "&f[探検セット]||&6鉱石を掘ることができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 200
+		
+	else if {_event} = 8:
+		set {ug-item-d.%{_p}%} to "&bいいハンマー"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to iron axe of fortune 2 named "&bいいハンマー" with lore "&f[探検セット]||&6鉱石を掘ることができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 1000
+		
+	else if {_event} = 9:
+		set {ug-item-d.%{_p}%} to "&eすごいハンマー"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to diamond axe of fortune 3 named "&eすごいハンマー" with lore "&f[探検セット]||&6鉱石を掘ることができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 1900
+		
+	else if {_event} = 10:
+		set {ug-item-d.%{_p}%} to "&e火炎トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e火炎トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 120
+		
+	else if {_event} = 11:
+		set {ug-item-d.%{_p}%} to "&e氷結トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e氷結トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 80
+		
+	else if {_event} = 12:
+		set {ug-item-d.%{_p}%} to "&e爆裂トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e爆裂トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 230
+		
+	else if {_event} = 13:
+		set {ug-item-d.%{_p}%} to "&e雷電トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e雷電トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 190
+		
+	else if {_event} = 14:
+		set {ug-item-d.%{_p}%} to "&e盲目トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e盲目トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 70
+		
+	else if {_event} = 15:
+		set {ug-item-d.%{_p}%} to "&e毒トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e毒トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 160
+		
+	else if {_event} = 16:
+		set {ug-item-d.%{_p}%} to "&eヒールトラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&eヒールトラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 300
+		
+	else if {_event} = 17:
+		set {ug-item-d.%{_p}%} to "&e混乱トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e混乱トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 90
+		
+	else if {_event} = 18:
+		set {ug-item-d.%{_p}%} to "&eテレポートトラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&eテレポートトラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 220
+		
+	else if {_event} = 19:
+		set {ug-item-d.%{_p}%} to "&e帰還トラップ"
+		if {_n} = 1:
+			set {ug-item-t.%{_p}%} to chirp music disc of fortune 1 named "&e帰還トラップ" with lore "&f[探検セット]||&6トラップを設置することができます"
+			if {_n2} = 1:
+				give {ug-item-t.%{_p}%} to {_p}
+		else if {_n} = 2:
+			return 420
+function hougu(p1:player ,p2:player ,name:text ,n:number, use:number) :: number:
+	if {_n} = 0:
+		if {_name} is "&3越後屋のお菓子":
+			set {_n} to 1
+		else if {_name} is "&e星の雫":
+			set {_n} to 2
+		else if {_name} is "&4ボンバーナックル":
+			set {_n} to 3
+		else if {_name} is "&a四季の思い出":
+			set {_n} to 4
+		else if {_name} is "&4真実の鏡":
+			set {_n} to 5
+		else if {_name} is "&6ツタンカーム":
+			set {_n} to 6
+		else if {_name} is "&4覇王のマント":
+			set {_n} to 7
+		else if {_name} is "&a月の浮舟":
+			set {_n} to 8
+		else if {_name} is "&b漣の笛":
+			set {_n} to 9
+		else if {_name} is "&a魔法の絵筆":
+			set {_n} to 10
+			
+	if {_n} = 1:
+		set {ug-item-t.%{_p1}%} to pumpkin pie of fortune 1 named "&3越後屋のお菓子" with lore "&b[防御宝具]||&6宝具による攻撃を１回防ぎます"
+		set {ug-item-d.%{_p1}%} to "&3越後屋のお菓子"
+		if {_use} = 1:
+			message "{@tag}所持しているだけで効果があるアイテムです" to {_p1}
+		else if {_use} = 3:
+			return 420
+		
+	else if {_n} = 2:
+		set {ug-item-t.%{_p1}%} to ghast tear of fortune 1 named "&e星の雫" with lore "&b[特殊宝具]||&6HPと満腹度を回復します"
+		set {ug-item-d.%{_p1}%} to "&e星の雫"
+		if {_use} = 1:
+			remove 1 of {_p1}'s tool from {_p1}
+			message "{@tag}体力と満腹度を回復しました" to {_p1}
+			set {_p1}'s health to 10
+			set {_p1}'s food level to 10
+		else if {_use} = 3:
+			return 300
+			
+	else if {_n} = 3:
+		set {ug-item-t.%{_p1}%} to flint of fortune 1 named "&4ボンバーナックル" with lore "&b[攻撃宝具]||&6ランダムなプレイヤーから||&6鉄を5奪います"
+		set {ug-item-d.%{_p1}%} to "&4ボンバーナックル"
+		if {_use} = 1:
+			loop all players:
+				if {ug-in.%loop-player%} is set:
+					if loop-player is not {_p1}:
+						set {_num.%loop-player%} to random integer between 1 and 100
+			set {_max} to 0
+			loop all players:
+				if {_num.%loop-player%} is set:
+					if {_max} is less than {_num.%loop-player%}:
+						set {_max} to {_num.%loop-player%}
+						set {_maxp} to loop-player
+			remove 1 of {_p1}'s tool from {_p1}
+			if {_maxp} is not set:
+				message "{@tag}対象にできるプレイヤーがいなかった" to {_p1}
+				stop
+			else:
+				hougu({_maxp}, {_p1}, "none", {_n}, 2)
+		else if {_use} = 2:
+			loop items in {_p1}'s inventory:
+				if lore of loop-item contain "防御":
+					remove 1 of loop-item from {_p1}
+					message "{@tag}宝具により攻撃を防いだ" to {_p1}
+					message "{@tag}宝具によって防がれたようだ" to {_p2}
+					if name of loop-item contain "真実":
+						message "{@tag}真実の鏡の効果を発動" to {_p1}
+						hougu({_p2},{_p1},"none",3,2)
+						hougu({_p2},{_p1},"none",3,2)
+					stop
+			message "{@tag}宝具による攻撃で鉄を奪われた" to {_p1}
+			message "{@tag}鉄を５つ奪った" to {_p2}
+			remove 5 of iron bar from {_p1}
+			give 5 iron bar to {_p2}
+		else if {_use} = 3:
+			return 600
+	else if {_n} = 4:
+		set {ug-item-t.%{_p1}%} to nether star of fortune 1 named "&a四季の思い出" with lore "&b[防御宝具]||&6宝具による攻撃を１回防ぎます"
+		set {ug-item-d.%{_p1}%} to "&a四季の思い出"
+		if {_use} = 1:
+			message "{@tag}所持しているだけで効果があるアイテムです" to {_p1}
+		else if {_use} = 3:
+			return 400
+	else if {_n} = 5:
+		set {ug-item-t.%{_p1}%} to glass pane of fortune 1 named "&4真実の鏡" with lore "&b[防御宝具]||&6攻撃を防ぎ，２倍で反撃します"
+		set {ug-item-d.%{_p1}%} to "&4真実の鏡"
+		if {_use} = 1:
+			message "{@tag}所持しているだけで効果があるアイテムです" to {_p1}
+		else if {_use} = 3:
+			return 600
+	else if {_n} = 6:
+		set {ug-item-t.%{_p1}%} to raw pufferfish of fortune 1 named "&6ツタンカーム" with lore "&b[宝具]"
+		set {ug-item-d.%{_p1}%} to "&6ツタンカーム"
+		if {_use} = 1:
+			message "{@tag}効果の持たない宝具です" to {_p1}
+		else if {_use} = 3:
+			return 200
+	else if {_n} = 7:
+		set {ug-item-t.%{_p1}%} to leather of fortune 1 named "&4覇王のマント" with lore "&b[宝具]"
+		set {ug-item-d.%{_p1}%} to "&4覇王のマント"
+		if {_use} = 1:
+			message "{@tag}効果の持たない宝具です" to {_p1}
+		else if {_use} = 3:
+			return 200
+	else if {_n} = 8:
+		set {ug-item-t.%{_p1}%} to cauldron item of fortune 1 named "&a月の浮舟" with lore "&b[攻撃宝具]||&6ランダムなプレイヤーから||&6鉄を3奪います"
+		set {ug-item-d.%{_p1}%} to "&a月の浮舟"
+		if {_use} = 1:
+			loop all players:
+				if {ug-in.%loop-player%} is set:
+					if loop-player is not {_p1}:
+						set {_num.%loop-player%} to random integer between 1 and 100
+			set {_max} to 0
+			loop all players:
+				if {_num.%loop-player%} is set:
+					if {_max} is less than {_num.%loop-player%}:
+						set {_max} to {_num.%loop-player%}
+						set {_maxp} to loop-player
+			remove 1 of {_p1}'s tool from {_p1}
+			if {_maxp} is not set:
+				message "{@tag}対象にできるプレイヤーがいなかった" to {_p1}
+				stop
+			else:
+				hougu({_maxp}, {_p1}, "none", {_n}, 2)
+		else if {_use} = 2:
+			loop items in {_p1}'s inventory:
+				if lore of loop-item contain "防御":
+					remove 1 of loop-item from {_p1}
+					message "{@tag}宝具により攻撃を防いだ" to {_p1}
+					message "{@tag}宝具によって防がれたようだ" to {_p2}
+					if name of loop-item contain "真実":
+						message "{@tag}真実の鏡の効果を発動" to {_p1}
+						hougu({_p2},{_p1},"none",8,2)
+						hougu({_p2},{_p1},"none",8,2)
+					stop
+			message "{@tag}宝具による攻撃で鉄を奪われた" to {_p1}
+			message "{@tag}鉄を３つ奪った" to {_p2}
+			remove 3 of iron bar from {_p1}
+			give 3 iron bar to {_p2}
+		else if {_use} = 3:
+			return 300
+	else if {_n} = 9:
+		set {ug-item-t.%{_p1}%} to nether quartz item of fortune 1 named "&b漣の笛" with lore "&b[攻撃宝具]||&6全プレイヤーから||&6鉄を3奪います"
+		set {ug-item-d.%{_p1}%} to "&b漣の笛"
+		if {_use} = 1:
+			remove 1 of {_p1}'s tool from {_p1}
+			loop all players:
+				if {ug-in.%loop-player%} is set:
+					if loop-player is not {_p1}:
+						set {_pl} to true
+						hougu(loop-player, {_p1}, "none", {_n}, 2)
+			if {_pl} is not set:
+				message "{@tag}対象にできるプレイヤーがいなかった" to {_p1}
+		else if {_use} = 3:
+			return 1200
+		else if {_use} = 2:
+			loop items in {_p1}'s inventory:
+				if lore of loop-item contain "防御":
+					remove 1 of loop-item from {_p1}
+					message "{@tag}宝具により攻撃を防いだ" to {_p1}
+					message "{@tag}宝具によって防がれたようだ" to {_p2}
+					if name of loop-item contain "真実":
+						message "{@tag}真実の鏡の効果を発動" to {_p1}
+						hougu({_p2},{_p1},"none",8,2)
+						hougu({_p2},{_p1},"none",8,2)
+					stop
+			message "{@tag}宝具による攻撃で鉄を奪われた" to {_p1}
+			message "{@tag}鉄を３つ奪った" to {_p2}
+			remove 3 of iron bar from {_p1}
+			give 3 iron bar to {_p2}
+	else if {_n} = 10:
+		set {ug-item-t.%{_p1}%} to feather of fortune 1 named "&a魔法の絵筆" with lore "&b[宝具]"
+		set {ug-item-d.%{_p1}%} to "&a魔法の絵筆"
+		if {_use} = 1:
+			message "{@tag}効果の持たない宝具です" to {_p1}
+		else if {_use} = 3:
+			return 200
+			
+command /ts:
+	usage: /error
+	permission: sk.itemget
+	trigger:
+		set {_} to 1
+		loop 10 times:
+			hougu(player,player,"none",{_},3)
+			give {ug-item-t.%player%} to player
+			add 1 to {_}
+on rightclick:
+	if lore of player's tool contain "宝具":
+		hougu(player,player,"%name of player's tool%",0,1)
+		
+command /underground-item [<player=%player%>] [<text>] [<text>] [<number = 1>] [<number = 1>]:
+	permission:console.console
+	trigger:
+		if arg 2 = "shop":
+			open chest with 1 row named "&cべに&f%{ug.aka.%arg 1%}%:&bあお&f%{ug.ao.%arg 1%}%:&aみどり&f%{ug.midori.%arg 1%}%" to arg 1
+			wait a tick
+			set {_slot} to 0
+			loop 3 times:
+				set {_num} to random integer between 1 and 9
+				set {_num2} to random integer between -50 and 50
+				items(arg 1 ,arg 1, {_num}, 1, 0)
+				set {_sell} to items(arg 1 ,arg 1, {_num}, 2, 0)
+				add {_num2} to {_sell}
+				format slot {_slot} of arg 1 with {ug-item-t.%arg 1%} named "&f%{ug-item-d.%arg 1%}%" with lore "&cべにタマ&f%{_sell}%&a必要" to close then run "underground-item %arg 1% buy red %{_num}% %{_sell}%"
+				add 1 to {_slot}
+			loop 3 times:
+				set {_num} to random integer between 10 and 19
+				set {_num2} to random integer between -50 and 80
+				items(arg 1 ,arg 1, {_num}, 1, 0)
+				set {_sell} to items(arg 1 ,arg 1, {_num}, 2, 0)
+				add {_num2} to {_sell}
+				format slot {_slot} of arg 1 with {ug-item-t.%arg 1%} named "&f%{ug-item-d.%arg 1%}%" with lore "&bあおタマ&f%{_sell}%&a必要" to close then run "underground-item %arg 1% buy blue %{_num}% %{_sell}%"
+				add 1 to {_slot}
+			loop 3 times:
+				set {_num} to random integer between 1 and 10
+				set {_num2} to random integer between -100 and 200
+				set {_sell} to hougu(arg 1 ,arg 1, "none", {_num}, 3)
+				add {_num2} to {_sell}
+				format slot {_slot} of arg 1 with {ug-item-t.%arg 1%} named "&f%{ug-item-d.%arg 1%}%" with lore "&aみどりタマ&f%{_sell}%&a必要" to close then run "underground-item %arg 1% buy green %{_num}% %{_sell}%"
+				add 1 to {_slot}
+		else if arg 2 = "buy":
+			if arg 3 = "red":
+				if {ug.aka.%arg 1%} is more than arg 5:
+					add -1 * arg 5 to {ug.aka.%arg 1%}
+					items(arg 1 ,arg 1, arg 4, 1, 1)
+					message "{@tag}アイテムを購入した" to arg 1
+				else:
+					message "{@tag}コストが足りないようだ" to arg 1
+			else if arg 3 = "blue":
+				if {ug.ao.%arg 1%} is more than arg 5:
+					add -1 * arg 5 to {ug.ao.%arg 1%}
+					items(arg 1 ,arg 1, arg 4, 1, 1)
+					message "{@tag}アイテムを購入した" to arg 1
+				else:
+					message "{@tag}コストが足りないようだ" to arg 1
+			else if arg 3 = "green":
+				if {ug.midori.%arg 1%} is more than arg 5:
+					add -1 * arg 5 to {ug.midori.%arg 1%}
+					items(arg 1 ,arg 1, arg 4, 1, 1)
+					message "{@tag}アイテムを購入した" to arg 1
+				else:
+					message "{@tag}コストが足りないようだ" to arg 1
+
+on rightclick with iron horse armour:
+	if name of player's tool is "&8ボロの探検セット":
+		remove 1 of player's tool from the player
+		loop items in player's inventory:
+			if lore of loop-item contain "探検セット":
+			else:
+				drop loop-item at location of player
+				remove loop-item from player's inventory
+		execute console command "underground %player% enter"
+		execute console command "underground %player% status"
+		give stone hoe of fortune 1 named "&8ボロのツルハシ" with lore "&f[探検セット]||&6鉱石を掘ることができます" to player
+		give stone axe of fortune 1 named "&8ボロのハンマー" with lore "&f[探検セット]||&6鉱石を掘ることができます" to player
+		give name tag of fortune 1 named "&8ボロのレーダー&f 耐久:30" with lore "&f[探検セット]||&6付近の鉱石をサーチします" to player
+		give ladder of fortune 3 named "&e帰還する" with lore "&f[探検セット]||&6地上に戻ります" to player
+		give 10 bread of fortune 3 named "&e探検食料" with lore "&f[探検セット]" to player
+		
+on rightclick with gold horse armour:
+	if name of player's tool is "&bいい探検セット":
+		remove 1 of player's tool from the player
+		loop items in player's inventory:
+			if lore of loop-item contain "探検セット":
+			else:
+				drop loop-item at location of player
+				remove loop-item from player's inventory
+		execute console command "underground %player% enter"
+		execute console command "underground %player% status"
+		give iron hoe of fortune 2 named "&bいいツルハシ" with lore "&f[探検セット]||&6鉱石を掘ることができます" to player
+		give iron axe of fortune 2 named "&bいいハンマー" with lore "&f[探検セット]||&6鉱石を掘ることができます" to player
+		give name tag of fortune 2 named "&bいいレーダー&f 耐久:80" with lore "&f[探検セット]||&6付近の鉱石をサーチします" to player
+		give ladder of fortune 3 named "&e帰還する" with lore "&f[探検セット]||&6地上に戻ります" to player
+		give 20 bread of fortune 3 named "&e探検食料" with lore "&f[探検セット]" to player
+		
+on rightclick with diamond horse armour:
+	if name of player's tool is "&eすごい探検セット":
+		remove 1 of player's tool from the player
+		loop items in player's inventory:
+			if lore of loop-item contain "探検セット":
+			else:
+				drop loop-item at location of player
+				remove loop-item from player's inventory
+		execute console command "underground %player% enter"
+		execute console command "underground %player% status"
+		give diamond hoe of fortune 3 named "&eすごいツルハシ" with lore "&f[探検セット]||&6鉱石を掘ることができます" to player
+		give diamond axe of fortune 3 named "&eすごいハンマー" with lore "&f[探検セット]||&6鉱石を掘ることができます" to player
+		give name tag of fortune 3 named "&eすごいレーダー&f 耐久:150" with lore "&f[探検セット]||&6付近の鉱石をサーチします" to player
+		give ladder of fortune 3 named "&e帰還する" with lore "&f[探検セット]||&6地上に戻ります" to player
+		give 30 bread of fortune 3 named "&e探検食料" with lore "&f[探検セット]" to player
+		
+on rightclick with ladder:
+	if name of player's tool is "&e帰還する":
+		remove 1 of player's tool from the player
+		execute console command "underground %player% leave"
+
+on rightclick with name tag:
+	set {_ts::*} to name of player's tool parsed as "%text% 耐久:%number%"
+	if {_ts::*} is set:
+		set {_num} to {_ts::2} - 1
+		set name of player's tool to "%{_ts::1}% 耐久:%{_num}%"
+		execute console command "underground %player% radar"
+		if {_num} is less than 1:
+			message "{@tag}レーダーが壊れてしまった"
+			remove 1 of player's tool from the player
+			
+#鉱石クリック
+on leftclick with name tag:
+	cancel event
+	set {_loc} to location of event-block
+	add -3 to y-coordinate of {_loc}
+	if block at {_loc} is gold block:
+		message "{@tag}かべがすこしもりあがっている"
+		set block at {_loc} to air
+		wait 1 seconds
+		execute console command "underground createore"
+		execute console command "underground %player% go"
+	else:
+		message "{@tag}鉱石は見つからなかった"
+	set {_ts::*} to name of player's tool parsed as "%text% 耐久:%number%"
+	if {_ts::*} is set:
+		set {_num} to {_ts::2} - 1
+		set name of player's tool to "%{_ts::1}% 耐久:%{_num}%"
+		if {_num} is less than 1:
+			message "{@tag}レーダーが壊れてしまった"
+			remove 1 of player's tool from the player

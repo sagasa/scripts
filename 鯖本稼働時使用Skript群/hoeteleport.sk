@@ -1,0 +1,11 @@
+# Loginbonustest
+on rightclick with diamond hoe:
+	player's gamemode is creative
+	cancel event
+	set {_coordinate} to player's location
+	player is Sneaking:
+		set x-coordinate of {_coordinate} to x-coordinate of player's location * -1
+		teleport player to {_coordinate}
+	else:
+		set z-coordinate of {_coordinate} to z-coordinate of player's location * -1
+		teleport player to {_coordinate}
