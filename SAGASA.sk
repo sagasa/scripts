@@ -1,0 +1,242 @@
+#バックアップなどの統括
+
+#作業ディレクトリ
+options:
+	dir : plugins/Skript/SAGASA/backup/temp
+
+# 対応プラグイン
+#=============
+# ocpt
+# killreward
+# facility
+# EP
+# TC
+# giftbox
+# reserch
+# AddCraft
+# shop
+#=============
+
+command /SAGASA [<text>] [<text>]:
+	permission: console.console
+	trigger:
+		if arg-1 is "backup":
+			if arg-2 is not set:
+				message "&5[SAGASA]&cバックアップの名前を決定してください"
+			else:
+				if file "plugins/Skript/SAGASA" doesn't exist:
+					create dir "plugins/Skript/SAGASA"
+					message "&5[SAGASA]&6ディレクトリを作成しました"
+				if file "plugins/Skript/SAGASA/backup" doesn't exist:
+					create dir "plugins/Skript/SAGASA/backup"
+					message "&5[SAGASA]&6ディレクトリを作成しました"
+
+				loop files in directory "plugins/Skript/SAGASA/backup":
+					set {_s::*} to loop-value split at "\"
+					set {_name} to last element of {_s::*}
+					set {_s::*} to {_name} split at "."
+					if arg-2 is first element of {_s::*}:
+						message "&5[SAGASA]&cすでに使われている名前です"
+						stop
+
+				message "&5[SAGASA]&aバックアップを作成中です &3%arg-2%.zip"
+				create dir "{@dir}"
+				execute player command "/SAGASA backup_write"
+				wait 2 tick
+				zip dir "{@dir}" to zip "plugins/Skript/SAGASA/backup/%arg-2%.zip"
+				delete dir "{@dir}"
+				message "&5[SAGASA]&aバックアップを作成しました &3%arg-2%.zip"
+
+		if arg-1 is "backup_write":
+			message "&5[SAGASA]&aocptのデータを書き込み中..."
+			#ocpt
+			#テキストファイルのパス
+			set {_dir} to "{@dir}/ocpt.txt"
+
+			create file {_dir}
+
+			set {_line} to 3
+			write "//占領地の設定の保存" at line 1 to file {_dir}
+			set {_ID} to 0
+			loop 8 times:
+				write "##cappoint" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{_ID}%/%{OT.name.%{_ID}%}%/%{OT.region.%{_ID}%}%/%{OT.use.%{_ID}%}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				add 1 to {_ID}
+
+
+			write "//占領地の報酬とローテーションの保存" at line {_line} to file {_dir}
+			set {_ID} to 0
+			loop 8 times:
+				write "##ID" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{_ID}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+
+				write "##reward" at line {_line} to file {_dir}
+				add 1 to {_line}
+				set {_n} to 0
+				while {cap.reward.win.%{_ID}%::%{_n}%} is set:
+					write "%{cap.reward.win.%{_ID}%::%{_n}%}%" at line {_line} to file {_dir}
+					add 1 to {_line}
+					add 1 to {_n}
+				add 1 to {_line}
+
+				write "##lotation" at line {_line} to file {_dir}
+				add 1 to {_line}
+				set {_n} to 0
+				while {cap.l.%{_ID}%.%{_n}%::*} is set:
+					write "##new" at line {_line} to file {_dir}
+					add 1 to {_line}
+					loop {cap.l.%{_ID}%.%{_n}%::*}:
+						write "%loop-value-2%" at line {_line} to file {_dir}
+						add 1 to {_line}
+					add 1 to {_n}
+
+				add 1 to {_line}
+				add 1 to {_ID}
+
+			message "&5[SAGASA]&akillrewardのデータを書き込み中..."
+			#killreward
+			#テキストファイルのパス
+			set {_dir} to "{@dir}/killreward.txt"
+
+			create file {_dir}
+
+			write "//プレイヤーごとのステータスを保存" at line 1 to file {_dir}
+			set {_line} to 3
+			loop {kr.players::*}:
+				write "##player" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%loop-value%/%{kill.count::%loop-value%}%/%{death.count::%loop-value%}%/%{kill.streak::%loop-value%}%/%{max.streak::%loop-value%}%/%{max.range::%loop-value%}%/%{killpoint::%loop-value%}%" at line {_line} to file {_dir}
+				add 3 to {_line}
+
+			message "&5[SAGASA]&afacilityのデータを書き込み中..."
+			#giftbox
+			#テキストファイルのパス
+			set {_dir} to "{@dir}/facility.txt"
+
+			create file {_dir}
+
+			write "//施設の設定を保存" at line 1 to file {_dir}
+			set {_line} to 3
+			loop {facility.ID.list::*}:
+				write "##name" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::name}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##lore" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::lore}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##type" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::type}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##capacity.max" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::capacity.max}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##capacity.rate" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::capacity.rate}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##output.max" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::output.max}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##output.rate" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::output.rate}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##item.output" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::item.output}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##item.request" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::item.request}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##output.rate" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::output.rate}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##ct.private" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{facility.%loop-value%::ct.private}%" at line {_line} to file {_dir}
+				add 3 to {_line}
+			
+			write "//ポイントアイテムの設定を保存" at line 1 to file {_dir}
+			add 3 to {_line}
+			write "##pointitem.0" at line {_line} to file {_dir}
+			add 1 to {_line}
+			write "%{facility.pointitem.0}%" at line {_line} to file {_dir}
+			add 2 to {_line}
+			write "##pointitem.1" at line {_line} to file {_dir}
+			add 1 to {_line}
+			write "%{facility.pointitem.1}%" at line {_line} to file {_dir}
+			add 2 to {_line}
+	
+			message "&5[SAGASA]&aEPのデータを書き込み中..."
+			#EP
+			#テキストファイルのパス
+			set {_dir} to "{@dir}/EP.txt"
+
+			create file {_dir}
+
+			write "//EPの設定を保存" at line 1 to file {_dir}
+			set {_line} to 3
+			#書き込み
+			loop {EP.types::*}:
+				write "##new" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%loop-value%" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{EP.point::%loop-value%}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+
+			add 1 to {_line}
+			write "##Item-Type" at line {_line} to file {_dir}
+			add 1 to {_line}
+			write "//例" at line {_line} to file {_dir}
+			add 1 to {_line}
+			write "//##new" at line {_line} to file {_dir}
+			add 1 to {_line}
+			write "//Itemショートネーム" at line {_line} to file {_dir}
+			add 1 to {_line}
+			write "//Type名" at line {_line} to file {_dir}
+			add 2 to {_line}
+
+			loop {EP.weapons::*}:
+				write "##new" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%loop-value%" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{EP.type::%loop-value%}%" at line {_line} to file {_dir}
+				add 2 to {_line}
+
+			message "&5[SAGASA]&aTCのデータを書き込み中..."
+			#TC
+			#テキストファイルのパス
+			set {_dir} to "{@dir}/TC.txt"
+
+			create file {_dir}
+
+			write "//TCの設定を保存" at line 1 to file {_dir}
+			set {_line} to 3
+			loop {tx.players::*}:
+				write "##player" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%loop-value%" at line {_line} to file {_dir}
+				add 2 to {_line}
+				write "##titles" at line {_line} to file {_dir}
+				add 1 to {_line}
+				loop {titleList.%loop-value%::*}:
+					write "%loop-value-2%" at line {_line} to file {_dir}
+					add 1 to {_line}
+				add 1 to {_line}
+				write "##number" at line {_line} to file {_dir}
+				add 1 to {_line}
+				write "%{titleNumber.%loop-value%}%" at line {_line} to file {_dir}
+				add 2 to {_line}

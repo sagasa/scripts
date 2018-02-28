@@ -1,0 +1,762 @@
+options:
+	#初回接続時に配布される通貨の量
+	FirstJoinAmount : 1000
+	#通貨の単位
+	CurrencyUnit : yen
+
+#ランキングとかあったらいいよね
+command /money [<text>] [<player>]:
+	trigger:
+		if arg-1 is not set:
+			if arg-2 is set:
+				message "&3=---------------------------="
+				message "&f 所持金 : &a%{money::%arg-2's name%}% {@CurrencyUnit}"
+				message "&3=---------------------------="
+			else:
+				message "&3=---------------------------="
+				message "&f 所持金 : &a%{money::%player's name%}% {@CurrencyUnit}"
+				message "&3=---------------------------="
+
+#管理者向け
+command /economy <text> [<player>] [<number>]:
+	permission: console.console
+	trigger:
+		if arg-1 is "set":
+			if arg-2 is set:
+				if arg-3 > 0:
+					set {money::%arg-2's name%} to "%arg-3%"
+					send "&6[Money]&2%arg-2%の所持金を%arg-3%{@CurrencyUnit}に設定しました"
+					send "&6[Money]&2所持金：%{economy.%arg-2's name%}%{@CurrencyUnit}"
+					stop
+				else:
+					send "&6[Money]&c不正な値を設定することはできません"
+					stop
+			else:
+				send "&6[Money]&cプレイヤーを指定してください"
+				stop
+				
+		if arg-1 is "give":
+			if arg-2 is set:
+				if arg-3 > 0:
+					add "%arg-3%" to {money::%arg-2's name%}
+					send "&6[Money]&2%arg-2%の所持金を%arg-3%{@CurrencyUnit}加算しました"
+					send "&6[Money]&2所持金：%{economy.%arg-2's name%}%{@CurrencyUnit}"
+					stop
+				else:
+					send "&6[Money]&c不正な値を設定することはできません"
+					stop
+			else:
+				send "&6[Money]&cプレイヤーを指定してください"
+				stop
+				
+		if arg-1 is "reset":
+			if arg-2 is set:
+				set {money::%arg-2's name%} to 0
+				send "&6[Money]&2%arg-2%の所持金をリセットしました"
+				send "&6[Money]&2所持金：%{economy.%arg-2's name%}%{@CurrencyUnit}"
+				stop
+			else:
+				send "&6[Money]&cプレイヤーを指定してください"
+				stop
+		
+		if arg-1 is "resetall":
+			clear {money::*}
+			clear {money.join::*}
+			send "&6[Money]&c全プレイヤーのデータを削除しました"
+
+on join:
+	#負の値の場合所持金を0にする、"-"と一致したならば～でもいいかも・・？
+	if {money::%player's name%} < 0:
+		set {money::%player's name%} to 0
+		
+	#<none>の場合も
+	if {money::%player's name%} is not set:
+		set {money::%player's name%} to 0
+
+	if {money.join::%player's name%} is not set:
+		set {money.join::%player's name%} to 1
+		set {money::%player's name%} to {@FirstJoinAmount}
+
+#=======================
+#     ↓↓↓↓shop↓↓↓↓
+#=======================
+on sign change:
+	if line 1 is "[運営shop]":
+		set line 1 to ""
+
+on mine of sign:
+	if player is holding strad disc named "&dshop管理":
+		if line 1 is not "[運営shop]":
+			set line 1 to "[運営shop]"
+			set line 2 to "未設定"
+		else:
+			set {shop.setting::%player%} to block
+			execute player command "/shop_gui %player% shop_setting"
+
+
+	#破壊防止
+	if line 1 is "[運営shop]":
+		if player is not holding a bedrock:
+			cancel event
+
+	
+on rightclick on sign:
+	if line 1 is "[運営shop]":
+		cancel event
+		if line 2 is not "未設定":
+			if {shop.lore.%line 2%} is set:
+				execute console command "/shop_gui %player% gui_open %line 2%"
+			else:
+				message "&6[shop]&cショップが破損しています"
+		else:
+			message "&6[shop]&c未設定のショップです"
+		#{shop.%location of block%}
+
+#管理アイテム
+on rightclick with strad disc:
+	if player is holding strad disc named "&dshop管理":
+		if player is sneaking:
+			clear {shop.gui::%player%}
+		if {shop.gui::%player%} is not set:
+			set {shop.gui::%player%} to "/shop_gui %player% shop_edit_list"
+		execute player command {shop.gui::%player%}
+
+
+on chat:
+	if {shop.setting.type::%player%} is "new_shop":
+		cancel event
+		loop {shop.list::*}:
+			if message is loop-value:
+				message "&6[shop]&cすでにその名前は使われています &4%message%"
+				stop
+		message "&6[shop]&2%message%&aを登録しました"
+		add message to {shop.list::*}
+		set {shop.lore.%message%} to "未設定"
+		clear {shop.setting.type::%player%}
+
+	if {shop.setting.type::%player%} is "set_name":
+		cancel event
+		set {_list::*} to {shop.setting.data::%player%} split at "|"
+		set {_shop} to first element of {_list::*}
+		remove first element of {_list::*} from {_list::*}
+		set {_data} to first element of {_list::*}
+
+		set {_list::*} to {shop.data.%{_shop}%::%{_data}%} split at "/"
+		set {_slot} to {_list::1}
+		set {_item} to {_list::2}
+		#set {_name} to {_list::3}
+		set {_cost} to {_list::4}
+		set {_type} to {_list::5}
+		set {_enchant} to {_list::6}
+		if {_enchant} is set:
+			set {_enchant} to "/%{_enchant}%"
+		else:
+			set {_enchant} to ""
+
+		set {_name} to message
+
+		clear {shop.data.%{_shop}%::%{_slot}%}
+		set {_data} to "%{_slot}%/%{_item}%/%{_name}%/%{_cost}%/%{_type}%%{_enchant}%"
+		set {shop.data.%{_shop}%::%{_slot}%} to {_data}
+		message "&6[shop]&3%message%&aに変更しました"
+		clear {shop.setting.type::%player%}
+		clear {shop.setting.data::%player%}
+		execute console command "/shop_gui %player% shop_contents_edit_open %{_shop}% %{_slot}%"
+
+#                  プレイヤー名    動作  ショップ名      データ
+command /shop_gui [<player>] [<text>] [<text>] [<text>]:
+	permission: console.console
+	trigger:
+		#プレイヤーを変数に
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+		if arg-3 is set:
+			set {_name} to arg-3
+
+		#管理アイテム
+		if arg-2 is "item":
+			give strad disc named "&dshop管理" to {_player}
+
+
+		#使用するショップの設定
+		if arg-2 is "shop_setting":
+			wait 2 tick
+			open chest with 6 row named "&9使用するショップを選択" to {_player}
+			wait 1 tick
+			set {_slot} to 0
+			loop {shop.list::*}:
+				set {_data} to ""
+				loop {shop.data.%loop-value%::*}:
+					set {_data} to "%{_data}%||&6data:&3%loop-value-2%"
+				if {shop.setting::%{_player}%} is loop-value:
+					format slot {_slot} of {_player} with light green glass pane named "&e%loop-value%&6を使用する" with lore "&6lore:&3%{shop.lore.%loop-value%}%||&6現在の設定:&3%line 2 of {shop.setting::%{_player}%}%%{_data}%" to close then run "shop_gui %{_player}% shop_set %loop-value%"
+				else:
+					format slot {_slot} of {_player} with light blue glass pane named "&e%loop-value%&6を使用する" with lore "&6lore:&3%{shop.lore.%loop-value%}%||&6現在の設定:&3%line 2 of {shop.setting::%{_player}%}%%{_data}%" to close then run "shop_gui %{_player}% shop_set %loop-value%"
+				add 1 to {_slot}
+
+		#使用するショップを決定
+		if arg-2 is "shop_set":
+			set line 2 of {shop.setting::%{_player}%} to arg-3
+			set line 3 of {shop.setting::%{_player}%} to {shop.lore.%arg-3%}
+			message "&6[shop]&3%location of {shop.setting::%{_player}%}%&2のショップを&3%arg-3%&2に設定しました" to {_player} 
+
+		#ショップの設定
+		if arg-2 is "shop_edit_list":
+			set {shop.gui::%{_player}%} to "/shop_gui %{_player}% shop_edit_list"
+			wait 2 tick
+			open chest with 6 row named "&9運営shop設定" to {_player}
+			wait 1 tick
+			set {_slot} to 0
+			loop {shop.list::*}:
+				set {_data} to ""
+				loop {shop.data.%loop-value%::*}:
+					set {_data} to "%{_data}%||&6data:&3%loop-value-2%"
+				format slot {_slot} of {_player} with light blue glass pane named "&6%loop-value-1%&3を編集する" with lore "&6lore:&3%{shop.lore.%loop-value-1%}%%{_data}%" to close then run "shop_gui %{_player}% shop_edit %loop-value%"
+				add 1 to {_slot}
+
+			format slot 51 of {_player} with paper named "&a新規ショップを作成" with lore "" to close then run "shop_gui %{_player}% shop_create"
+			format slot 53 of {_player} with dispenser named "&6ファイルにセーブする" with lore "" to close then run "shop_gui %{_player}% shop_save"
+			format slot 52 of {_player} with hopper named "&6ファイルからロードする" with lore "" to close then run "shop_gui %{_player}% shop_load"
+
+		#ショップを作成
+		if arg-2 is "shop_create":
+			message "&6[shop]&3チャット欄にショップ名を入力してください" to {_player}
+			set {shop.setting.type::%{_player}%} to "new_shop"
+
+		#ショップの設定
+		if arg-2 is "shop_edit":
+			set {shop.gui::%{_player}%} to "/shop_gui %{_player}% shop_edit %arg-3%"
+			wait 2 tick
+			open chest with 7 row named "&9運営shop内容 &3%arg-3%" to {_player}
+			wait 1 tick
+			set {_slot} to 0
+			loop 54 times:
+				format slot {_slot} of {_player} with light gray glass pane named "&6内容を追加する" with lore "&6slot:&3%{_slot}%" to close then run "shop_gui %{_player}% shop_contents_create %arg-3% %{_slot}%"
+				add 1 to {_slot}
+			set {_slot} to 0
+			loop {shop.data.%arg-3%::*}:
+				clear {_check}
+				set {_list::*} to loop-value split at "/"
+				set {_slot} to {_list::1}
+				set {_item} to {_list::2}
+				set {_name} to {_list::3}
+				set {_cost} to {_list::4}
+				set {_type} to {_list::5}
+				clear {_enchant}
+				set {_enchant} to {_list::6}
+
+				set {_slot} to {_slot} parsed as number
+				set {_item} to {_item} parsed as item
+				if {_item} is not a item:
+					set {_check} to true
+				set {_cost} to {_cost} parsed as number
+				if {_cost} is not set:
+					set {_check} to true
+				if {_type} is not "buy" or "sell" or "enchant":
+					set {_check} to true
+
+				#エンチャントを展開
+				set {_enchant::*} to {_enchant} split at " "
+				set {_level} to last element of {_enchant::*}
+				set {_enchant} to ""
+				loop {_enchant::*}:
+					if loop-value-2 parsed as number is not set:
+						set {_enchant} to "%{_enchant}% %loop-value-2%"
+				set {_level} to last element of {_enchant::*}
+
+				if {_level} is set:
+					set {_enchant} to "||&6enchant:&3%{_enchant}%||&6level&3%{_level}%"
+				else:
+					set {_enchant} to ""
+
+				if {_check} is true:
+					format slot {_slot} of {_player} with red glass pane named "&6%{_name}%&3を編集する" with lore "&c未設定の項目があります||&6slot:&3%{_slot}%||&6item:&3%{_item}%||&6name:&3%{_name}%||&6cost:&3%{_cost}%||&6type:&3%{_type}%%{_enchant}%" to close then run "shop_gui %{_player}% shop_contents_edit_open %arg-3% %{_slot}%"
+				else:
+					format slot {_slot} of {_player} with light blue glass pane named "&6%{_name}%&3を編集する" with lore "&6slot:&3%{_slot}%||&6item:&3%{_item}%||&6name:&3%{_name}%||&6cost:&3%{_cost}%||&6type:&3%{_type}%%{_enchant}%" to close then run "shop_gui %{_player}% shop_contents_edit_open %arg-3% %{_slot}%"
+
+			format slot 61 of {_player} with compass named "&2前のページに戻る" with lore "" to close then run "shop_gui %{_player}% shop_edit_list"
+			format slot 62 of {_player} with lava bucket named "&4このショップを削除する" with lore "" to close then run "shop_gui %{_player}% shop_delete %arg-3%"
+
+		#ショップの設定
+		if arg-2 is "shop_delete":
+			clear {shop.lore.%arg-3%}
+			clear {shop.data.%arg-3%::*}
+			remove arg-3 from {shop.list::*}
+			message "&6[shop]&4ショップ&3%arg-3%&4を削除しました" to {_player}
+			execute console command "/shop_gui %{_player}% shop_edit_list"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_create":
+			set {_data} to "%arg-4%//未設定/0/"
+			set {shop.data.%arg-3%::%arg-4%} to {_data}
+			execute console command "/shop_gui %{_player}% shop_edit %arg-3%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_open":
+			wait 2 tick
+			open chest with 2 row named "&9運営shop内容編集" to {_player}
+			wait 1 tick
+			execute console command "/shop_gui %{_player}% shop_contents_edit_write %arg-3% %arg-4%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_write":
+			set {shop.gui::%{_player}%} to "/shop_gui %{_player}% shop_contents_edit_open %arg-3% %arg-4%"
+
+			set {_list::*} to {shop.data.%arg-3%::%arg-4%} split at "/"
+			set {_slot} to {_list::1}
+			set {_item} to {_list::2}
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_type} to {_list::5}
+			clear {_enchant}
+			set {_enchant} to {_list::6}
+			#エンチャントを展開
+			set {_enchant::*} to {_enchant} split at " "
+			set {_level} to last element of {_enchant::*}
+			set {_enchant} to ""
+			loop {_enchant::*}:
+				if loop-value parsed as number is not set:
+					set {_enchant} to "%{_enchant}% %loop-value%"
+			set {_level} to last element of {_enchant::*}
+
+			format slot 0 of {_player} with light green glass pane named "&6costを&31000&a増やす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|1000"
+			format slot 1 of {_player} with light green glass pane named "&6costを&3100&a増やす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|100"
+			format slot 2 of {_player} with light green glass pane named "&6costを&310&a増やす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|10"
+			format slot 3 of {_player} with light green glass pane named "&6costを&31&a増やす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|1"
+			format slot 9 of {_player} with blue glass pane named "&6costを&31000&c減らす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|-1000"
+			format slot 10 of {_player} with blue glass pane named "&6costを&3100&c減らす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|-100"
+			format slot 11 of {_player} with blue glass pane named "&6costを&310&c減らす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|-10"
+			format slot 12 of {_player} with blue glass pane named "&6costを&31&c減らす" with lore "&6現在のcost:&3%{_cost}%" to run "shop_gui %{_player}% shop_contents_edit_addcost %arg-3% %{_slot}%|-1"
+			
+			format slot 13 of {_player} with sign item named "&6表示名を設定" with lore "&6現在のname:&3%{_name}%" to close then run "shop_gui %{_player}% shop_contents_edit_setname %arg-3% %{_slot}%"
+			format slot 14 of {_player} with grass named "&6アイテムを設定" with lore "&6現在のitem:&3%{_item}%" to run "shop_gui %{_player}% shop_contents_edit_setitem %arg-3% %{_slot}%"
+			
+			format slot 15 of {_player} with lava bucket named "&4この項目を削除する" with lore "" to close then run "shop_gui %{_player}% shop_contents_edit_delete %arg-3% %{_slot}%"
+			format slot 16 of {_player} with compass named "&2前ページに戻る" with lore "" to close then run "shop_gui %{_player}% shop_edit %arg-3%"
+
+			format slot 7 of {_player} with enchanted book named "&6エンチャントを設定" with lore "&6現在のenchant:&3%{_enchant}%" to run "shop_gui %{_player}% shop_contents_edit_enchant_list %arg-3% %{_slot}%"
+
+			format slot 8 of {_player} with book and quill named "&3コピーする" with lore "&6現在のクリップボード:&3%{shop.cripboad::%{_player}%}%" to close then run "shop_gui %{_player}% shop_contents_edit_copy %arg-3% %{_slot}%"
+			format slot 17 of {_player} with book and quill named "&3ペーストする" with lore "&6現在のクリップボード:&3%{shop.cripboad::%{_player}%}%" to run "shop_gui %{_player}% shop_contents_edit_paste %arg-3% %{_slot}%"
+
+			if {_type} is "buy":
+				format slot 4 of {_player} with yellow glass pane named "&6ショップモードは&3buy&6です" with lore "&6現在のtype:&3%{_type}%" to run "shop_gui %{_player}% shop_contents_edit_settype %arg-3% %{_slot}%|buy"
+			else:
+				format slot 4 of {_player} with orange glass pane named "&6ショップモードを&3buy&6に変更" with lore "&6現在のtype:&3%{_type}%" to run "shop_gui %{_player}% shop_contents_edit_settype %arg-3% %{_slot}%|buy"
+
+			if {_type} is "sell":
+				format slot 5 of {_player} with yellow glass pane named "&6ショップモードは&3sell&6です" with lore "&6現在のtype:&3%{_type}%" to run "shop_gui %{_player}% shop_contents_edit_settype %arg-3% %{_slot}%|sell"
+			else:
+				format slot 5 of {_player} with orange glass pane named "&6ショップモードを&3sell&6に変更" with lore "&6現在のtype:&3%{_type}%" to run "shop_gui %{_player}% shop_contents_edit_settype %arg-3% %{_slot}%|sell"
+
+			if {_type} is "enchant":
+				format slot 6 of {_player} with yellow glass pane named "&6ショップモードは&3enchant&6です" with lore "&6現在のtype:&3%{_type}%" to run "shop_gui %{_player}% shop_contents_edit_settype %arg-3% %{_slot}%|enchant"
+			else:
+				format slot 6 of {_player} with orange glass pane named "&6ショップモードを&3enchant&6に変更" with lore "&6現在のtype:&3%{_type}%" to run "shop_gui %{_player}% shop_contents_edit_settype %arg-3% %{_slot}%|enchant"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_copy":
+			set {shop.cripboad::%{_player}%} to {shop.data.%arg-3%::%arg-4%}
+			message "&6[shop]&bクリップボードに&3%arg-4%&bをコピーしました" to {_player}
+			execute console command "/shop_gui %{_player}% shop_edit %arg-3%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_paste":
+			clear {shop.data.%arg-3%::%arg-4%}
+
+			set {_list::*} to {shop.cripboad::%{_player}%} split at "/"
+			set {_slot} to arg-4
+			set {_item} to {_list::2}
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_type} to {_list::5}
+			set {_enchant} to {_list::6}
+			if {_enchant} is set:
+				set {_enchant} to "/%{_enchant}%"
+			else:
+				set {_enchant} to ""
+			broadcast "%{_slot}%/%{_item}%/%{_name}%/%{_cost}%/%{_type}%%{_enchant}% | %{shop.data.%arg-3%::%arg-4%}%"
+			set {shop.data.%arg-3%::%arg-4%} to "%{_slot}%/%{_item}%/%{_name}%/%{_cost}%/%{_type}%%{_enchant}%"
+			message "&6[shop]&bクリップボードから&3%{shop.cripboad::%{_player}%}%&bを貼り付けました" to {_player}
+			execute console command "/shop_gui %{_player}% shop_contents_edit_write %arg-3% %arg-4%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_delete":
+			message "&6[shop]&3%{shop.data.%arg-3%::%arg-4%}%&cを削除しました" to {_player}
+			clear {shop.data.%arg-3%::%arg-4%}
+			execute console command "/shop_gui %{_player}% shop_edit %arg-3%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_enchant_list":
+			wait 2 tick
+			open chest with 4 row named "&9使用するエンチャントを選択" to {_player}
+			wait 2 tick
+			set {_list::*} to {shop.data.%arg-3%::%arg-4%} split at "/"
+			set {_enchant} to {_list::6}
+			#追加処理
+			add Unbreaking to {_enchant::*}
+			add Fortune to {_enchant::*}
+			add Silk Touch to {_enchant::*}
+			add Efficiency to {_enchant::*}
+			add Looting to {_enchant::*}
+
+			set {_slot} to 0
+			loop {_enchant::*}:
+				set {_level} to 0
+				loop 3 times:
+					format slot {_slot} of {_player} with enchanted book named "&e%loop-value-1% %{_level}%" with lore "&6enchant:&3%loop-value-1%||&6level:&3%{_level}%||&6現在の設定:&3%{_enchant}%" to close then run "shop_gui %{_player}% shop_contents_edit_enchant_set %arg-3% %arg-4%|%loop-value-1% %{_level}%"
+					add 1 to {_level}
+					add 1 to {_slot}
+				add 1 to {_slot}
+			
+			format slot 34 of {_player} with paper named "&cエンチャントを使用しない" with lore "" to close then run "shop_gui %{_player}% shop_contents_edit_enchant_set %arg-3% %arg-4%|"
+
+			format slot 35 of {_player} with compass named "&2前ページに戻る" with lore "" to close then run "shop_gui %{_player}% shop_contents_edit_write %arg-3% %arg-4%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_enchant_set":
+			set {_list::*} to arg-4 split at "|"
+			set {_data} to {_list::1}
+			set {_enchant} to {_list::2}
+			set {_list::*} to {shop.data.%arg-3%::%{_data}%} split at "/"
+			set {_slot} to {_list::1}
+			set {_item} to {_list::2}
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_type} to {_list::5}
+
+			if {_enchant} is not "":
+				set {_enchant} to "/%{_enchant}%"
+
+			clear {shop.data.%arg-3%::%{_data}%}
+			set {_data} to "%{_slot}%/%{_item}%/%{_name}%/%{_cost}%/%{_type}%%{_enchant}%"
+			set {shop.data.%arg-3%::%{_slot}%} to {_data}
+
+			execute console command "/shop_gui %{_player}% shop_contents_edit_write %arg-3% %{_slot}%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_setitem":
+			set {_list::*} to {shop.data.%arg-3%::%arg-4%} split at "/"
+			set {_slot} to {_list::1}
+			set {_item} to {_list::2}
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_type} to {_list::5}
+			set {_enchant} to {_list::6}
+			if {_enchant} is set:
+				set {_enchant} to "/%{_enchant}%"
+			else:
+				set {_enchant} to ""
+
+			set {_item} to "%slot 0 of {_player}'s inventory%"
+
+			clear {shop.data.%arg-3%::%{_data}%}
+			set {_data} to "%{_slot}%/%{_item}%/%{_name}%/%{_cost}%/%{_type}%%{_enchant}%"
+			set {shop.data.%arg-3%::%{_slot}%} to {_data}
+
+			execute console command "/shop_gui %{_player}% shop_contents_edit_write %arg-3% %{_slot}%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_setname":
+			message "&6[shop]&3チャット欄にショップ名を入力してください" to {_player}
+			set {shop.setting.type::%{_player}%} to "set_name"
+			set {shop.setting.data::%{_player}%} to "%arg-3%|%arg-4%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_settype":
+			set {_list::*} to arg-4 split at "|"
+			set {_data} to first element of {_list::*}
+			remove first element of {_list::*} from {_list::*}
+			set {_type} to first element of {_list::*}
+			set {_list::*} to {shop.data.%arg-3%::%{_data}%} split at "/"
+			set {_slot} to {_list::1}
+			set {_item} to {_list::2}
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_enchant} to {_list::6}
+			if {_enchant} is set:
+				set {_enchant} to "/%{_enchant}%"
+			else:
+				set {_enchant} to ""
+
+			clear {shop.data.%arg-3%::%{_data}%}
+			set {_data} to "%{_slot}%/%{_item}%/%{_name}%/%{_cost}%/%{_type}%%{_enchant}%"
+			set {shop.data.%arg-3%::%{_slot}%} to {_data}
+
+			execute console command "/shop_gui %{_player}% shop_contents_edit_write %arg-3% %{_slot}%"
+
+		#ショップの設定
+		if arg-2 is "shop_contents_edit_addcost":
+			set {_list::*} to arg-4 split at "|"
+			set {_data} to first element of {_list::*}
+			remove first element of {_list::*} from {_list::*}
+			set {_add} to first element of {_list::*}
+			set {_add} to {_add} parsed as number
+
+			set {_list::*} to {shop.data.%arg-3%::%{_data}%} split at "/"
+			set {_slot} to {_list::1}
+			set {_item} to {_list::2}
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_cost} to {_cost} parsed as number
+			set {_type} to {_list::5}
+			set {_enchant} to {_list::6}
+			if {_enchant} is set:
+				set {_enchant} to "/%{_enchant}%"
+			else:
+				set {_enchant} to ""
+
+			clear {shop.data.%arg-3%::%{_data}%}
+			set {_data} to "%{_slot}%/%{_item}%/%{_name}%/%{_cost} + {_add}%/%{_type}%%{_enchant}%"
+			set {shop.data.%arg-3%::%{_slot}%} to {_data}
+
+			execute console command "/shop_gui %{_player}% shop_contents_edit_write %arg-3% %{_slot}%"
+
+		#ファイルにセーブ
+		if arg-2 is "shop_save":
+			if file "plugins/Skript/SAGASA" doesn't exist:
+				create dir "plugins/Skript/SAGASA"
+				message "&d[shop]&6ディレクトリを作成しました" to {_player}
+
+			if file "plugins/Skript/SAGASA/shop.txt" exists:
+				set {_now} to convert unix convert date now to unix to date formatted as "20yy.MM.dd HH.mm.ss"
+				set {_now} to "%{_now}%"
+				rename file "plugins/Skript/SAGASA/shop.txt" to "shop_backup_%{_now}%.txt"
+				message "&d[shop]&6バックアップファイルを作成しました" to {_player}
+			else:
+				message "&d[shop]&eファイルが見つかりませんでした 新しく作成します" to {_player}
+
+			create file "plugins/Skript/SAGASA/shop.txt"
+
+			write "//##name" at line 2 to file "plugins/Skript/SAGASA/shop.txt"
+			write "//ショップ名" at line 3 to file "plugins/Skript/SAGASA/shop.txt"
+			write "//##lore" at line 5 to file "plugins/Skript/SAGASA/shop.txt"
+			write "//ショップ説明(32文字以内)" at line 6 to file "plugins/Skript/SAGASA/shop.txt"
+			write "//##data" at line 8 to file "plugins/Skript/SAGASA/shop.txt"
+			write "//[表示するスロット]/[アイテム]/[表示名]/[値段]/[sell|buy|enchant](/[エンチャント])" at line 9 to file "plugins/Skript/SAGASA/shop.txt"
+
+			set {_line} to 11
+			loop {shop.list::*}:
+				write "##name" at line {_line} to file "plugins/Skript/SAGASA/shop.txt"
+				add 1 to {_line}
+				write "%loop-value%" at line {_line} to file "plugins/Skript/SAGASA/shop.txt"
+				add 2 to {_line}
+				write "##lore" at line {_line} to file "plugins/Skript/SAGASA/shop.txt"
+				add 1 to {_line}
+				write "%{shop.lore.%loop-value%}%" at line {_line} to file "plugins/Skript/SAGASA/shop.txt"
+				add 2 to {_line}
+				write "##data" at line {_line} to file "plugins/Skript/SAGASA/shop.txt"
+				add 1 to {_line}
+				loop {shop.data.%loop-value%::*}:
+					write "%loop-value-2%" at line {_line} to file "plugins/Skript/SAGASA/shop.txt"
+					add 1 to {_line}
+
+				add 2 to {_line}
+
+		#ファイルからロード
+		if arg-2 is "shop_load":
+			loop {shop.list::*}:
+				clear {shop.lore.%loop-value%}
+				clear {shop.data.%loop-value%::*}
+			clear {shop.list::*}
+			message "&6[shop]&dファイルから読み込みます" to {_player}
+
+			set {_data::*} to file contents of "plugins/Skript/SAGASA/shop.txt"
+			set {_line} to 0
+
+			loop {_data::*}:
+				add 1 to {_line}
+
+				if loop-value is "##name":
+					set {_mode} to "name"
+
+				else if loop-value is "##lore":
+					set {_mode} to "lore"
+
+				else if loop-value is "##data":
+					set {_mode} to "data"
+
+				else if loop-value is not "":
+
+					if {_mode} is "name":
+						clear {_c}
+						loop {shop.list::*}:
+							if loop-value-2 is loop-value-1:
+								set {_c} to true
+						if {_c} is not set:
+							set {_name} to loop-value
+							add loop-value to {shop.list::*}
+							clear {_mode}
+							message "&6[shop]&dName:&3%loop-value%&6を追加します" to {_player}
+						else:
+							clear {_name}
+							clear {_mode}
+							message "&6[shop]&dName:&3%loop-value%&6は既に登録されています" to {_player}
+
+					else if {_mode} is "lore":
+						set {shop.lore.%{_name}%} to loop-value
+						clear {_mode}
+						message "&6[shop]&dName:&3%{_name}%&6の説明を&3%loop-value%に設定します" to {_player}
+					
+					else if {_mode} is "data":
+						set {_list::*} to loop-value split at "/"
+						set {_slot} to {_list::1}
+						set {shop.data.%{_name}%::%{_slot}%} to loop-value
+						message "&6[shop]&dName:&3%{_name}%&6に&3%loop-value%を追加します" to {_player}
+
+
+		#==================
+		#     ショップ本体
+		#==================
+		if arg-2 is "gui_open":
+			wait 2 tick
+			set {_n} to 0
+			loop {shop.data.%{_name}%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_slot} to first element of {_list::*}
+				set {_slot} to {_slot} parsed as number
+				if {_slot} > {_n}:
+					set {_n} to {_slot}
+			set {_line} to (round {_n}/9-0.5)+1
+			open chest with {_line} row named "<blue>%{shop.lore.%{_name}%}%" to {_player}
+			execute console command "/shop_gui %{_player}% gui_write %arg-3%"
+
+		if arg-2 is "gui_write":
+			wait 1 tick
+			set {_n} to 0
+			loop {shop.data.%{_name}%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_slot} to {_list::1}
+				set {_slot} to {_slot} parsed as number
+				set {_item} to {_list::2}
+				set {_item} to {_item} parsed as item
+				set {_name} to {_list::3}
+				set {_cost} to {_list::4}
+				set {_cost} to {_cost} parsed as number
+				set {_type} to {_list::5}
+				clear {_enchant}
+				clear {_enchant::*}
+				clear {_level}
+				set {_enchant} to {_list::6}
+				#エンチャントを展開
+				set {_enchant::*} to {_enchant} split at " "
+				set {_level} to last element of {_enchant::*}
+				set {_enchant} to ""
+				loop {_enchant::*}:
+					if loop-value-2 parsed as number is not set:
+						set {_enchant} to "%{_enchant}% %loop-value-2%"
+				set {_level} to last element of {_enchant::*}
+
+				#表示用に
+				if {_level} is set:
+					set {_enchant} to "&6enchant:&3%{_enchant}%||&6level&3%{_level}%||"
+				else:
+					set {_enchant} to ""
+
+				#アイテムがあったなら
+				if {_item} is a item:
+					if {_type} is "buy":
+						format slot {_slot} of {_player} with {_item} named "&e%{_name}%を&b購入&eする" with lore "&6item:&3%{_item} %||%{_enchant}%&6cost:&3%{_cost}%{@CurrencyUnit}||&6所持金:&3%{money::%{_player}%}%{@CurrencyUnit}" to run "shop_gui %{_player}% buy %arg-3% %loop-value%"
+					else if {_type} is "sell":
+						format slot {_slot} of {_player} with {_item} named "&e%{_name}%を&c売却&eする" with lore "&6item:&3%{_item} %||%{_enchant}%&6cost:&3%{_cost}%{@CurrencyUnit}||&6所持金:&3%{money::%{_player}%}%{@CurrencyUnit}" to run "shop_gui %{_player}% sell %arg-3% %loop-value%"
+					else if {_type} is "enchant":
+						format slot {_slot} of {_player} with {_item} named "&eアイテムに&5%{_name}%&eを付与する" with lore "%{_enchant}%&6cost:&3%{_cost}%{@CurrencyUnit}||&6所持金:&3%{money::%{_player}%}%{@CurrencyUnit}" to run "shop_gui %{_player}% enchant %arg-3% %loop-value%"
+
+		if arg-2 is "buy":
+			#nether quartz item named "&a[clanhome]&bビルドコア" of fortune 0
+			set {_list::*} to arg-4 split at "/"
+			set {_item} to {_list::2}
+			set {_item} to {_item} parsed as item
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_cost} to {_cost} parsed as number
+
+			#エンチャントがあった場合
+			set {_enchant} to {_list::6}
+			set {_enchant} to {_enchant} parsed as enchantment type
+			if {_enchant} is set:
+				set {_item} to {_item} of {_enchant}
+			#名前指定があった場合
+			clear {_list::*}
+			set {_list::*} to {_name} split at "@"
+			if {_list::2} is set:
+				set {_item} to {_item} named {_list::2}
+
+
+
+			if {money::%{_player}%} >= {_cost}:
+				remove {_cost} from {money::%{_player}%}
+				if {_player} can hold {_item}:
+					give {_item} to {_player}
+				else:
+					drop {_item} at {_player}
+
+				message "&6[shop]&3%{_name}%&bを購入しました &a残金&3%{money::%{_player}%}%{@CurrencyUnit}" to {_player}
+			else:
+				message "&6[shop]&c所持金が不足しています 不足&4%{_cost}-{money::%{_player}%}%{@CurrencyUnit}" to {_player}
+			execute console command "/shop_gui %{_player}% gui_write %arg-3%"
+
+		if arg-2 is "sell":
+			set {_list::*} to arg-4 split at "/"
+			set {_item} to {_list::2}
+			#アイテムを数値とアイテム本体に分ける
+			set {_item::*} to {_item} split at " "
+			set {_number} to first element of {_item::*}d wd
+			if {_number} parsed as number is set:
+				remove first element of {_item::*} from {_item::*}
+				set {_type} to ""
+				loop {_item::*}:
+					set {_type} to "%{_type}% %first element of {_item::*}%"
+					remove first element of {_item::*} from {_item::*}
+				set {_type} to {_type} parsed as item
+				set {_number} to {_number} parsed as number
+			else:
+				set {_type} to {_number}
+				set {_type} to {_type} parsed as item
+				set {_number} to 1
+			set {_item} to {_item} parsed as item
+			set {_name} to {_list::3}
+			set {_cost} to {_list::4}
+			set {_cost} to {_cost} parsed as number
+
+			if amount of {_item} in {_player} >= {_number}:
+				add {_cost} to {money::%{_player}%}
+				remove {_item} from {_player}
+
+				message "&6[shop]&3%{_name}%&cを売却しました &a所持金&3%{money::%{_player}%}%{@CurrencyUnit}" to {_player}
+			else if amount of {_item} in {_player} > 0:
+				set {_have} to amount of {_item} in {_player}
+				#現在ある分だけ売却処理
+				loop {_have} times:
+					remove {_type} from {_player}
+				add {_cost} / {_number} * {_have} to {money::%{_player}%}
+				message "&6[shop]&c%{_name}%&4を売却しました &a所持金&3%{money::%{_player}%}%{@CurrencyUnit} &3%{_have}%&c個売却しました" to {_player}
+
+			else:
+				message "&6[shop]&cアイテムが不足しています 不足&4%{_number} - amount of {_item} in {_player}% %{_type}%" to {_player}
+			execute console command "/shop_gui %{_player}% gui_write %arg-3%"
+
+		if arg-2 is "enchant":
+			set {_list::*} to arg-4 split at "/"
+			remove first element of {_list::*} from {_list::*}
+			remove first element of {_list::*} from {_list::*}
+			set {_name} to first element of {_list::*}
+			remove first element of {_list::*} from {_list::*}
+			set {_cost} to first element of {_list::*}
+			set {_cost} to {_cost} parsed as number
+			remove first element of {_list::*} from {_list::*}
+			remove first element of {_list::*} from {_list::*}
+			set {_enchant} to first element of {_list::*}
+			set {_enchant} to {_enchant} parsed as enchantment type
+			#エンチャントを展開
+			if {money::%{_player}%} >= {_cost}:
+				remove {_cost} from {money::%{_player}%}
+				enchant {_player}'s tool with {_enchant}
+
+				message "&6[shop]&3%{_name}%&5を付与しました &a残金&3%{money::%{_player}%}%{@CurrencyUnit}" to {_player}
+			else:
+				message "&6[shop]&c所持金が不足しています 不足&4%{_cost}-{money::%{_player}%}%{@CurrencyUnit}" to {_player}
+			execute console command "/shop_gui %{_player}% gui_write %arg-3%"

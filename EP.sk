@@ -1,0 +1,244 @@
+#ポイント制の武器装備
+
+#{EP.weapons::*}
+#{EP.type::[item]}
+
+#{EP.point::[Type]}
+#{EP.types::*}
+
+#弓対策
+on shoot:
+	if shooter is a player:
+		if tool of shooter is bow:
+			repair tool of shooter
+
+options:
+	#ダミー用アイテム
+	dummy : firework star
+	EquipPoint : 10
+
+on join:
+	clear {EP.waiting%player%}
+	clear {EP.waitmessage%player%}
+
+#インベントリが閉じたときに価値計算
+on inventory close:
+	set {_EP.old} to {EP.%player%}
+	set {_slot} to 0
+	set {EP.%player%} to 0
+	#ホットバーの合計を計算　10を超えたらインベントリに移動する
+	loop 9 times:
+		#変数を整理
+		clear {_point}
+		set {_item} to "%slot {_slot} of player's inventory%"
+		set {_item1} to slot {_slot} of player's inventory
+		set {_point} to {EP.point::%{EP.type::%{_item}%}%}
+		if {_point} is set:
+			if {EP.%player%} + {_point} > {@EquipPoint}:
+				message "&6[EquipPoint]&c限界装備ポイントを超過しています"
+				#インベントリの空きに入れる
+				set {_count} to 9
+				loop 27 times:
+					if slot {_count} of player's inventory is air:
+						set slot {_count} of player's inventory to {_item1}
+						exit loop
+					add 1 to {_count}
+					if {_count} is 36:
+						drop {_item1}
+				set slot {_slot} of player's inventory to air
+			else:
+				add {_point} to {EP.%player%}
+		add 1 to {_slot}
+	if {EP.%player%} > 2:
+		if {_EP.old} is not {EP.%player%}:
+			message "&6[EquipPoint]&a現在の装備の合計ポイントは%{EP.%player%}%です"
+
+
+on pickup:
+	set {_item} to "%event-item%"
+	set {_point} to {EP.point::%{EP.type::%{_item}%}%}
+	if {_point} is set:
+		if {EP.%player%} + {_point} > {@EquipPoint}:
+			set {_count} to 9
+			loop 27 times:
+				if slot {_count} of player's inventory is air:
+					exit loop
+				add 1 to {_count}
+				if {_count} is 36:
+					cancel event
+					if {EP.waitmessage%player%} is not set:
+						message "&6[EquipPoint]&cインベントリに空きがありません"
+						set {EP.waitmessage%player%} to true
+						wait 1 second
+						clear {EP.waitmessage%player%}
+					stop
+			message "&6[EquipPoint]&c限界装備ポイントを超過しています"
+			#設置していないときなら
+			if {EP.waiting%player%} is not set:
+				#空きにダミーを配置
+				set {_count} to 0
+				loop 9 times:
+					if slot {_count} of player's inventory is air:
+						set slot {_count} of player's inventory to 1 {@dummy}
+					add 1 to {_count}
+				set {EP.waiting%player%} to true
+				wait 10 tick
+				clear {EP.waiting%player%}
+				#ダミーを除去
+				set {_count} to 0
+				loop 9 times:
+					if slot {_count} of player's inventory is {@dummy}:
+						set slot {_count} of player's inventory to air
+					add 1 to {_count}
+		else:
+			#装備ポイント再計算
+			add {_point} to {EP.%player%}
+			if {EP.%player%} > 2:
+				message "&6[EquipPoint]&a現在の装備の合計ポイントは%{EP.%player%}%です"
+
+on drop:
+	set {_item} to "%event-item%"
+	set {_point} to {EP.point::%{EP.type::%{_item}%}%}
+	if {_point} is set:
+		remove {_point} from {EP.%player%}
+		if {EP.%player%} > 2:
+			message "&6[EquipPoint]&a現在の装備の合計ポイントは%{EP.%player%}%です"
+
+#ダミーを捨てられなくする
+on drop {@dummy}:
+	cancel event
+
+command /EquipPoint [<text>] [<text>]:
+	permission: ep.admin
+	trigger:
+		if arg-1 is not set:
+			message "&6[EquipPoint]&3 /EquipPoint save &6== &2現在の設定をファイルに保存する"
+			message "&6[EquipPoint]&3 /EquipPoint load &6== &2ファイルから設定をロードする"
+			message "&6[EquipPoint]&3 /EquipPoint list &6== &2Typeリストを表示"
+			message "&6[EquipPoint]&3 /EquipPoint set &6== &2ホットバーの左端のアイテムのTypeを設定"
+			message "&6[EquipPoint]&3 /EquipPoint remove &6== &2ホットバーの左端のアイテムの登録を削除"
+
+		if arg-1 is "save":
+			if file "plugins/Skript/SAGASA" doesn't exist:
+				create dir "plugins/Skript/SAGASA"
+				message "&d[EquipPoint]&6ディレクトリを作成しました"
+
+			if file "plugins/Skript/SAGASA/EquipPoint.txt" exists:
+				set {_now} to convert unix convert date now to unix to date formatted as "20yy.MM.dd HH.mm.ss"
+				set {_now} to "%{_now}%"
+				rename file "plugins/Skript/SAGASA/EquipPoint.txt" to "EquipPoint_backup_%{_now}%.txt"
+				message "&d[EquipPoint]&6バックアップファイルを作成しました"
+			else:
+				message "&d[EquipPoint]&eファイルが見つかりませんでした 新しく作成します"
+
+			create file "plugins/Skript/SAGASA/EquipPoint.txt"
+
+			write "##Type-Point" at line 1 to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			write "//例" at line 3 to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			write "//##new" at line 4 to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			write "//Type名" at line 5 to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			write "//装備ポイント" at line 6 to file "plugins/Skript/SAGASA/EquipPoint.txt"
+
+			write "" at line 7 to file "plugins/Skript/SAGASA/EquipPoint.txt"
+
+			#書き込み
+			set {_p} to 8
+			loop {EP.types::*}:
+				write "##new" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+				add 1 to {_p}
+				write "%loop-value%" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+				add 1 to {_p}
+				write "%{EP.point::%loop-value%}%" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+				add 2 to {_p}
+
+			add 1 to {_p}
+			write "##Item-Type" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			add 1 to {_p}
+			write "//例" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			add 1 to {_p}
+			write "//##new" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			add 1 to {_p}
+			write "//Itemショートネーム" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			add 1 to {_p}
+			write "//Type名" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+			add 2 to {_p}
+
+			loop {EP.weapons::*}:
+				write "##new" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+				add 1 to {_p}
+				write "%loop-value%" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+				add 1 to {_p}
+				write "%{EP.type::%loop-value%}%" at line {_p} to file "plugins/Skript/SAGASA/EquipPoint.txt"
+				add 2 to {_p}
+				
+		if arg-1 is "load":
+			clear {EP.point::*}
+			clear {EP.type::*}
+
+			clear {EP.weapons::*}
+			clear {EP.types::*}
+
+			set {_data::*} to file contents of "plugins/Skript/SAGASA/EquipPoint.txt"
+			loop {_data::*}:
+				if loop-value is "##Type-Point":
+					set {_mode} to "type"
+
+				else if loop-value is "##Item-Type":
+					set {_mode} to "item"
+
+				else if loop-value is "##new":
+					set {_f} to 1
+
+				else:
+					if {_f} is 1:
+						set {_f} to 2
+						if {_mode} is "type":
+							add loop-value to {EP.types::*}
+							set {_cash} to loop-value
+						if {_mode} is "item":
+							add loop-value to {EP.weapons::*}
+							set {_cash} to loop-value
+					else if {_f} is 2:
+						clear {_f}
+						if {_mode} is "type":
+							set {EP.point::%{_cash}%} to loop-value parsed as number
+							message "&6[EquipPoint]&eType-Pointをロードしました&3Type&b%{_cash}%&3Point&b%loop-value%"
+							clear {_cash}
+						if {_mode} is "item":
+							set {EP.type::%{_cash}%} to loop-value
+							message "&6[EquipPoint]&eItem-Typeをロードしました&3Item&b%{_cash}%&3Type&b%loop-value%"
+							clear {_cash}
+
+		if arg-1 is "list":
+			loop {EP.types::*}:
+				message "&6[EquipPoint]&b%loop-value%"
+
+		if arg-1 is "set":
+			if slot 0 of player's inventory is not air:
+				if {EP.point::%arg-2%} is set:
+					set {_item} to "%slot 0 of player's inventory%"
+
+					if {EP.type::%{_item}%} is not set:
+						add {_item} to {EP.weapons::*}
+						loop {EP.types::*}:
+							if loop-value is arg-2:
+								set {EP.type::%{_item}%} to loop-value
+						message "&6[EquipPoint]&a%{_item}%の武器タイプを&2%arg-2%&aに設定しました。"
+						message "&6[EquipPoint]&a装備ポイント : &2%{EP.point::%arg-2%}%"
+					else:
+						message "&6[EquipPoint]&cすでにTypeが設定されています removeで削除してから登録してください"
+				else:
+					message "&6[EquipPoint]&c無効なType名です"
+			else:
+				message "&6[EquipPoint]&cホットバーの左端に登録したいアイテムを入れてください"
+		
+		if arg-1 is "remove":
+			if slot 0 of player's inventory is not air:
+				if {EP.type::%slot 0 of player's inventory%} is set:
+					remove slot 0 of player's inventory from {EP.weapons::*}
+					clear {EP.type::%slot 0 of player's inventory%}
+					message "&6[EquipPoint]&e%slot 0 of player's inventory%&6の登録を削除しました"
+				else:
+					message "&6[EquipPoint]&cこのアイテムは登録されていません"
+			else:
+				message "&6[EquipPoint]&cホットバーの左端に登録削除したいアイテムを入れてください"

@@ -1,0 +1,26 @@
+on spawn of villager:
+	apply slowness 6 to event-entity for 10 days
+
+on rightclick on chest:
+	if player is holding minecart with TNT:
+		cancel event
+		set {_n} to 0
+		loop 54 times:
+			set slot {_n} of inventory of event-block to minecart with TNT
+			add 1 to {_n}
+
+on rightclick on dispenser:
+	if player is holding minecart with TNT:
+		cancel event
+		set {_n} to 0
+		loop 9 times:
+			set slot {_n} of inventory of event-block to minecart with TNT
+			add 1 to {_n}
+
+on rightclick on dispenser:
+	if player is holding TNT:
+		cancel event
+		set {_n} to 0
+		loop 9 times:
+			set slot {_n} of inventory of event-block to 64 TNTs
+			add 1 to {_n}

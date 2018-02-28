@@ -1,0 +1,373 @@
+options:
+	#初回接続時に配布される通貨の量
+	FirstJoinAmount : 1000
+	#通貨の単位
+	CurrencyUnit : yen
+	#現在のバージョン、使用しない
+	#Version : 1.0
+
+#/Enchantment [21,32,33,34,35] [1,2,3] [player]でエンチャントを全アイテムに付与
+
+
+#個人ショップに必要なもの
+	#自分での値段の設定
+	#個人ショップと国別ショップ
+	#チェストとリンク
+	#持ち主による内容確認をコマンドで　GUIでもいいかも
+	#購入確認で残りの商品の数を表示
+#ガチャ
+	#スロットに景品を入れる　スロットごとに確率変更
+
+variables:
+	{money.%player%} = 0
+	#リストのデータが1の場合その看板は使用中　0の場合未使用
+	{shop.signID::*} = 0
+	shop.chestID = 0
+	#IDはポインターを使用する
+	{pointer} = 1
+	{shop.set%player%} = 0
+	{wait} = 0
+	{ID.provisional%player%} = 0
+
+
+#====ここよりEconomy====
+
+#UUIDまだなので時間があれば対応オネ・・・
+
+on join:
+	#負の値の場合所持金を0にする、"-"と一致したならば～でもいいかも・・？
+	if {money.%player's name%} < 0:
+		set {money.%player's name%} to 0
+		
+	#<none>の場合も
+	if {money.%player's name%} is not set:
+		set {money.%player's name%} to 0
+
+	if {money.join::%player's name%} is not set:
+		loop {money.playerlist::*}:
+			#重複防止、UUIDまだ
+			if "%loop-value%" do not contain "%player's name%":
+				add player's name to {money.playerlist::*}
+				set {money.join::%player's name%} to 1
+				set {money.%player's name%} to {@FirstJoinAmount}
+				stop
+			else:
+				set {money.join::%player's name%} to 1
+				set {money.%player's name%} to {@FirstJoinAmount}
+				stop
+	
+#ランキングとかあったらいいよね
+command /money [<text>] [<player>]:
+	trigger:
+		if arg-1 is not set:
+			if arg-2 is set:
+				message "&3=---------------------------="
+				message "&f 所持金 : &a%{economy.%arg-2's name%}% {@CurrencyUnit}"
+				message "&3=---------------------------="
+			else:
+				message "&3=---------------------------="
+				message "&f 所持金 : &a%{economy.%player's name%}% {@CurrencyUnit}"
+				message "&3=---------------------------="
+
+
+#管理者向け
+command /economy <text> [<player>] [<number>]:
+	permission: console.console
+	trigger:
+		if arg-1 is "set":
+			if arg-2 is set:
+				if arg-3 > 0:
+					set {economy.%arg-2's name%} to "%arg-3%"
+					send "&6[Money]&2%arg-2%の所持金を%arg-3%{@CurrencyUnit}に設定しました"
+					send "&6[Money]&2所持金：%{economy.%arg-2's name%}%{@CurrencyUnit}"
+					stop
+				else:
+					send "&6[Money]&c不正な値を設定することはできません"
+					stop
+			else:
+				send "&6[Money]&cプレイヤーを指定してください"
+				stop
+				
+		if arg-1 is "give":
+			if arg-2 is set:
+				if arg-3 > 0:
+					add "%arg-3%" to {economy.%arg-2's name%}
+					send "&6[Money]&2%arg-2%の所持金を%arg-3%{@CurrencyUnit}加算しました"
+					send "&6[Money]&2所持金：%{economy.%arg-2's name%}%{@CurrencyUnit}"
+					stop
+				else:
+					send "&6[Money]&c不正な値を設定することはできません"
+					stop
+			else:
+				send "&6[Money]&cプレイヤーを指定してください"
+				stop
+				
+		if arg-1 is "reset":
+			if arg-2 is set:
+				set {economy.%arg-2's name%} to 0
+				send "&6[Money]&2%arg-2%の所持金をリセットしました"
+				send "&6[Money]&2所持金：%{economy.%arg-2's name%}%{@CurrencyUnit}"
+				stop
+			else:
+				send "&6[Money]&cプレイヤーを指定してください"
+				stop
+		
+		#稼働開始時に実行、プレイヤーリストを除くすべてのデータ削除
+		if arg-1 is "resetall":
+			loop {money.playerlist::*}:
+				set {economy.%loop-value%} to 0
+			clear {money.join::*}
+			send "&6[Money]&c全プレイヤーのデータを削除しました"
+					
+#====ここまでEconomy====
+
+#====ここよりShop====
+
+#看板のロケーション紐付け変数
+#	{shop.item%location%}	アイテム 文字列型ではない
+#	{shop.price%location%}	価格 文字列型ではない
+#	{shop.displayname%location%}	アイテムの表示名 文字列型
+
+on sign change:
+	if line 1 is "[shop]":
+		cancel event
+
+command /shopitem:
+	trigger:
+		if gamemode of player is not creative:
+			stop
+		give 1 sign named "&dShop &2buy" to player
+		give 1 sign named "&dShop &6sell" to player
+		give 1 dirt named "&dShop &2item" to player
+		give 1 iron ingot named "&dShop &2price" to player
+		give 1 book named "&dShop &2displayname" to player
+		give 1 command block named "&dShop &2command" to player
+
+on mine of sign:
+	if player is holding sign named "&dShop &2buy":
+		cancel event
+		set line 1 to "[shop]"
+		set line 4 to "buy"
+		if {shop.displayname%location of block%} is set:
+			set line 2 to {shop.displayname%location of block%}
+		else:
+			if {shop.item%location of target block%} is set:
+				set line 2 to "%{shop.item%location of target block%}%"
+			else:
+				set line 2 to "&cUnregistered"
+		if {shop.price%location of block%} is set:
+			set line 3 to "%{shop.price%location of block%}%yen"
+		else:
+			set line 3 to "&cUnregistered"
+		message "&d[shop]&6購入用ショップを設定しました"
+		stop
+	if player is holding sign named "&dShop &6sell":
+		cancel event
+		set line 1 to "[shop]"
+		set line 4 to "sell"
+		if {shop.displayname%location of block%} is set:
+			set line 2 to {shop.displayname%location of block%}
+		else:
+			if {shop.item%location of target block%} is set:
+				set line 2 to "%{shop.item%location of target block%}%"
+			else:
+				set line 2 to "&cUnregistered"
+		if {shop.price%location of block%} is set:
+			set line 3 to "%{shop.price%location of block%}%yen"
+		else:
+			set line 3 to "&cUnregistered"
+		message "&d[shop]&6売却用ショップを設定しました"
+		stop
+	if line 1 is "[shop]":
+		if player is holding iron ingot named "&dShop &2price":
+			set {shop.price%location of block%} to {shop.price.seting.%player%}
+			set line 3 to "%{shop.price%location of block%}%yen"
+			message "&d[shop]&6価格を&e%{shop.price%location of block%}%yen&6に適応しました"
+		if player is holding book named "&dShop &2displayname":
+			set {shop.displayname%location of block%} to {shop.displayname.seting.%player%}
+			set line 2 to {shop.displayname%location of block%}
+			message "&d[shop]&6アイテムの表示名を&e%{shop.displayname%location of block%}%&6に適応しました"
+		if player is holding dirt named "&dShop &2item":
+			set {shop.item%location of block%} to slot 0 of player's inventory
+			
+			set {shop.type%location of target block%} to "item"
+			if {shop.displayname%location of block%} is set:
+				set line 2 to {shop.displayname%location of block%}
+			else:
+				if {shop.item%location of target block%} is set:
+					set line 2 to "%{shop.item%location of target block%}%"
+			message "&d[shop]&6アイテムを&e%{shop.item%location of block%}%&6に適応しました"
+		if player is holding command block named "&dShop &2command":
+			set {shop.type%location of target block%} to "command"
+			set {shop.command1%location of block%} to {shop.command1.seting.%player%}
+			set {shop.command2%location of block%} to {shop.command2.seting.%player%}
+			message "&d[shop]&6コマンドを&e%{shop.command1%location of block%}% %player% %{shop.command2%location of block%}%&6に適応しました"
+		if player is holding bedrock:
+			message "ショップ%location of block%を削除しました"
+			clear {shop.price%location of block%}
+			clear {shop.item%location of target block%}
+			clear {shop.NumberofItem%location of target block%}
+			clear {shop.displayname%location of block%}
+			clear {shop.command%location of block%}
+			clear {shop.type%location of target block%}
+		else:
+			cancel event
+
+on rightclick on sign:
+	if line 1 is "[shop]":
+		if player is holding book named "&dShop &2displayname":
+			set {setmode.%player%} to "price & displayname"
+			message "&d[shop]&6/shop <text> &2でアイテムの表示名を記録"
+			message "&d[shop]&2左クリックで登録されたアイテムの表示名を看板に書き込み"
+			stop
+		if player is holding iron ingot named "&dShop &2price":
+			set {setmode.%player%} to "price & displayname"
+			message "&d[shop]&6/shop <number> &2でアイテムの価格を記録"
+			message "&d[shop]&2左クリックで登録されたアイテムの価格を看板に書き込み"
+			stop
+		if player is holding dirt named "&dShop &2item":
+			set {setmode.%player%} to "item"
+			message "&d[shop]&6/shop <number> &2でアイテムの買取時の個数を記録"
+			message "&d[shop]&2左クリックでインベントリの左端のアイテムをを看板に書き込み"
+			stop
+		if player is holding command block named "&dShop &2command":
+			cancel event
+			set {setmode.%player%} to "command"
+			message "&d[shop]&6/shop <1 or 2> <text> &2でコマンドを記録"
+			message "&d[shop]&2左クリックで登録されたコマンドを看板に書き込み"
+			stop
+
+		if line 4 is "buy":
+			cancel event
+			if {shop.type%location of target block%} is "command":
+				if {economy.%player%} >= {shop.price%location of block%}:
+					message "&d[shop]&2%{shop.displayname%location of block%}%&aを購入しました &d-%{shop.price%location of block%}%yen"
+					message "&d[shop]&e残金&6%{economy.%player%}%{@CurrencyUnit}&eです"
+					execute console command "%{shop.command1%location of block%}% %player% %{shop.command2%location of block%}%"
+					remove {shop.price%location of block%} from {economy.%player%}
+				else:
+					message "&4金が%{shop.price%location of block%}-{economy.%player%}%yen&c足りません"
+			else:
+				if {economy.%player%} >= {shop.price%location of block%}:
+					if player can hold {shop.item%location of block%}:
+						message "&d[shop]&2%{shop.item%location of block%}%&aを購入しました &d-%{shop.price%location of block%}%yen"
+						message "&d[shop]&e残金&6%{economy.%player%}%{@CurrencyUnit}&eです"
+						give player {shop.item%location of block%}
+						remove {shop.price%location of block%} from {economy.%player%}
+					else:
+						message "&d[shop]&cインベントリの空きが足りません"
+				else:
+					message "&d[shop]&c金が&4%{shop.price%location of block%}-{economy.%player%}%yen&c足りません"
+
+		if line 4 is "sell":
+			cancel event
+			execute console command "/shopsell %{shop.item%location of block%}% %player% %{shop.price%location of block%}%"
+			
+
+command /shopsell [<number>] <item> <player> <number>:
+	trigger:
+		if arg-1 is not set:
+			set {_n} to 1
+		else:
+			set {_n} to arg-1
+		set {_p} to arg-4 / {_n}
+		loop {_n} times:
+			if arg-3 have arg-2:
+				remove arg-2 from arg-3's inventory 
+				add {_p} to {economy.%arg-3%}
+			else:
+				if loop-number is 1:
+					message "&d[shop]&cアイテムが足りません" to arg-3
+					stop
+				else:
+					message "&d[shop]&6%arg-2%&eを&6%loop-number - 1%&e個売却しました &d+%{_p} * (loop-number - 1)%yen &6%{_n} - loop-number + 1%&c個足りませんでした" to arg-3
+					stop
+		message "&d[shop]&6%arg-2%&eを&6%{_n}%&e個売却しました &d+%{_p} * {_n}%yen" to arg-3
+
+
+on leftclick on sign:
+	if line 1 is "[shop]":
+		if line 2 and line 3 is not "&cUnregistered":
+			if line 4 is "buy":
+				if {shop.type%location of target block%} is "item":
+					message "&d[shop]&6%{shop.item%location of block%}%&dを&6%{shop.price%location of block%}%yen&dで購入しますか？"
+				else:
+					message "&d[shop]&6%{shop.displayname%location of block%}%&dを&6%{shop.price%location of block%}%yen&dで購入しますか？"
+			if line 4 is "sell":
+				message "&d[shop]&6%{shop.item%location of block%}%&dを&6%{shop.price%location of block%}%yen&dで売却しますか？"
+
+command /Enchantment <number> <number> <player>:
+	trigger:
+		if arg-1 is 21:
+			if arg-2 is 1:
+				enchant the arg-3's tool with looting 1
+			if arg-2 is 2:
+				enchant the arg-3's tool with looting 2
+			if arg-2 is 3:
+				enchant the arg-3's tool with looting 3
+		if arg-1 is 32:
+			if arg-2 is 1:
+				enchant the arg-3's tool with efficiency 1
+			if arg-2 is 2:
+				enchant the arg-3's tool with efficiency 2
+			if arg-2 is 3:
+				enchant the arg-3's tool with efficiency 3
+		if arg-1 is 33:
+			if arg-2 is 1:
+				enchant the arg-3's tool with silk touch 1
+			if arg-2 is 2:
+				enchant the arg-3's tool with silk touch 2
+			if arg-2 is 3:
+				enchant the arg-3's tool with silk touch 3
+		if arg-1 is 34:
+			if arg-2 is 1:
+				enchant the arg-3's tool with unbreaking 1
+			if arg-2 is 2:
+				enchant the arg-3's tool with unbreaking 2
+			if arg-2 is 3:
+				enchant the arg-3's tool with unbreaking 3
+		if arg-1 is 35:
+			if arg-2 is 1:
+				enchant the arg-3's tool with fortune 1
+			if arg-2 is 2:
+				enchant the arg-3's tool with fortune 2
+			if arg-2 is 3:
+				enchant the arg-3's tool with fortune 3
+
+
+command /shop [<number>] [<text>]:
+	trigger:
+		if {setmode.%player%} is "price & displayname":
+			if arg-1 is set:
+				set {shop.price.seting.%player%} to arg-1
+				message "&d[shop]&2左クリックで価格を適応できます"
+				stop
+
+			if arg-2 is set:
+				set {shop.displayname.seting.%player%} to arg-2
+				message "&d[shop]&2左クリックでアイテムの表示名を適応できます"
+				stop
+		if {setmode.%player%} is "item":
+			if arg-1 is set:
+				set {shop.NumberofItem%location of target block%} to arg-1
+				message "&d[shop]&2左クリックでアイテムの個数を適応できます"
+				stop
+		if {setmode.%player%} is "command":
+			if arg-1 is 1:
+				if arg-2 is set:
+					set {shop.command1.seting.%player%} to arg-2
+					message "&d[shop]&2左クリックで実行するコマンドを適応できます"
+				else:
+					set {shop.command1.seting.%player%} to ""
+					message "&d[shop]&6コマンドを削除しました"
+			else if arg-1 is 2:
+				if arg-2 is set:
+					set {shop.command2.seting.%player%} to arg-2
+					message "&d[shop]&2左クリックで実行するコマンドを適応できます"
+				else:
+					set {shop.command2.seting.%player%} to ""
+					message "&d[shop]&6コマンドを削除しました"
+			else:
+				message "&d[shop]&6/shop <1 or 2> <text> &cでコマンドを記録"
+				
+#====Shopここまで====

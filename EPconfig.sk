@@ -1,0 +1,71 @@
+on rightclick on bedrock:
+
+	stop
+	if file "plugins\Skript\SAGASA" doesn't exist:
+		create dir "plugins\Skript\SAGASA"
+		message "&d[EquipPoint]&6ディレクトリを作成しました"
+
+	if file "plugins\Skript\SAGASA\EquipPoint.txt" doesn't exist:
+		create file "plugins\Skript\SAGASA\EquipPoint.txt"
+		write "##Type-Point" at line 1 to file "plugins\Skript\SAGASA\EquipPoint.txt"
+		write "##Item-Type" at line 3 to file "plugins\Skript\SAGASA\EquipPoint.txt"
+		message "&d[EquipPoint]&6ファイルを作成しました"
+
+	#set {_Linenum} to line count of file "plugins\Skript\SAGASA\EquipPoint.txt"
+
+
+	set {_now} to convert unix convert date now to unix to date formatted as "20yy.MM.dd HH.mm.ss"
+	set {_now} to "%{_now}%"
+	rename file "plugins\Skript\SAGASA\EquipPoint.txt" to "EquipPoint_backup_%{_now}%.txt"
+	create file "plugins\Skript\SAGASA\EquipPoint.txt"
+
+	write "##Type-Point" at line 1 to file "plugins\Skript\SAGASA\EquipPoint.txt"
+	write "//例" at line 3 to file "plugins\Skript\SAGASA\EquipPoint.txt"
+	write "//##new" at line 4 to file "plugins\Skript\SAGASA\EquipPoint.txt"
+	write "//Type名" at line 5 to file "plugins\Skript\SAGASA\EquipPoint.txt"
+	write "//装備ポイント" at line 6 to file "plugins\Skript\SAGASA\EquipPoint.txt"
+
+	set {_n} to 10
+	loop 10 times:
+		write "//装備ポイント" at line {_n} to file "plugins\Skript\SAGASA\EquipPoint.txt"
+		add 1 to {_n}
+
+	stop
+	
+	set {_data::*} to file contents of "plugins\Skript\SAGASA\EquipPoint.txt"
+	set {_line} to 1
+	loop {_data::*}:
+		if loop-value is "##Type-Point":
+			set {_mode} to "type"
+
+		else if loop-value is "##Item-Type":
+			set {_mode} to "item"
+
+		else if loop-value is "##new":
+			set {_f} to 1
+
+		else:
+			if {_f} is 1:
+				set {_f} to 2
+				message "%loop-value%"
+			else if {_f} is 2:
+				clear {_f}
+				message "%loop-value%"
+
+	#	message "%loop-value%"
+
+
+#	loop {_Linenum} times:
+#		set {_line} to file "plugins\Skript\SAGASA\EquipPoint.txt"'s line {_p}
+#		message "%{_line}% %{_p}%"
+#		set {_p} to {_p} + 1
+#		wait 1 tick
+#file "plugins\test.txt"'s line 3 
+#set line 3 in file "plugins\text.txt" to "hello"
+
+function leatherDye(pass: text , l: number):
+   #note the comma, this allows us to input multiple values
+   dye {_p}'s helmet {_c}
+   dye {_p}'s leggings {_c}
+   dye {_p}'s chestplate {_c}
+   dye {_p}'s boots {_c}

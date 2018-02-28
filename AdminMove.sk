@@ -1,0 +1,53 @@
+on rightclick with diamond hoe:
+	cancel event
+	set {_coordinate} to player's location
+	player is Sneaking:
+		set x-coordinate of {_coordinate} to x-coordinate of player's location * -1
+		teleport player to {_coordinate}
+	else:
+		set z-coordinate of {_coordinate} to z-coordinate of player's location * -1
+		teleport player to {_coordinate}
+
+
+
+
+on rightclick with gold hoe:
+	
+	if {OP%player%} is true:
+		cancel event
+		#shoot an arrow from player at speed 5
+		push event-entity infront at speed 2
+		player is Sneaking:
+			push event-entity down at speed 1
+		else:
+			push event-entity up at speed 0.5
+
+		show mobspawner flames at player's head
+
+
+#on shoot:
+#	if shooter is player:
+#		push event-entity right at speed random number from -0.2 to 0.2
+#		push event-entity up at speed random number from -0.2 to 0.2
+
+on damage:
+	if {OP%victim%} is true:
+		if damage was caused by fall:
+			cancel event
+
+command /god [<player>]:
+	trigger:
+		if arg-1 is set:
+			set {OP%arg-1%} to true
+			broadcast "&2%arg-1%に運営機動能力を付与されました"
+		else:
+			set {OP%player%} to true
+			broadcast "&2%player%が運営機動能力を付与されました"
+command /ungod [<player>]:
+	trigger:
+		if arg-1 is set:
+			set {OP%arg-1%} to false
+			broadcast "&4%arg-1%が運営機動能力を剥奪されました"
+		else:
+			set {OP%player%} to false
+			broadcast "&4%player%が運営機動能力を剥奪されました"

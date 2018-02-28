@@ -1,0 +1,32 @@
+options:
+	#設置制限高度
+	place : 75
+	#破壊制限高度
+	break : 55
+
+	wait : 60
+
+#設置制限
+on place:
+	#op用
+	if player is op:
+		if {ch-enable-op.%player%} is true:
+		stop
+	#保護なし
+	if {ch-land.%chunk at location of block%} is not set:
+		if y-coordinate of location of block > {@place}:
+			message "&6[BildLimit]&c工作制限がかかっています &3設置上限高度&9&l{@place} &6&l{@wait}&6秒後に削除されます"
+			wait {@wait} second
+			set event-block to air
+
+#破壊制限
+on Break:
+	#op用
+	if player is op:
+#	if {ch-enable-op.%player%} is true:
+		stop
+	#保護なし
+	if {ch-land.%chunk at location of block%} is not set:
+		if y-coordinate of location of block < {@break}:
+			message "&6[BildLimit]&c工作制限がかかっています &3破壊下限高度&9&l{@break}"
+			cancel event

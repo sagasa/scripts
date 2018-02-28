@@ -1,0 +1,39 @@
+
+#============================
+#      運営からの手動送信
+#============================
+
+
+command /Admingift [<player>] [<text>]:
+	permission: console.console
+	trigger:
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+
+
+		if arg-2 is not set:
+			
+
+			#プレイヤーリストを表示
+			wait 2 tick
+			open chest with 6 row named "&1対象にするプレイヤーの選択" to {_player}
+			wait 1 tick 
+			
+			set {_n} to 0
+			loop all players:
+				if {gift.sent.list.%{_player}%::%loop-value%} is true:
+					format slot {_n} of {_player} with light green glass pane named "%loop-value%" with lore "&cクリックでリストから外す" to run "gift %{_player}% togle_player %loop-value%"
+				else:
+					format slot {_n} of {_player} with gray glass pane named "%loop-value%" with lore "&aクリックでリストに追加" to run ""
+
+			format slot 53 of {_player} with green glass pane named "&aプレイヤーに渡すアイテムを選択する" with lore "&2渡すアイテムを選択" to run ""
+
+		#クリックされたプレイヤーをトグル
+		if arg-2 is "togle_player":
+
+
+
+		#選択されているプレイヤーに送信

@@ -1,0 +1,350 @@
+#シベリア製プラグインが前提
+
+#共有する変数
+#{RewardBox.%[player]%::*}
+
+#主要変数
+#{kill.count::*}
+#{kill.streak::*}
+#{death.count::*}
+#{max.range::*}
+#{max.streak::*}
+#{killpoint::*}
+
+#{kr.players::*}
+
+
+on join:
+	if {kill.count::%player%} is not set:
+		set {kill.count::%player%} to 0
+	if {death.count::%player%} is not set:
+		set {death.count::%player%} to 0
+	if {kill.streak::%player%} is not set:
+		set {kill.streak::%player%} to 0
+	if {max.range::%player%} is not set:
+		set {max.range::%player%} to 0
+	if {max.streak::%player%} is not set:
+		set {max.streak::%player%} to 0
+
+	#プレイヤー名変更に対応
+	#UUID登録
+	if {kr.UUID.%uuid of player%} is not set:
+		set {kr.UUID.%uuid of player%} to player
+
+	#UUIDと照合
+	if "%{kr.UUID.%uuid of player%}%" is not "%player%":
+		message "&5[&6KRBackUp&5]&d以前のユーザー名が見つかりました、データを移行します"
+		#データの移行
+		set {kill.count::%player%} to {kill.count::%{kr.UUID.%uuid of player%}%}
+		set {kill.streak::%player%} to {kill.streak::%{kr.UUID.%uuid of player%}%}
+		set {death.count::%player%} to {death.count::%{kr.UUID.%uuid of player%}%}
+		set {max.range::%player%} to {max.range::%{kr.UUID.%uuid of player%}%}
+		set {max.streak::%player%} to {max.streak::%{kr.UUID.%uuid of player%}%}
+
+		#過去データの削除
+		clear {kill.count::%{kr.UUID.%uuid of player%}%}
+		clear {kill.streak::%{kr.UUID.%uuid of player%}%}
+		clear {death.count::%{kr.UUID.%uuid of player%}%}
+		clear {max.range::%{kr.UUID.%uuid of player%}%}
+		clear {max.streak::%{kr.UUID.%uuid of player%}%}
+		remove {kr.UUID.%uuid of player%} from {kr.players::*}
+
+		#UUIDの更新
+		#set {kr.UUID.%uuid of player%} to player
+
+	loop {kr.players::*}:
+		if "%loop-value%" is "%player%":
+			stop
+	add player to {kr.players::*}
+
+on death of player:
+	set {_attacker} to expand attacker
+	broadcast "&5expand attacker&3%{_attacker}% &5attacker&3%attacker% %damage Cause%"
+
+	#====================
+	#    銃火器のキルログ
+	#====================
+	if damage Cause is attack:
+		#エンティティに殺されたなら
+		if "%attacker%" is "entity":
+			#アタッカーが車両に乗っていたら車両
+			if "%{_attacker}'s vehicle%" is "entity":
+				broadcast "&4[KILL]&b&l=&f&l%expand attacker%&b&l= &6«Vehicle»&f--->> &c&l†&f&l%victim%&c&l†"
+			#乗っていなかったら銃
+			else:
+				#最長狙撃を保存
+				if distance between victim and expand attacker > {max.range::%player%}:
+					set {max.range::%player%} to distance between victim and expand attacker
+				if distance between victim and expand attacker > 100:
+					broadcast "&4[KILL]&b&l=&f&l%expand attacker%&b&l= &6«Gun»&f--->> &c&l†&f&l%victim%&c&l† &3Range&1%distance between victim and expand attacker%&3m"
+				else:
+					broadcast "&4[KILL]&b&l=&f&l%expand attacker%&b&l= &6«Gun»&f--->> &c&l†&f&l%victim%&c&l†"
+		#アタッカーが被害者ならFlanの爆発
+		if attacker is victim:
+			set death message to "&4[KILL]&b&l=&f&l%expand attacker%&b&l= &6«Explosion»&f--->> &c&l†&f&l%victim%&c&l†"
+		#アタッカーがプレイヤーなら
+		else if attacker is a player:
+			#フラグが立っていたなら
+			wait a tick
+			if {vehicledeath.%victim%} is true:
+				clear {vehicledeath.%victim%}
+				#アタッカーが車両に乗っていたら車両
+				if "%{_attacker}'s vehicle%" is "entity":
+					set death message to "&4[KILL]&b&l=&f&l%expand attacker%&b&l= &6«Vehicle»&f--->> &c&l†&f&l%victim%&c&l†"
+				else:
+					broadcast "&4[KILL]&b&l=&f&l%expand attacker%&b&l= &6«Gun»&f--->> &c&l†&f&l%victim%&c&l†"
+			else:
+				set death message to "&4[KILL]&b&l=&f&l%expand attacker%&b&l= &6«Slash»&f--->> &c&l†&f&l%victim%&c&l†"
+	#バニラのメッセージ書き換え
+	#直前に攻撃を受けていたなら
+	if {_attacker} is a player:
+		if {_attacker} is not player:
+			set {_deathmessage1} to "KILL"
+			set {_deathmessage2} to "&b&l=&f&l%expand attacker%&b&l= "
+		else:
+			set {_deathmessage1} to "DEATH"
+			set {_deathmessage2} to ""
+	else:
+		set {_deathmessage1} to "DEATH"
+		set {_deathmessage2} to ""
+
+	if damage Cause is entity explosion:
+		set death message to "&4[%{_deathmessage1}%]%{_deathmessage2}%&6«Explosion»»&f--->> &c&l†&f&l%victim%&c&l†"
+	if damage Cause is void:
+		set death message to "&4[%{_deathmessage1}%]%{_deathmessage2}%&6«Void»»&f--->> &c&l†&f&l%victim%&c&l†"
+	if damage Cause is potion:
+		set death message to "&4[%{_deathmessage1}%]%{_deathmessage2}%&6«Potion»»&f--->> &c&l†&f&l%victim%&c&l†"
+	if damage Cause is fall:
+		set death message to "&4[%{_deathmessage1}%]%{_deathmessage2}%&6«Fall»»&f--->> &c&l†&f&l%victim%&c&l†"
+	if damage Cause is suicide:
+		set death message to "&4[%{_deathmessage1}%]%{_deathmessage2}%&6«Suicide»»&f--->> &c&l†&f&l%victim%&c&l†"
+	if damage Cause is lava:
+		set death message to "&4[%{_deathmessage1}%]%{_deathmessage2}%&6«Lava»»&f--->> &c&l†&f&l%victim%&c&l†"
+
+
+	#====================
+	#  キルポイントによる報酬
+	#====================
+	#プレイヤーに殺されたなら
+	if {_attacker} is a player:
+		#セルフキルの場合
+		if {_attacker} is player:
+			stop
+		#-------------
+		# アタッカーの処理
+		#-------------
+		add 1 to {kill.count::%{_attacker}%}
+		message "&4[KILL]&bkill &3%{kill.count::%{_attacker}%}%" to {_attacker}
+		add 1 to {kill.streak::%{_attacker}%}
+		message "&4[KILL]&bstreak &3%{kill.streak::%{_attacker}%}%" to {_attacker}
+		if {kill.streak::%{_attacker}%} > {max.streak::%{_attacker}%}:
+			set {max.streak::%{_attacker}%} to {kill.streak::%{_attacker}%}
+		#キルポイント関連
+		add 10 to {killpoint::%{_attacker}%}
+		message "&4[KILL]&3あなたの&cKillPoint&3は&2%{killpoint::%{_attacker}%}%&3になりました" to {_attacker}
+		#キル報酬
+		add 4 iron ingot to {RewardBox.%{_attacker}%::*}
+		add "&6キル報酬" to {RewardBox.lore.%{_attacker}%::*}
+		message "&4[KILL]&3キル報酬として鉄を4個受け取りました" to {_attacker}
+		#キルポイントに応じた報酬
+		set {_reward} to {killpoint::%victim%}/10
+		loop {_reward} times:
+			add 3 iron ingot to {RewardBox.%{_attacker}%::*}
+			add "&3キルストリーク阻止報酬" to {RewardBox.lore.%{_attacker}%::*}
+		if {_reward} > 0:
+			message "&4[KILL]&3キルストリーク阻止報酬として鉄を%{_reward} * 3%個受け取りました" to {_attacker}
+
+		#-------------
+		# 被害者の処理
+		#-------------
+		add 1 to {death.count::%victim%}
+		message "&4[DEATH]&bdeath &3%{death.count::%victim%}%" to victim
+		set {kill.streak::%victim%} to 0
+
+		wait 1 tick
+		#キルポイント関連
+		if {killpoint::%victim%} is 10:
+			set {killpoint::%victim%} to 0
+		else:
+			set {killpoint::%victim%} to (Round {killpoint::%victim%}/20)*10
+
+		message "&4[DEATH]&3あなたの&cKillPoint&3は&4%{killpoint::%victim%}%&3になりました" to victim
+
+
+#兵器で死んだ場合フラグ立て
+on damage of player:
+	if damage >= 1000000:
+		set {vehicledeath.%victim%} to true
+
+#誤作動防止にデフラグ
+on respawn:
+	clear {vehicledeath.%player%}
+
+#ランキング用
+command /kdr [<offlineplayer>]:
+	trigger:
+		if arg-1 is not set:
+			set {_player} to player
+		else:
+			set {_player} to arg-1
+
+		#表示用に
+		set {_kill} to {kill.count::%{_player}%}
+		set {_death} to {death.count::%{_player}%}
+		set {_maxrange} to {max.range::%{_player}%}
+		if {_maxrange} is 0:
+			set {_maxrange} to "N/A"
+		if {_death} is 0:
+			set {_kdr} to "N/A"
+		else:
+			set {_kdr} to {_kill} / {_death}
+		set {_streak} to {kill.streak::%{_player}%}
+		set {_maxstreak} to {max.streak::%{_player}%}
+
+		message " &a=-=-=-=-=-=-=-=-=-=-="
+		message " &a Player : &2%{_player}%"
+		message " &a K/D : &2%{_kdr}%"
+		message " &a Kill : &2%{_kill}%"
+		message " &a Death : &2%{_death}%"
+		message " &a Streak : &2%{_streak}%"
+		message " &a MaxKillRange : &2%{_maxrange}%"
+		message " &a MaxKillStreak : &2%{_maxstreak}%"
+		message " &a=-=-=-=-=-=-=-=-=-=-="
+
+command /ranking [<text>]:
+	trigger:
+		if arg-1 is not set:
+			message " &a/ranking kill &6でキルランキングを表示"
+			message " &a/ranking death &6でデスランキングを表示"
+			message " &a/ranking kdr &6でK/Dランキングを表示"
+			message " &a/ranking range &6で最長狙撃ランキングを表示"
+		#キルとデスは同じ処理系
+		if arg-1 is "kill" or "death":
+			#ローカルリストを作成
+			set {_players::*} to {kr.players::*}
+			#プレイヤー数をカウント
+			set {_player.number} to 0
+			loop {_players::*}:
+				add 1 to {_player.number}
+			#1番目を算出してリストから除外 カウンタを進める
+			message " &2=-------------------------="
+			message "    &2| &b%arg-1% &3ranking &6TOP10 &2|"
+			message " &2=-------------------------="
+			message " &a=-=-=-=-=-=-=-=-=-=-=-=-=-="
+			set {_count} to 1
+			set {_n} to 0
+			set {_check} to true	
+			while {_check} is true:
+				#1番目を調べる
+				set {_c} to true
+				loop {_players::*}:
+					#初回の処理
+					if {_c} is true:
+						clear {_c}
+						#変数の初期化
+						clear {_top.number}
+						clear {_top.player::*}
+
+						set {_top.number} to {%arg-1%.count::%loop-value%}
+						add loop-value to {_top.player::*}
+					else:
+						#比較
+						if {_top.number} < {%arg-1%.count::%loop-value%}:
+							set {_top.number} to {%arg-1%.count::%loop-value%}
+							clear {_top.player::*}
+							add loop-value to {_top.player::*}
+						#比較
+						if {_top.number} = {%arg-1%.count::%loop-value%}:
+							add loop-value to {_top.player::*}
+				#1位を除外 メッセージを表示
+				loop {_top.player::*}:
+					remove loop-value from {_players::*}
+					#10位までを表示
+					if {_count} <= 10:
+						message "  &2%{_count}%&a位 &b&l=&3%loop-value%&b&l= &4%{_top.number}%&c%arg-1%"
+					#実行したプレイヤーの順位を格納
+					if loop-value is player:
+						set {_myrank} to {_count}
+					add 1 to {_n}
+				add 1 to {_count}
+				#停止処理
+				if {_player.number} <= {_n}:
+					clear {_check}
+			#範囲外なら最下位に
+			if {_myrank} is not set:
+				set {_myrank} to {_count}
+			message "-------------------------"
+			message "   &a自分の順位&2%{_myrank}%&a位"
+			message "-------------------------"
+			message " &a=-=-=-=-=-=-=-=-=-=-=-=-=-="
+		#KDR用処理系
+		if arg-1 is "kdr":
+			#ローカルリストを作成
+			set {_players::*} to {kr.players::*}
+			#プレイヤー数をカウント KDRの計算
+			set {_player.number} to 0
+			loop {_players::*}:
+				add 1 to {_player.number}
+				set {_kdr::%loop-value%} to {kill.count::%loop-value%} / {death.count::%loop-value%}
+			#1番目を算出してリストから除外 カウンタを進める
+			message " &2=-------------------------="
+			message "    &2| &bK/D &3ranking &6TOP10 &2|"
+			message " &2=-------------------------="
+			message " &a=-=-=-=-=-=-=-=-=-=-=-=-=-="
+			set {_count} to 1
+			set {_n} to 0
+			set {_check} to true
+			while {_check} is true:
+				#1番目を調べる
+				set {_c} to true
+				loop {_players::*}:
+					#初回の処理
+					if {_c} is true:
+						clear {_c}
+						#変数の初期化
+						clear {_top.number}
+						clear {_top.player::*}
+
+						set {_top.number} to {_kdr::%loop-value%}
+						add loop-value to {_top.player::*}
+					else:
+						#比較
+						if {_top.number} < {_kdr::%loop-value%}:
+							set {_top.number} to {_kdr::%loop-value%}
+							clear {_top.player::*}
+							add loop-value to {_top.player::*}
+						#比較
+						if {_top.number} = {_kdr::%loop-value%}:
+							add loop-value to {_top.player::*}
+				#1位を除外 メッセージを表示
+				loop {_top.player::*}:
+					remove loop-value from {_players::*}
+					#10位までを表示
+					if {_count} <= 10:
+						message "  &2%{_count}%&a位 &b&l=&3%loop-value%&b&l= &cKDR&4%{_top.number}%"
+					#実行したプレイヤーの順位を格納
+					if loop-value is player:
+						set {_myrank} to {_count}
+					add 1 to {_n}
+				add 1 to {_count}
+				#停止処理
+				if {_player.number} <= {_n}:
+					clear {_check}
+			#範囲外なら最下位に
+			if {_myrank} is not set:
+				set {_myrank} to {_count}
+			message "-------------------------"
+			message "   &a自分の順位&2%{_myrank}%&a位"
+			message "-------------------------"
+			message " &a=-=-=-=-=-=-=-=-=-=-=-=-=-="
+
+
+command /adminkillreward [<text>] [<player>]:
+	permission: console.console
+	trigger:
+		if arg-1 is "clear":
+			set {kill.count::*} to 0
+			set {death.count::*} to 0
+			set {kill.streak::*} to 0
+
+			clear {kr.players::*}

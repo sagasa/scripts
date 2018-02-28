@@ -1,0 +1,149 @@
+#ゲーム内からレシピを追加
+
+command /addcraft [<player>] [<text>] [<text>]:
+	permission: console.console
+	trigger:
+		#プレイヤーを変数に
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+
+		if arg-2 is not set:
+			wait 2 tick
+			open chest with 6 row named "&d登録済みレシピ" to {_player}
+			wait 1 tick
+			format slot 45 of {_player} with paper named "&6新規追加" with lore "&d定型レシピを追加" to close then run "addcraft %{_player}% add_start_shaped"
+			format slot 46 of {_player} with paper named "&6新規追加" with lore "&d不定型レシピを追加" to close then run "addcraft %{_player}% add_start_shapeless"
+			format slot 53 of {_player} with book and quill named "&6レシピのリロード" with lore "" to run "addcraft %{_player}% reload"
+			set {_n} to 0
+			loop {addcraft.recipes.name::*}:
+				if {addcraft.recipe.isshaped.%loop-value%} is true:
+					set {_isshaped} to "&3定形レシピ"
+				else:
+					set {_isshaped} to "&3不定形レシピ"
+
+				format slot {_n} of {_player} with {addcraft.recipe.%loop-value%::9} named "&6Name.&d%loop-value%" with lore "&d%{addcraft.recipe.%loop-value%::0}%&6,&d%{addcraft.recipe.%loop-value%::1}%&6,&d%{addcraft.recipe.%loop-value%::2}%||&d%{addcraft.recipe.%loop-value%::3}%&6,&d%{addcraft.recipe.%loop-value%::4}%&6,&d%{addcraft.recipe.%loop-value%::5}%||&d%{addcraft.recipe.%loop-value%::6}%&6,&d%{addcraft.recipe.%loop-value%::7}%&6,&d%{addcraft.recipe.%loop-value%::8}%||↓↓↓↓↓||&d%{addcraft.recipe.%loop-value%::9}%||%{_isshaped}%||&cクリックしてレシピを削除" to close then run "addcraft %{_player}% delete_recipe %loop-value%"
+				add 1 to {_n}
+
+		#レシピの削除
+		if arg-2 is "delete_recipe":
+			remove arg-3 from {addcraft.recipes.name::*}
+			clear {addcraft.recipe.%arg-3%::*}
+			clear {addcraft.recipe.isshaped.%arg-3%}
+			message "&a[AddCraft]&4レシピを削除しました &6Name.&d%arg-3%" to {_player}
+			
+			execute console command "/addcraft %player%"
+
+		#登録開始
+		if arg-2 is "add_start_shaped":
+			set {addcraft.moment.%{_player}%::start} to true
+			set {addcraft.moment.%{_player}%::shaped} to true
+			message "&a[AddCraft]&6チャット欄に登録名を入力してください" to {_player}
+
+		if arg-2 is "add_start_shapeless":
+			set {addcraft.moment.%{_player}%::start} to true
+			set {addcraft.moment.%{_player}%::shaped} to false
+			message "&a[AddCraft]&6チャット欄に登録名を入力してください" to {_player}
+
+
+
+		if arg-2 is "add_open":
+			set {_name} to {addcraft.moment.%{_player}%::name}
+			if {_name} is not set:
+				stop
+			wait 2 tick
+			open chest with 3 row named "&d" to {_player}
+			wait 1 tick
+			#余白を埋める
+			format slot 6 of {_player} with gray glass pane named " " to run [set {_dummy} to 0]
+			format slot 24 of {_player} with gray glass pane named " " to run [set {_dummy} to 0]
+			loop 3 times:
+				set {_n} to loop-number*9
+				format slot {_n}-9 of {_player} with gray glass pane named " " to run [set {_dummy} to 0]
+				format slot {_n}-5 of {_player} with gray glass pane named " " to run [set {_dummy} to 0]
+				format slot {_n}-4 of {_player} with gray glass pane named " " to run [set {_dummy} to 0]
+				format slot {_n}-2 of {_player} with gray glass pane named " " to run [set {_dummy} to 0]
+				format slot {_n}-1 of {_player} with gray glass pane named " " to run [set {_dummy} to 0]
+
+			format slot 17 of {_player} with red glass pane named "登録をキャンセル" to close then run "addcraft %{_player}% add_cancel"
+			format slot 26 of {_player} with light green glass pane named "レシピを保存" to run "addcraft %{_player}% add_recipe"
+			
+		if arg-2 is "add_cancel":
+			clear {addcraft.moment.%{_player}%::*}
+			message "&6[AddCraft]&cキャンセルしました" to {_player}
+
+
+		if arg-2 is "add_recipe":
+			set {_name} to {addcraft.moment.%{_player}%::name}
+			if {_name} is not set:
+				stop
+
+			#変数に格納
+			add {_name} to {addcraft.recipes.name::*}
+
+			#不定形かどうか
+			set {addcraft.recipe.isshaped.%{_name}%} to {addcraft.moment.%{_player}%::shaped}
+
+			set {_n} to 0
+			loop 3 times:
+
+				set {addcraft.recipe.%{_name}%::%{_n}%} to slot loop-number*9-8 of {_player}'s open inventory
+				drop {addcraft.recipe.%{_name}%::%{_n}%} at {_player}
+				add 1 to {_n}
+				set {addcraft.recipe.%{_name}%::%{_n}%} to slot loop-number*9-7 of {_player}'s open inventory
+				drop {addcraft.recipe.%{_name}%::%{_n}%} at {_player}
+				add 1 to {_n}
+				set {addcraft.recipe.%{_name}%::%{_n}%} to slot loop-number*9-6 of {_player}'s open inventory
+				drop {addcraft.recipe.%{_name}%::%{_n}%} at {_player}
+				add 1 to {_n}
+
+			set {addcraft.recipe.%{_name}%::%{_n}%} to slot 15 of {_player}'s open inventory
+			drop {addcraft.recipe.%{_name}%::%{_n}%} at {_player}
+			close {_player}'s inventory
+			message "&a[AddCraft]&6材料" to {_player}
+			message "&a[AddCraft]&d%{addcraft.recipe.%{_name}%::0}%&6,&d%{addcraft.recipe.%{_name}%::1}%&6,&d%{addcraft.recipe.%{_name}%::2}%" to {_player}
+			message "&a[AddCraft]&d%{addcraft.recipe.%{_name}%::3}%&6,&d%{addcraft.recipe.%{_name}%::4}%&6,&d%{addcraft.recipe.%{_name}%::5}%" to {_player}
+			message "&a[AddCraft]&d%{addcraft.recipe.%{_name}%::6}%&6,&d%{addcraft.recipe.%{_name}%::7}%&6,&d%{addcraft.recipe.%{_name}%::8}%" to {_player}
+			message "&a[AddCraft]&6成果物" to {_player}
+			message "&a[AddCraft]&d%{addcraft.recipe.%{_name}%::9}%" to {_player}
+			message "&a[AddCraft]&6登録完了しました" to {_player}
+
+			execute console command "/addcraft %player%"
+
+
+		if arg-2 is "reload":
+			#リロード
+			wipe server crafting recipes
+
+			#金を鉄に
+			register new shapeless recipe for 8 iron bar using air, air, gold bar, air, air, gold bar, air, air, air
+
+			#ダイヤモンドを鉄に
+			register new shapeless recipe for 40 iron bar using air, air, air, air, air, diamond, air, air, air
+
+			loop {addcraft.recipes.name::*}:
+				if {addcraft.recipe.isshaped.%loop-value%} is true:
+					register new shaped recipe for {addcraft.recipe.%loop-value%::9} using {addcraft.recipe.%loop-value%::0}, {addcraft.recipe.%loop-value%::1}, {addcraft.recipe.%loop-value%::2}, {addcraft.recipe.%loop-value%::3}, {addcraft.recipe.%loop-value%::4}, {addcraft.recipe.%loop-value%::5}, {addcraft.recipe.%loop-value%::6}, {addcraft.recipe.%loop-value%::7}, {addcraft.recipe.%loop-value%::8}
+				else:
+					register new shapeless recipe for {addcraft.recipe.%loop-value%::9} using {addcraft.recipe.%loop-value%::0}, {addcraft.recipe.%loop-value%::1}, {addcraft.recipe.%loop-value%::2}, {addcraft.recipe.%loop-value%::3}, {addcraft.recipe.%loop-value%::4}, {addcraft.recipe.%loop-value%::5}, {addcraft.recipe.%loop-value%::6}, {addcraft.recipe.%loop-value%::7}, {addcraft.recipe.%loop-value%::8}
+
+			message "&a[AddCraft]&6リロード完了しました" to {_player}
+
+
+on chat:
+	if {addcraft.moment.%player%::start} is true:
+		cancel event
+		#重複チェック
+		loop {addcraft.recipes.name::*}:
+			if loop-value is message:
+				message "&6[AddCraft]&c名前が重複しています"
+				stop
+		set {addcraft.moment.%player%::name} to message
+		execute console command "/addcraft %player% add_open"
+
+
+#register new shaped recipe for zombie egg using rotten flesh, rotten flesh, rotten flesh, rotten flesh, egg, rotten flesh, rotten flesh, rotten flesh, rotten flesh
+#register new shapeless recipe for zombie egg using rotten flesh, rotten flesh, rotten flesh, rotten flesh, egg, rotten flesh, rotten flesh, rotten flesh, rotten flesh
+#wipe server crafting recipe

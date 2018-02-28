@@ -1,0 +1,679 @@
+#op系
+#
+options:
+	ct : 180
+
+on inventory close:
+	if {invmenu.%player%} is set:
+		clear {invmenu.%player%}
+		
+on quit:
+	clear {ch-cooltime.%player%}	
+
+on join:
+	set {ch-cooltime.%player%}	 to {@ct}
+	while  {ch-cooltime.%player%} is more than 0:
+		add -1 to {ch-cooltime.%player%}
+		wait 1 seconds
+		
+on chat:
+	if {country-name.%player%} is set:
+		cancel event
+		set {_leng} to size of message
+		if {_leng} is less than 11:
+			set {ch-name.%{country-name.%player%}%} to message
+			clear {country-name.%player%}
+			message "%{ch-title}%&a国名を変更しました"
+		else:
+			message "%{ch-title}%&4文字数が多すぎます"
+			
+
+	else if {country-s-name.%player%} is set:
+		cancel event
+		set {_leng} to size of message
+		if {_leng} is less than 5:
+			set {shortnamehome.%{country-s-name.%player%}%} to message
+			clear {country-s-name.%player%}
+			message "%{ch-title}%&aショートネームを変更しました"
+		else:
+			message "%{ch-title}%&4文字数が多すぎます"
+			
+#リスポーン		
+On Respawn:
+	wait 3 tick
+	if {country-respone} is true:
+		if {ug-in.%player%} is set:
+			stop
+		if {ch-countryid.%player%} is not 0:
+			teleport player to {ch-spawnpoint.%{ch-countryid.%player%}%}
+			stop
+
+command /ch-admin <text> [<number>] [<number>] [<number>] [<number>] [<offlineplayer=%player%>] [<offlineplayer>]:
+	usage: /error
+	permission: sk.sympholy
+	trigger:
+		#ツール配布
+		if arg 1 = "tool":
+			open chest with 1 rows named "インベントリ" to arg 6
+			wait a tick
+			set slot 0 of arg 6's current inventory to nether quartz item of fortune 0 named "&a[clanhome]&bビルドコア" with lore "&6建国・領土の拡張が可能です"
+			set slot 1 of arg 6's current inventory to nether quartz item of fortune 0 named "&a[clanhome]&bビルドコア[隣接]" with lore "&6建国・領土の拡張が可能です"
+
+			set slot 8 of arg 6's current inventory to clock of fortune 0 named "&4[clanhome]&bアドミンクロック" with lore "&6OP専用メニューを開きます"
+		else if arg 1 = "daycount":
+			loop {ch-number} times:
+				if {ch-name.%{_count}%} is set:
+					add 1 to {ch-delcountry-count.%{_count}%}
+					message "%{ch-delcountry-count.%{_count}%}%"
+					if {ch-delcountry-count.%{_count}%} + 1 is more than {ch-core-deltime-territory}:
+						execute console command "ch-admin delcountry %{_count}%"
+				add 1 to {_count}
+		else if arg 1 = "menu":
+			wait 2 tick	
+			if arg 2 = 0:
+				open chest with 1 row named "&4アドミンクロック" to arg 6
+				wait a tick
+				format slot 1 of arg 6 with nether star named "&6ClanHome2の設定を行う" with lore "&f-建築制限変更||&f-Admin例外処理変更||&fother..." to close then run "ch-admin menu 1 %arg 6%"
+				format slot 3 of arg 6 with diamond named "&b国の管理を行う" with lore "&f-プレイヤー権限変更||&f-国削除||&fother..." to close then run "ch-admin menu 2 %arg 6%"
+				format slot 5 of arg 6 with player head named "&aプレイヤーの管理を行う" with lore "&2&2&f-プレイヤー情報の削除||&fother..." to close then run "ch-admin menu 3 %arg 6%"
+				format slot 7 of arg 6 with obsidian named "&eその他" with lore "&2&f-OPの保護無視||&f-システムデバッグ||&fother..." to close then run "ch-admin menu 4 %arg 6%"
+				format slot 8 of arg 6 with obsidian named "&e[デバッグ用]このチャンクを整地する" to close then run "ch-build chunk 6 0 0 0 %arg 6%"
+
+			#メニュー1
+			else if arg 2 = 1:
+				open chest with 2 row named "&4アドミンクロック&6[ClanHome2の設定]" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with map named "&b領土外を保護する" with lore "&a現在&f%{ch-block-neutral-territory}%&aです||&5コマンド(トグル式)||&5ch-admin edit 1 <player>" to close then run "ch-admin edit 1 %arg 6%"
+				format slot 1 of arg 6 with obsidian named "&b隣接保護" with lore "&a現在&f%{ch-core-near-territory}%&aチャンク以内の建国を制限しています||&5コマンド(数値入力)||&5ch-admin edit 3 <チャンク数> <player>" to close then run "ch-admin edit 2 %arg 6%"
+				format slot 2 of arg 6 with grass named "&b初期Max領土チャンク" with lore "&a現在の初期max領土は&f%{ch-core-max-territory}%&aチャンクです||&5コマンド(数値入力)||&5ch-admin edit 5 <チャンク数> <player>" to close then run "ch-admin edit 4 %arg 6%"
+				format slot 3 of arg 6 with player head named "&b国所属人数上限" with lore "&a現在の国の人数上限は&f%{ch-core-playernum-territory}%&a人です||&5コマンド(数値入力)||&5ch-admin edit 7 <人数> <player>" to close then run "ch-admin edit 6 %arg 6%"
+				format slot 4 of arg 6 with fresh fire named "&b放置国削除" with lore "&a現在&f%{ch-core-deltime-territory}%&a日放置で削除されます||&5コマンド(数値入力)||&5ch-admin edit 9 <日数> <player>" to close then run "ch-admin edit 8 %arg 6%"
+				format slot 5 of arg 6 with ender chest named "&b領土外のエンチェス削除" with lore "&a現在&f%{ch-block-use-enderchest}%&aです||&5コマンド(トグル式)||&5ch-admin edit 10 <player>" to close then run "ch-admin edit 10 %arg 6%"
+				format slot 6 of arg 6 with sponge named "&b領土外のスポンジ削除" with lore "&a現在&f%{ch-block-use-sponge}%&aです||&5コマンド(トグル式)||&5ch-admin edit 11 <player>" to close then run "ch-admin edit 11 %arg 6%"
+				format slot 7 of arg 6 with sponge named "&b国スポーンを有効化" with lore "&a現在&f%{country-respone}%&aです||&5falseで国のspawnに関わらず初期リスに送ります||&5コマンド(トグル式)||&5ch-admin edit 12 <player>" to close then run "ch-admin edit 12 %arg 6%"
+
+			#メニュー２
+			else if arg 2 = 2:
+				open chest with 6 row named "&4アドミンクロック&b[国の管理]" to arg 6
+				wait a tick
+				set {_count} to 1
+				set {_slot} to 0
+				loop {ch-number} times:
+					if {ch-name.%{_count}%} is set:
+						format slot {_slot} of arg 6 with sword named "&b%{ch-name.%{_count}%}%の編集" to close then run "ch-admin country %{_count}% %arg 6%"
+						add 1 to {_slot}
+					add 1 to {_count}
+			#メニュー3
+			else if arg 2 = 3:
+				open chest with 6 row named "&4アドミンクロック&a[プレイヤーの管理]" to arg 6
+				wait a tick
+				set {_count} to 0
+				loop all players:
+					if {ch-rank.%loop-player%} is not set:
+						format slot {_count} of arg 6 with stick named "&3%loop-player%" with lore "&f-&5%loop-player%の編集をします" to close then run "ch-admin playerinfo 0 0 0 0 %arg 6% %loop-value%"
+					else if {ch-rank.%loop-player%} = 1:
+						format slot {_count} of arg 6 with diamond helmet named "&3%loop-player%" with lore "&f-&5%loop-player%の編集をします" to close then run "ch-admin playerinfo 0 0 0 0 %arg 6% %loop-value%"
+					else if {ch-rank.%loop-player%} = 2:
+						format slot {_count} of arg 6 with golden helmet named "&3%loop-player%" with lore "&f-&5%loop-player%の編集をします" to close then run "ch-admin playerinfo 0 0 0 0 %arg 6% %loop-value%"
+					else if {ch-rank.%loop-player%} = 3:
+						format slot {_count} of arg 6 with leather helmet named "&3%loop-player%" with lore "&f-&5%loop-player%の編集をします" to close then run "ch-admin playerinfo 0 0 0 0 %arg 6% %loop-value%"
+					add 1 to {_count}					
+			#メニュー4				
+			else if arg 2 = 4:
+				open chest with 1 row named "&4アドミンクロック&6[その他]" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with diamond named "&bOPの保護無視" with lore "&a現在&f%{ch-enable-op.%arg 6%}%&aです||&5コマンド(トグル式)||&5ch-admin other 1 <player>" to close then run "ch-admin other 1 %arg 6%"
+				format slot 8 of arg 6 with stick named "&bシステムデバッグ" with lore "&aテスト用です" to close then run "ch-admin other 2 %arg 6%"
+		else if arg 1 = "player":
+			wait 2 tick
+			open chest with 1 row named "&f%arg 7%&bを編集する" to arg 6
+			wait a tick
+		#国情報
+		else if arg 1 = "country":
+			wait 2 tick
+			open chest with 4 row named "[%{shortnamehome.%arg 2%}%]&4%{ch-name.%arg 2%}%" to arg 6
+			wait a tick
+			format slot 0 of arg 6 with Nether Star named "&a国に招待する" with lore "&f-&5国への招待を送る" to close then run "ch-admin sendinvitation %arg 2% %arg 6%"
+			format slot 2 of arg 6 with player head named "&dプレイヤーの情報を設定する" with lore "&f-&5プレイヤーの権限を変更する||&f-&5プレイヤーをキックする" to close then run "ch-admin changeplayermenu %arg 2% %arg 6%"
+			format slot 3 of arg 6 with grass named "&b国情報を変更する" with lore "&f-&5国の名前を変更する||&f-&5リスポーンを変更する" to close then run "ch-admin countryinfo %arg 2% %arg 6%"
+			format slot 4 of arg 6 with wood sword named "&6同盟を組む" with lore "&f-&5同盟の申請を送る||&f-&5同盟を解消する" to close then run "ch-admin alliancemenu %arg 2% %arg 6%"
+			format slot 5 of arg 6 with ender pearl named "&f他の領土に移動する" with lore "&f-&5テレポートします" to close then run ""
+			format slot 6 of arg 6 with enchantment table named "&3研究を開始する" with lore "&f-&5研究メニューを開きます" to close then run "researchGUI %arg 6% open"
+			format slot 8 of arg 6 with bone named "&eその他" with lore "&5-国を削除する" to close then run "ch-confirmation ch-admin delcountry %arg 2% 0 0 0 %arg 6%"
+			
+			format slot 9 of arg 6 with red glass of fortune 1 named "&c所属プレイヤー" to close then run ""
+			format slot 18 of arg 6 with yellow glass of fortune 1 named "&e同盟プレイヤー" to close then run ""
+			format slot 27 of arg 6 with blue glass of fortune 1 named "&b取得領土" to close then run ""
+			#自国民
+			set {_count} to 10
+			loop {ch-member-list.%arg 2%::*}:
+				if {ch-countryid.%loop-value%} is not arg 2:
+					remove loop-value from {ch-member-list.%arg 2%::*}
+			loop {ch-member-list.%arg 2%::*}:
+				if loop-value is online:
+					if {ch-rank.%loop-value%} = 1:
+						format slot {_count} of arg 6 with diamond helmet named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer 0 0 0 0 %arg 6% %loop-value%"
+					else if {ch-rank.%loop-value%} = 2:
+						format slot {_count} of arg 6 with golden helmet named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer 0 0 0 0 %arg 6% %loop-value%"
+					else:
+						format slot {_count} of arg 6 with leather helmet named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer 0 0 0 0 %arg 6% %loop-value%"
+				else:
+					if {ch-rank.%loop-value%} = 1:
+						format slot {_count} of arg 6 with pumpkin named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer 0 0 0 0 %arg 6% %loop-value%"
+					else if {ch-rank.%loop-value%} = 2:
+						format slot {_count} of arg 6 with pumpkin named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer 0 0 0 0 %arg 6% %loop-value%"
+					else:
+						format slot {_count} of arg 6 with pumpkin named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer 0 0 0 0 %arg 6% %loop-value%"
+				add 1 to {_count}
+			set {_count} to 19
+			loop {ch-aliance-member-list.%{ch-alliance.%arg 2%}%::*}:
+				if {ch-alliance.%{ch-countryid.%loop-value%}%} is not {ch-alliance.%arg 2%}:
+					remove loop-value from {ch-aliance-member-list.%{ch-alliance.%arg 2%}%::*}
+					
+			loop {ch-aliance-member-list.%{ch-alliance.%arg 2%}%::*}:
+				if {ch-countryid.%loop-value%} is not arg 2:
+					if loop-value is online:
+						if {ch-rank.%loop-value%} = 1:
+							format slot {_count} of arg 6 with diamond helmet named "&6%loop-value%" with lore "&f-%{ch-name.%{ch-countryid.%loop-value%}%}%所属" to close then run ""
+						else if {ch-rank.%loop-value%} = 2:
+							format slot {_count} of arg 6 with golden helmet named "&6%loop-value%" with lore "&f-%{ch-name.%{ch-countryid.%loop-value%}%}%所属" to close then run ""
+						else:
+							format slot {_count} of arg 6 with leather helmet named "&6%loop-value%" with lore "&f-%{ch-name.%{ch-countryid.%loop-value%}%}%所属" to close then run ""
+					else:
+						if {ch-rank.%loop-value%} = 1:
+							format slot {_count} of arg 6 with pumpkin named "&6%loop-value%" with lore "&f-%{ch-name.%{ch-countryid.%loop-value%}%}%所属" to close then run ""
+						else if {ch-rank.%loop-value%} = 2:
+							format slot {_count} of arg 6 with pumpkin named "&6%loop-value%" with lore "&f-%{ch-name.%{ch-countryid.%loop-value%}%}%所属" to close then run ""
+						else:
+							format slot {_count} of arg 6 with pumpkin named "&6%loop-value%" with lore "&f-%{ch-name.%{ch-countryid.%loop-value%}%}%所属" to close then run ""
+					add 1 to {_count}
+
+			#領土
+			set {_count} to 28
+			loop {ch-land-list.%arg 2%::*}:
+				if {ch-spawn-list.%loop-value%} is set:
+					format slot {_count} of arg 6 with grass named "&3%{ch-spawn-list.%loop-value%}%&e[クリックで編集]" to close then run "ch-admin landadmin %x-coordinate of {ch-spawn-list.%loop-value%}% %y-coordinate of {ch-spawn-list.%loop-value%}% %z-coordinate of {ch-spawn-list.%loop-value%}% %arg 6%"
+					add 1 to {_count}
+				else:
+					#ガバリプト対策
+					remove loop-value from {ch-land-list.%arg 2%::*}
+		#同盟メニュー
+		else if arg 1 = "alliancemenu":
+			wait 2 tick
+			open chest with 1 row named "&4同盟メニュー" to arg 6
+			wait a tick
+			if {ch-alliance-rank.%arg 2%} = 0:
+				format slot 0 of arg 6 with wood sword item named "&3同盟を作る" with lore "&f自国をリーダーとする同盟を結成します" to close then run "ch-admin createalliance %arg 2% %arg 6%"
+			else if {ch-alliance-rank.%arg 2%} = 1:
+				format slot 0 of arg 6 with light green glass named "&3あなたの国は同盟のリーダーです" to close then run ""
+				format slot 2 of arg 6 with feather named "&e参加申請を送る" with lore "&f結成した同盟への参加要望を送ります" to close then run "ch-admin invalliance %arg 2% %arg 6%"
+				format slot 8 of arg 6 with fresh fire named "&4同盟を解散する" with lore "&f同盟を解散します" to close then run "ch-admin kaisanalliance %arg 2% %arg 6%"
+			else if {ch-alliance-rank.%arg 2%} = 2:
+				format slot 0 of arg 6 with light green glass named "&3あなたの国は同盟に参加しています" to close then run ""
+				format slot 8 of arg 6 with fresh fire named "&4同盟から脱退する" with lore "&f同盟から脱退します" to close then run "ch-admin leavealliance %arg 2% %arg 6%"
+		#同盟脱退
+		else if arg 1 = "leavealliance":
+			set {_id} to {ch-alliance.%arg 2%}
+			loop {ch-aliance-member-list.%{_id}%::*}:
+				message "%{ch-title}%&4%{ch-name.%arg 2%}%が脱退しました" to loop-value
+				remove loop-value from {ch-member-list.%{_id}%::*}
+			set {ch-alliance-rank.%arg 2%} to 0
+			set {ch-alliance.%arg 2%} to 0
+			loop {ch-member-list.%arg 2%::*}:				
+				execute console command "scoreboard teams leave %loop-value%"
+				execute console command "scoreboard teams join %{ch-countryid.%loop-value%}% %loop-value%"
+		#同盟参加申請
+		else if arg 1 = "addalliance":
+			if {ch-rank.%arg 3%} is not 0:
+				message "%{ch-title}%&4%{ch-name.%arg 3%}%は同盟参加済です" to arg 6
+				stop
+			set {_count} to 0
+			loop {ch-member-list.%arg 3%::*}:
+				add 1 to {_count}
+			if {_count} + {ch-a-playernum.%arg 4%} + 1 is more than {ch-core-playernum-territory}:
+				message "%{ch-title}%&4%{ch-core-playernum-territory}%人を超える同盟は作ることができません" to arg 6
+			loop {ch-member-list.%arg 3%::*}:
+				if {ch-rank.%loop-value%} = 1:
+					if loop-value is not online:
+						message "%{ch-title}%&4国のリーダーが不在です" to arg 6
+						stop
+					if {ch-land.%chunk at location of loop-value%} is set:
+						if {ch-land.%chunk at location of loop-value%} =  {ch-countryid.%loop-value%}:
+							wait 2 tick
+							message "%{ch-title}%&a%{ch-name.%arg 3%}%に同盟申請を送りました" to arg 6
+							open chest with 1 row named "&4%{ch-name.%arg 2%}%から同盟申請が届いています" to loop-value
+							wait a tick
+							format slot 0 of loop-value with light green glass named "&a参加する" to close then run "ch-admin joinalliance %arg 2% %arg 3% 0 0 %arg 6%"
+							format slot 8 of loop-value with red glass named "&4キャンセル" to close then run ""
+							format slot 4 of loop-value with grass named "&6国名&a[%{ch-name.%arg 2%}%]" to close then run ""
+							set {_count} to 0
+							set {_mozi} to "&d----------"
+							loop {ch-member-list.%arg 2%::*}:
+								set {_mozi} to "%{_mozi}%||&a-%loop-value-2%"
+								add 1 to {_count}
+							format slot 5 of loop-value with diamond helmet named "&6国民" with lore "%{_mozi}%" to close then run ""
+							stop
+					message "%{ch-title}%&4同盟申請に失敗しました" to arg 6
+					message  "%{ch-title}%&4時間を空けて再度申請してください" to arg 6
+					stop	
+		#同盟参加
+		else if arg 1 = "joinalliance":
+			set {ch-alliance.%arg 3%} to {ch-alliance.%arg 2%}
+			set {ch-alliance-rank.%arg 3%} to 2
+			loop {ch-member-list.%arg 3%::*}:
+				execute console command "scoreboard teams leave %loop-value%"
+				execute console command "scoreboard teams join %{ch-alliance.%arg 3%}% %loop-value%"
+				add loop-value to {ch-aliance-member-list.%{ch-alliance.%arg 2%}%::*}			
+			loop {ch-aliance-member-list.%{ch-alliance.%arg 2%}%::*}:
+				message "%{ch-title}%&a%{ch-name.%arg 3%}%が同盟に参加しました" to loop-value
+			
+		#同盟申請
+		else if arg 1 = "invalliance":
+			wait 2 tick
+			open chest with 6 row named "&4同盟への参加申請を送る" to arg 6
+			wait a tick
+			set {_count} to 1
+			set {_slot} to 0
+			loop {ch-number} times:
+				if {ch-name.%{_count}%} is set:
+					if {ch-name.%{_count}%} is not {ch-name.%arg 2%}:
+						format slot {_slot} of arg 6 with sword named "&b%{ch-name.%{_count}%}%に申請を送る" to close then run "ch-admin addalliance %arg 2% %{_count}% %{ch-alliance.%arg 2%}% %arg 6%"
+						add 1 to {_slot}
+				add 1 to {_count}
+				
+		#同盟生成
+		else if arg 1 = "createalliance":
+			message "%{ch-title}%&a同盟を作りました" to arg 6
+			message "%{ch-title}%&a同盟に参加して欲しい国へ参加申請を送りましょう" to arg 6
+			execute console command "scoreboard teams add %{ch-d-number}%"
+			execute console command "scoreboard teams option %{ch-d-number}% color %{ch-color.%arg 2%}%"
+			execute console command "scoreboard teams option %{ch-d-number}% friendlyfire false"
+			set {ch-alliance.%arg 2%} to {ch-d-number}
+			set {ch-alliance-rank.%arg 2%} to 1
+			set {_count} to 0
+			loop {ch-member-list.%arg 2%::*}:
+				execute console command "scoreboard teams leave %loop-value%"
+				execute console command "scoreboard teams join %{ch-alliance.%arg 2%}% %loop-value%"
+				add 1 to {_count}
+				if {ch-aliance-member-list.%{ch-d-number}%::*} is not set:
+					set {ch-aliance-member-list.%{ch-d-number}%::*} to loop-value
+				else:
+					add loop-value to {ch-aliance-member-list.%{ch-d-number}%::*}
+			set {ch-a-playernum.%{ch-d-number}%} to {_count}
+			add 1 to {ch-d-number}
+			
+		#同盟解散
+		else if arg 1 = "kaisanalliance":
+			message "%{ch-title}%&a同盟を解散しました" to arg 6
+			set {_id} to {ch-alliance.%arg 2%}
+			loop {ch-aliance-member-list.%{_id}%::*}:
+				execute console command "scoreboard teams leave %loop-value%"
+				message "%{ch-title}%&4同盟が解散されました" to loop-value
+				set {ch-alliance-rank.%{ch-countryid.%loop-value%}%} to 0
+				set {ch-alliance.%{ch-countryid.%loop-value%}%} to 0
+				execute console command "scoreboard teams join %{ch-countryid.%loop-value%}% %loop-value%"
+			clear {ch-aliance-member-list.%{_id}%}
+			clear {ch-a-playernum.%{_id}%}
+			execute console command "scoreboard teams remove %{_id}%"
+			
+		#国情報メニュー
+		else if arg 1 = "countryinfo":
+			wait 2 tick
+			open chest with 1 row named "&4国の情報を変更する" to arg 6
+			wait a tick
+			format slot 0 of arg 6 with bed item named "&3リスポーン地点を変更する" with lore "&f-現在の位置に変更します" to close then run "ch-admin respawnpoint %arg 2% %arg 6%"
+			format slot 1 of arg 6 with map named "&e国名を変更する" with lore "&f-10文字以内で国名を変更できます" to close then run "ch-admin m-name %arg 2% %arg 6%"
+			format slot 2 of arg 6 with map named "&bショートネームを変更する" with lore "&f-4文字以内でショートネームを変更できます" to close then run "ch-admin s-name %arg 2% %arg 6%"
+		else if arg 1 = "countryinfo2":
+			wait 2 tick
+			open chest with 1 row named "&4国の情報を変更する" to arg 6
+			wait a tick
+			format slot 0 of arg 6 with bed item named "&3リスポーン地点を変更する" with lore "&f-現在の位置に変更します" to close then run "ch-admin respawnpoint %arg 2% %arg 6%"
+		#国名変更
+		else if arg 1 = "m-name":
+			set {country-name.%arg 6%} to arg 2
+			message "%{ch-title}%&a新しい国名をチャットしてください" to arg 6
+		else if arg 1 = "s-name":
+			set {country-s-name.%arg 6%} to arg 2
+			message "%{ch-title}%&a新しいショートネームをチャットしてください" to arg 6
+		#リスポ変更
+		else if arg 1 = "respawnpoint":
+			if {ch-land.%chunk at location of arg 6%} = arg 2:
+				set {ch-spawnpoint.%arg 2%} to location of arg 6
+				message "%{ch-title}%&aリスポーン地点を変更しました" to arg 6
+			else:
+				message "%{ch-title}%&4領土外にリスポーン地点を変更することはできません" to arg 6
+		#プレイヤー情報メニュー
+		else if arg 1 = "playerinfo":
+			wait 2 tick
+			open chest with 1 row named "&4%arg 7%の情報" to arg 6
+			wait a tick
+			if {ch-rank.%arg 7%} is set:
+				format slot 0 of arg 6 with grass named "&3国情報を表示・変更する" with lore "&f-&5%{ch-name.%{ch-countryid.%arg 7%}%}%の編集をします" to close then run "ch-admin country %{ch-countryid.%arg 7%}% %arg 6%"
+				format slot 1 of arg 6 with diamond helmet named "&3プレイヤーの情報を変更する" to close then run "ch-admin changeplayer 0 0 0 0 %arg 6% %arg 7%"
+			else:
+				format slot 0 of arg 6 with grass named "&3国情報を表示・変更する" with lore "&f-未所属" to close then run ""
+		#プレイヤー編集メニュー
+		else if arg 1 = "changeplayermenu":
+			wait 2 tick
+			open chest with 1 row named "&bプレイヤーの権限を変更" to arg 6
+			wait a tick
+			set {_count} to 0
+			loop {ch-member-list.%arg 2%::*}:
+				if loop-value is online:
+					if {ch-rank.%loop-value%} = 1:
+						format slot {_count} of arg 6 with diamond helmet named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer %arg 3% 0 0 0 %arg 6% %loop-value%"
+					else if {ch-rank.%loop-value%} = 2:
+						format slot {_count} of arg 6 with golden helmet named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer %arg 3% 0 0 0 %arg 6% %loop-value%"
+					else:
+						format slot {_count} of arg 6 with leather helmet named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer %arg 3% 0 0 0 %arg 6% %loop-value%"
+				else:
+					if {ch-rank.%loop-value%} = 1:
+						format slot {_count} of arg 6 with pumpkin named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer %arg 3% 0 0 0 %arg 6% %loop-value%"
+					else if {ch-rank.%loop-value%} = 2:
+						format slot {_count} of arg 6 with pumpkin named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer %arg 3% 0 0 0 %arg 6% %loop-value%"
+					else:
+						format slot {_count} of arg 6 with pumpkin named "&3%loop-value%" with lore "&f-&5%loop-value%の編集をします" to close then run "ch-admin changeplayer %arg 3% 0 0 0 %arg 6% %loop-value%"
+				add 1 to {_count}
+		#国に招待
+		else if arg 1 = "sendinvitation":
+			if {ch-alliance.%arg 6%} is not 0:
+				message "%{ch-title}%&4同盟中はメンバーの追加ができません" to arg 6
+				stop
+			set {_count} to 0
+			loop {ch-member-list.%arg 2%::*}:
+				add 1 to {_count}
+			if {_count} is more than {ch-core-playernum-territory} - 1:
+				message "%{ch-title}%&4これ以上メンバーを追加できません" to arg 6
+				stop
+			
+			wait 2 tick
+			open chest with 6 row named "&bプレイヤーを国に招待" to arg 6
+			wait a tick
+			set {_count} to 0
+			loop all players:
+				if {ch-countryid.%loop-player%} = 0:
+					format slot {_count} of arg 6 with wool named "&6%loop-player%に招待を送る"  to close then run "ch-admin sendinv %arg 2% %arg 6% %loop-player%"
+					add 1 to {_count}					
+		#国招待(相手側)
+		else if arg 1 = "sendinv":
+			wait 2 tick
+			if {invmenu.%arg 7%} is not set:
+				set {invmenu.%arg 7%} to true
+				message "%{ch-title}%&a%arg 7%に招待を送りました" to arg 6
+				open chest with 1 row named "&4%{ch-name.%arg 2%}%から招待が届いています" to arg 7
+				wait a tick
+				format slot 0 of arg 7 with light green glass named "&a参加する" to close then run "ch-admin playerinv %arg 2% 0 0 0 %arg 6% %arg 7%"
+				format slot 8 of arg 7 with red glass named "&4キャンセル" to close then run ""
+				format slot 4 of arg 7 with grass named "&6国名&a[%{ch-name.%arg 2%}%]" to close then run ""
+				set {_count} to 0
+				set {_mozi} to "&d----------"
+				loop {ch-member-list.%arg 2%::*}:
+					set {_mozi} to "%{_mozi}%||&a-%loop-value%"
+					add 1 to {_count}
+				format slot 5 of arg 7 with diamond helmet named "&6国民" with lore "%{_mozi}%" to close then run ""
+			else:
+				message "%{ch-title}%&4招待を送ることができませんでした" to arg 6
+				
+		#プレイヤー参加
+		else if arg 1 = "playerinv":
+			set {ch-countryid.%arg 7%} to arg 2#プレイヤーに国id付与
+			set {ch-rank.%arg 7%} to 3
+			execute console command "scoreboard teams join %arg 2% %arg 7%"
+			add arg 7 to {ch-member-list.%arg 2%::*}#国メンバー追加
+			loop {ch-member-list.%arg 2%::*}:
+				message "%{ch-title}%&a%arg 7%が国に参加しました" to loop-value
+				
+		#追放
+		else if arg 1 = "playerkick":
+			if {ch-rank.%arg 7%} = 1 or 2:
+				message "%{ch-title}%&4リーダー・副リーダーを国から追放することはできません" to arg 6
+				stop
+			clear {ch-rank.%arg 7%}
+			execute console command "scoreboard teams leave %arg 7%"
+			if arg 7 is online:
+				set {ch-countryid.%arg 7%} to 0
+			else:
+				clear {ch-countryid.%arg 7%}
+			message "%{ch-title}%&4国から追放されました" to arg 7
+			message "%{ch-title}%&4%arg 7%を国から追放しました" to arg 6
+			remove arg 7 from {ch-member-list.%arg 2%::*}
+			
+		#プレイヤー権限変更
+		else if arg 1 = "changeplayer":
+			wait 2 tick
+			if arg 2 = 1:
+				if arg 7 = arg 6:
+					message "%{ch-title}%&4自身を対象にすることはできません" to arg 6
+					stop
+				wait 2 tick
+				open chest with 1 row named "&b%arg 7%の編集" to arg 6
+				wait a tick
+				format slot 1 of arg 6 with golden helmet named "&3サブリーダーにする" to close then run "ch-admin changeplayerrank 2 0 0 0 %arg 6% %arg 7%"
+				format slot 2 of arg 6 with leather helmet named "&3権限を無くす"  to close then run "ch-admin changeplayerrank 3 0 0 0 %arg 6% %arg 7%"
+				format slot 8 of arg 6 with obsidian named "&4国から追放する"  to close then run "ch-admin playerkick %arg 2% %arg 6% %arg 7%"
+			else if arg 2 = 2:
+				if arg 7 = arg 6:
+					message "%{ch-title}%&4自身を対象にすることはできません" to arg 6
+					stop
+				wait 2 tick
+				open chest with 1 row named "&b%arg 7%の編集" to arg 6
+				wait a tick
+				format slot 8 of arg 6 with obsidian named "&4国から追放する"  to close then run "ch-admin playerkick %arg 2% %arg 6% %arg 7%"
+			else:
+				open chest with 1 row named "&b%arg 7%の編集" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with diamond helmet named "&3リーダーにする" to close then run "ch-admin changeplayerrank 1 0 0 0 %arg 6% %arg 7%"
+				format slot 1 of arg 6 with golden helmet named "&3サブリーダーにする" to close then run "ch-admin changeplayerrank 2 0 0 0 %arg 6% %arg 7%"
+				format slot 2 of arg 6 with leather helmet named "&3権限を無くす"  to close then run "ch-admin changeplayerrank 3 0 0 0 %arg 6% %arg 7%"
+				format slot 8 of arg 6 with obsidian named "&4国から追放する"  to close then run "ch-admin playerkick %arg 2% %arg 6% %arg 7%"
+				
+		#ランク変更
+		else if arg 1 = "changeplayerrank":
+			if arg 2 = 1:
+				set {ch-rank.%arg 7%} to 1
+				message "%{ch-title}%&a権限がリーダーに変更されました" to arg 7
+				message "%{ch-title}%&a%arg 7%の権限がリーダーに変更されました" to arg 6
+			else if arg 2 = 2:
+				set {ch-rank.%arg 7%} to 2
+				message "%{ch-title}%&a権限がサブリーダーに変更されました" to arg 7
+				message "%{ch-title}%&a%arg 7%の権限がサブリーダーに変更されました" to arg 6
+			else if arg 2 = 3:
+				set {ch-rank.%arg 7%} to 3
+				message "%{ch-title}%&a権限が剥奪されました" to arg 7
+				message "%{ch-title}%&a%arg 7%の権限を剥奪しました" to arg 6
+				
+		else if arg 1 = "land":
+			wait 2 tick
+			open chest with 1 row named "&b領土" to arg 6
+			wait a tick
+			set {_loc} to location (arg-2, arg-3, arg-4) in world "testworld"
+			set {_cha} to chunk at location of {_loc}
+			format slot 0 of arg 6 with  yellow glass named "&6テレポートする"  to close then run "ch-admin landtp %arg 2% %arg 3% %arg 4% %arg 6%"
+			format slot 8 of arg 6 with red glass named "&6チャンクを削除する"  to close then run "ch-admin delland %arg 2% %arg 3% %arg 4% %arg 6%"
+		else if arg 1 = "land2":
+			wait 2 tick
+			open chest with 1 row named "&b領土" to arg 6
+			wait a tick
+			set {_loc} to location (arg-2, arg-3, arg-4) in world "testworld"
+			set {_cha} to chunk at location of {_loc}
+			format slot 0 of arg 6 with  yellow glass named "&6テレポートする"  to close then run "ch-admin landtp %arg 2% %arg 3% %arg 4% %arg 6%"
+		else if arg 1 = "landadmin":
+			wait 2 tick
+			open chest with 1 row named "&b領土" to arg 6
+			wait a tick
+			set {_loc} to location (arg-2, arg-3, arg-4) in world "testworld"
+			set {_cha} to chunk at location of {_loc}
+			format slot 0 of arg 6 with  yellow glass named "&6テレポートする"  to close then run "ch-admin landtp %arg 2% %arg 3% %arg 4% %arg 6%"
+			format slot 8 of arg 6 with red glass named "&6チャンクを削除する"  to close then run "ch-admin delland %arg 2% %arg 3% %arg 4% %arg 6%"
+			
+		else if arg 1 = "landtp":
+			if {ch-cooltime.%arg 6%} is less than 1:
+				execute console command "tp %arg 6% %arg 2% %arg 3% %arg 4%"
+				set {ch-cooltime.%arg 6%} to {@ct}
+				while  {ch-cooltime.%arg 6%} is more than 0:
+					add -1 to {ch-cooltime.%arg 6%}
+					wait 1 seconds
+			else:
+				message "%{ch-title}%クールタイム中です&6(残り : %{ch-cooltime.%arg 6%}%)" to arg 6
+				
+		else if arg 1 = "delland":
+			message "%{ch-title}%&f%arg 2%, %arg 3%, %arg 4%&aの%{ch-admin-del-land}%" to arg 6
+			set {_loc} to location (arg-2, arg-3, arg-4) in world "testworld"
+			set {_cha} to chunk at location of {_loc}
+			set {_country} to {ch-land.%{_cha}%}
+			set {_id} to {ch-land.%{_cha}%}
+			clear {ch-land.%{_cha}%}
+			remove {_cha} from {ch-land-list.%{_country}%::*}
+			clear {ch-spawn-list.%{_cha}%}
+			add -1 to {ch-maxchunk-now.%{_country}%}
+			if {ch-maxchunk-now.%{_country}%} = 0:
+				execute console command "ch-admin delcountry %{_id}% %arg 6%"
+
+		#国削除
+		else if arg 1 = "delcountry":
+			#国民バイバイ
+			loop {ch-member-list.%arg 2%::*}:
+				if loop-value is online:
+					set {ch-countryid.%loop-value%} to 0
+				else:
+					clear {ch-countryid.%loop-value%}
+				execute console command "scoreboard teams leave %loop-value%"
+				message "%{ch-title}%%{ch-admin-houkai-country}%" to loop-value
+				clear {ch-rank.%loop-value%}
+			#領土バイバイ
+			loop {ch-land-list.%arg 2%::*}:
+				clear {ch-land.%loop-value%}
+				clear {ch-spawn-list.%loop-value%}
+			#とどめ
+			clear {ch-land-list.%arg 2%::*}
+			message "%{ch-title}%%{ch-name.%arg 2%}%%{ch-admin-del-country}%" to arg 6
+			broadcast "%{ch-title}%&d%{ch-name.%arg 2%}%が崩壊しました"
+			execute console command "scoreboard teams remove %arg 2%"
+			clear {ch-color.%arg 2%}
+			clear {ch-delcountry-count.%arg 2%}
+			clear {ch-name.%arg 2%}
+			clear {shortnamehome.%arg 2%}
+			clear {ch-maxchunk.%arg 2%}
+			clear {ch-maxchunk-now.%arg 2%}
+			clear {ch-spawnpoint.%arg 2%}
+			clear {ch-alliance-rank.%arg 2%}
+			clear {ch-alliance.%arg 2%}
+			
+			add -1 to {country-now-number}
+				
+		else if arg 1 = "other":
+			if arg 2 = 1:
+				if {ch-enable-op.%arg 6%} is true:
+					set {ch-enable-op.%arg 6%} to false
+					message "%{ch-title}%%{ch-admin-false-message}%" to arg 6
+				else:
+					set {ch-enable-op.%arg 6%} to true
+					message "%{ch-title}%%{ch-admin-true-message}%" to arg 6
+			#システムでバッグ
+			else if arg 2 = 2:
+				wait 2 tick
+				open chest with 1 row named "&bデバッグ" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with clay item named "&6{ch-number}" with lore "&f%{ch-number}%" to close then run ""
+				
+				
+		else if arg 1 = "edit":
+			#領土外保護
+			if arg 2 = 1:
+				if {ch-block-neutral-territory} is true:
+					set {ch-block-neutral-territory} to false
+					message "%{ch-title}%%{ch-admin-false-message}%" to arg 6
+				else:
+					set {ch-block-neutral-territory} to true
+					message "%{ch-title}%%{ch-admin-true-message}%" to arg 6
+			 #隣接制限
+			else if arg 2 = 2:
+				wait 2 tick
+				open chest with 1 row named "&b隣接保護" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with clay item named "&61チャンクに変更する"  to close then run "ch-admin edit 3 1 %arg 6%"
+				format slot 1 of arg 6 with clay item named "&62チャンクに変更する"  to close then run "ch-admin edit 3 2 %arg 6%"
+				format slot 2 of arg 6 with clay item named "&63チャンクに変更する"  to close then run "ch-admin edit 3 3 %arg 6%"
+				format slot 3 of arg 6 with clay item named "&64チャンクに変更する"  to close then run "ch-admin edit 3 4 %arg 6%"
+				format slot 4 of arg 6 with clay item named "&65チャンクに変更する"  to close then run "ch-admin edit 3 5 %arg 6%"
+				format slot 5 of arg 6 with clay item named "&66チャンクに変更する"  to close then run "ch-admin edit 3 6 %arg 6%"
+				format slot 6 of arg 6 with clay item named "&67チャンクに変更する"  to close then run "ch-admin edit 3 7 %arg 6%"
+				format slot 7 of arg 6 with clay item named "&68チャンクに変更する"  to close then run "ch-admin edit 3 8 %arg 6%"
+				format slot 8 of arg 6 with clay item named "&69チャンクに変更する"  to close then run "ch-admin edit 3 9 %arg 6%"		
+			else if arg 2 = 3:
+				set {ch-core-near-territory} to arg 3
+				message "%{ch-title}%%{ch-admin-edit-message}%" to arg 6
+			#初期max領土数の変更	
+			else if arg 2 = 4:
+				wait 2 tick
+				open chest with 1 row named "&b初期max領土" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with clay item named "&61チャンクに変更する"  to close then run "ch-admin edit 5 1 %arg 6%"
+				format slot 1 of arg 6 with clay item named "&62チャンクに変更する"  to close then run "ch-admin edit 5 2 %arg 6%"
+				format slot 2 of arg 6 with clay item named "&63チャンクに変更する"  to close then run "ch-admin edit 5 3 %arg 6%"
+				format slot 3 of arg 6 with clay item named "&64チャンクに変更する"  to close then run "ch-admin edit 5 4 %arg 6%"
+				format slot 4 of arg 6 with clay item named "&65チャンクに変更する"  to close then run "ch-admin edit 5 5 %arg 6%"
+				format slot 5 of arg 6 with clay item named "&66チャンクに変更する"  to close then run "ch-admin edit 5 6 %arg 6%"
+				format slot 6 of arg 6 with clay item named "&67チャンクに変更する"  to close then run "ch-admin edit 5 7 %arg 6%"
+				format slot 7 of arg 6 with clay item named "&68チャンクに変更する"  to close then run "ch-admin edit 5 8 %arg 6%"
+				format slot 8 of arg 6 with clay item named "&69チャンクに変更する"  to close then run "ch-admin edit 5 9 %arg 6%"				
+			else if arg 2 = 5:
+				set {ch-core-max-territory} to arg 3
+				message "%{ch-title}%%{ch-admin-edit-message}%" to arg 6
+			#国所属上限変更	
+			else if arg 2 = 6:
+				wait 2 tick
+				open chest with 1 row named "&b国所属上限変更" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with clay item named "&61人に変更する"  to close then run "ch-admin edit 7 1 %arg 6%"
+				format slot 1 of arg 6 with clay item named "&62人に変更する"  to close then run "ch-admin edit 7 2 %arg 6%"
+				format slot 2 of arg 6 with clay item named "&63人に変更する"  to close then run "ch-admin edit 7 3 %arg 6%"
+				format slot 3 of arg 6 with clay item named "&64人に変更する"  to close then run "ch-admin edit 7 4 %arg 6%"
+				format slot 4 of arg 6 with clay item named "&65人に変更する"  to close then run "ch-admin edit 7 5 %arg 6%"
+				format slot 5 of arg 6 with clay item named "&66人に変更する"  to close then run "ch-admin edit 7 6 %arg 6%"
+				format slot 6 of arg 6 with clay item named "&67人に変更する"  to close then run "ch-admin edit 7 7 %arg 6%"
+				format slot 7 of arg 6 with clay item named "&68人に変更する"  to close then run "ch-admin edit 7 8 %arg 6%"
+			else if arg 2 = 7:
+				set {ch-core-playernum-territory} to arg 3
+				message "%{ch-title}%%{ch-admin-edit-message}%" to arg 6
+			#放置上限	
+			else if arg 2 = 8:
+				wait 2 tick
+				open chest with 1 row named "&b国所属上限変更" to arg 6
+				wait a tick
+				format slot 0 of arg 6 with clay item named "&63日に変更する"  to close then run "ch-admin edit 9 3 %arg 6%"
+				format slot 1 of arg 6 with clay item named "&66日に変更する"  to close then run "ch-admin edit 9 6 %arg 6%"
+				format slot 2 of arg 6 with clay item named "&69日に変更する"  to close then run "ch-admin edit 9 9 %arg 6%"
+				format slot 3 of arg 6 with clay item named "&612日に変更する"  to close then run "ch-admin edit 9 12 %arg 6%"
+				format slot 4 of arg 6 with clay item named "&615日に変更する"  to close then run "ch-admin edit 9 15 %arg 6%"
+				format slot 5 of arg 6 with clay item named "&618日に変更する"  to close then run "ch-admin edit 9 18 %arg 6%"
+				format slot 6 of arg 6 with clay item named "&621日に変更する"  to close then run "ch-admin edit 9 21 %arg 6%"
+				format slot 7 of arg 6 with clay item named "&624日に変更する"  to close then run "ch-admin edit 9 24 %arg 6%"
+				format slot 8 of arg 6 with clay item named "&627日に変更する"  to close then run "ch-admin edit 9 27 %arg 6%"				
+			else if arg 2 = 9:
+				set {ch-core-deltime-territory} to arg 3
+				message "%{ch-title}%%{ch-admin-edit-message}%" to arg 6
+			#エンチェス
+			else if arg 2 = 10:
+				if {ch-block-use-enderchest} is true:
+					set {ch-block-use-enderchest} to false
+					message "%{ch-title}%%{ch-admin-false-message}%" to arg 6
+				else:
+					set {ch-block-use-enderchest} to true
+					message "%{ch-title}%%{ch-admin-true-message}%" to arg 6
+			#スポンジ
+			else if arg 2 = 11:
+				if {ch-block-use-sponge} is true:
+					set {ch-block-use-sponge} to false
+					message "%{ch-title}%%{ch-admin-false-message}%" to arg 6
+				else:
+					set {ch-block-use-sponge} to true
+					message "%{ch-title}%%{ch-admin-true-message}%" to arg 6
+			else if arg 2 = 12:
+				if {country-respone} is true:
+					set {country-respone} to false
+					message "%{ch-title}%%{ch-admin-false-message}%" to arg 6
+				else:
+					set {country-respone} to true
+					message "%{ch-title}%%{ch-admin-true-message}%" to arg 6

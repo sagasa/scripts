@@ -1,0 +1,221 @@
+#ポイント制の武器装備
+
+#{gundata}の要素　1.使用中 2.タイプ 3.装備ポイント 
+
+options:
+	#ダミー用アイテム
+	dummy : firework star
+	EquipPoint : 10
+#変数定義
+variables:
+	{playerpoint.%player%} = 0
+	{EP.waiting%player%} = false
+	{waitingmessage%player%} = false
+
+on join:
+	set {EP.waiting%player%} to false
+	set {waitingmessage%player%} to false
+
+#インベントリが閉じたときに価値計算
+on inventory close:
+	set {playerpoint.%player%} to 0
+	set {_p} to 0
+	set {_c} to 0
+	#ホットバーの合計を計算　10を超えたらインベントリに移動する
+	loop 9 times:
+		set {_provisional.%player%} to slot {_p} of player's inventory
+		if {gundata.%{_provisional.%player%}%::1} is "using":
+			add {gundata.%{_provisional.%player%}%::3} to {playerpoint.%player%}
+			if {playerpoint.%player%} > {@EquipPoint}:
+				remove {gundata.%{_provisional.%player%}%::3} from {playerpoint.%player%}
+				
+				message "&6[EquipPoint]&c限界装備ポイントを超過しています。"
+				#インベントリの空きに入れる
+				set {_count} to 9
+				loop 27 times:
+					if slot {_count} of player's inventory is air:
+						set {_item} to slot {_p} of player's inventory
+						set slot {_count} of player's inventory to {_item}
+						exit loop
+					add 1 to {_count}
+					if {_count} is 36:
+						drop slot {_p} of player's inventory at player
+				set slot {_p} of player's inventory to air
+		add 1 to {_p}
+	if {playerpoint.%player%} > 2:
+		set {havegun%player%} to 1
+		message "&6[EquipPoint]&a現在の装備の合計ポイントは%{playerpoint.%player%}%です。"
+	else:
+		set {havegun%player%} to 0
+		if {playerpoint.%player%} is not 0:
+			message "&6[EquipPoint]&c戦闘に有効な武器を持ってください。"
+
+on pickup:
+	if {gundata.%event-item%::1} is "using":
+		if {playerpoint.%player%} + {gundata.%event-item%::3} > {@EquipPoint}:
+			set {_count} to 9
+			loop 27 times:
+				if slot {_count} of player's inventory is air:
+					exit loop
+				add 1 to {_count}
+				if {_count} is 36:
+					cancel event
+					if {waitingmessage%player%} is false:
+						message "&4インベントリに空きがありません"
+						set {waitingmessage%player%} to true
+						wait 1 second
+						set {waitingmessage%player%} to false
+					stop
+			message "&6[EquipPoint]&c限界装備ポイントを超過しています。"
+			#設置していないときなら
+			if {EP.waiting%player%} is false:
+				#空きにダミーを配置
+				set {_count} to 0
+				loop 9 times:
+					if slot {_count} of player's inventory is air:
+						set slot {_count} of player's inventory to 1 {@dummy}
+					add 1 to {_count}
+				set {EP.waiting%player%} to true
+				wait 10 tick
+				set {EP.waiting%player%} to false
+				#ダミーを除去
+				set {_count} to 0
+				loop 9 times:
+					if slot {_count} of player's inventory is {@dummy}:
+						set slot {_count} of player's inventory to air
+					add 1 to {_count}
+		else:
+			#装備ポイント再計算
+			add {gundata.%event-item%::3} to {playerpoint.%player%}
+			if {playerpoint.%player%} > 2:
+				set {havegun%player%} to 1
+				message "&6[EquipPoint]&a現在の装備の合計ポイントは%{playerpoint.%player%}%です。"
+			else:
+				set {havegun%player%} to 0
+				if {playerpoint.%player%} is not 0:
+					message "&6[EquipPoint]&c戦闘に有効な武器を持ってください。"
+
+on drop:
+	if {gundata.%event-item%::1} is "using":
+		remove {gundata.%event-item%::3} from {playerpoint.%player%}
+		if {playerpoint.%player%} > 2:
+			set {havegun%player%} to 1
+			message "&6[EquipPoint]&a現在の装備の合計ポイントは%{playerpoint.%player%}%です。"
+		else:
+			set {havegun%player%} to 0
+			if {playerpoint.%player%} is not 0:
+				message "&6[EquipPoint]&c戦闘に有効な武器を持ってください。"
+
+#ダミーを捨てられなくする
+on drop {@dummy}:
+	cancel event
+
+command /gun <text> <string>:
+	permission: ep.admin
+	trigger:
+		if slot 0 of player's inventory is not air:
+			set {_provisional.%player%} to slot 0 of player's inventory
+			message "%{gundata.%{_provisional.%player%}%::1}%"
+			#登録済みか確認
+			if {gundata.%{_provisional.%player%}%::1} is not set:
+				message "追加"
+				set {gundata.%{_provisional.%player%}%::1} to "using"
+			if arg-1 is "type":
+			#銃のタイプを設定
+				if arg-2 is "INI":
+					set {gundata.%{_provisional.%player%}%::2} to "INI"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 5
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプを初期装備に設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 5"
+
+				if arg-2 is "SMG":
+					set {gundata.%{_provisional.%player%}%::2} to "SMG"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 6
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをSMGに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+
+				if arg-2 is "LMG":
+					set {gundata.%{_provisional.%player%}%::2} to "LMG"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 6
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをLMGに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+					
+				if arg-2 is "AR":
+					set {gundata.%{_provisional.%player%}%::2} to "AR"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 6
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをARに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+					
+				if arg-2 is "AT":
+					set {gundata.%{_provisional.%player%}%::2} to "AT"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 4
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをATに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 4"
+					
+				if arg-2 is "SAR":
+					set {gundata.%{_provisional.%player%}%::2} to "SAR"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 6
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをSARに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+
+				if arg-2 is "HG":
+					set {gundata.%{_provisional.%player%}%::2} to "HG"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 2
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをHGに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 2"
+				if arg-2 is "DMR":
+					set {gundata.%{_provisional.%player%}%::2} to "DMR"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 6
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをDMRに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+					
+				if arg-2 is "SR":
+					set {gundata.%{_provisional.%player%}%::2} to "SR"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 6
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをSRに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+
+				if arg-2 is "BA":
+					set {gundata.%{_provisional.%player%}%::2} to "BA"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 6
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをBAに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+					
+				if arg-2 is "EXP":
+					set {gundata.%{_provisional.%player%}%::2} to "EXP"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 2
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをEXPに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 6"
+					
+				if arg-2 is "KNF":
+					set {gundata.%{_provisional.%player%}%::2} to "knife"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 1
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをKnifeに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 1"
+
+				if arg-2 is "MIC":
+					set {gundata.%{_provisional.%player%}%::2} to "misc"
+					#装備ポイント
+					set {gundata.%{_provisional.%player%}%::3} to 0
+					message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器タイプをKnifeに設定しました。"
+					message "&6[EquipPoint]&a装備ポイント : 1"
+					
+			if arg-1 is "remove" or "r":
+				clear {gundata.%{_provisional.%player%}%::1}
+				clear {gundata.%{_provisional.%player%}%::2}
+				clear {gundata.%{_provisional.%player%}%::3}
+				message "&6[EquipPoint]&a%slot 0 of player's inventory%の武器登録を削除しました。"
+		else:
+			message "&6[EquipPoint]&cホットバーの左端に登録したい武器を入れてください。"

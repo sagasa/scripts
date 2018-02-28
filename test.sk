@@ -1,0 +1,36 @@
+command /writetest <text> [<text>]:
+	trigger:
+		if arg-1 is "save":
+			delete file "D:\Games\Minecraft\Minecraft_ThermosServer\1.7.10_skript\testworld/writetest.txt"
+			create file "D:\Games\Minecraft\Minecraft_ThermosServer\1.7.10_skript\testworld/writetest.txt"
+
+			write "%arg-2%" at line 1 to file "D:\Games\Minecraft\Minecraft_ThermosServer\1.7.10_skript\testworld/writetest.txt"
+		if arg-1 is "load":
+			set {_data::*} to file contents of "D:\Games\Minecraft\Minecraft_ThermosServer\1.7.10_skript\testworld/writetest.txt"
+			loop {_data::*}:
+				message "%loop-value%"
+#convert text "%arg-2%" to unicode
+
+function test(p: player):
+	#note the comma, this allows us to input multiple values
+	message "OK" to {_p}
+
+every 60 seconds:
+	execute console command "/facility time"
+
+on command:
+	#broadcast "&d[command]&f%complete command%"
+
+on drop:
+	set {_item} to event-item
+	broadcast "%{_item}%"
+
+on death:
+	set {_attacker} to expand attacker
+	broadcast "&5expand attacker&3%{_attacker}% &5attacker&3%attacker% %damage Cause%"
+
+command /playerset1:
+	trigger:
+		set {RP.%player%.0} to 2000
+		message "SET"
+		

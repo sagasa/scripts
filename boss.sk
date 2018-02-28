@@ -1,0 +1,12 @@
+
+
+#====================================================================================================
+#                                      　　　　 NPC
+#====================================================================================================
+
+on rightclick on zombie:
+	if name of event-entity is "管理人":
+		loop all entities:
+			if event-entity is not loop-entity:
+				if loop-entity is not a player:
+					kill loop-entity

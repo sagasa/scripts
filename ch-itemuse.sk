@@ -1,0 +1,74 @@
+#アイテム使用判定系
+#一緒にしたくないコード
+#
+command /ch-confirmation <text> <text> [<number=0>] [<number=0>] [<number=0>] [<number=0>] [<player=%player%>]:
+	usage: /error
+	permission: sk.sympholy
+	trigger:
+		wait 2 tick
+		open chest with 1 rows named "&6本当に実行しますか？" to arg 7
+		wait a tick
+		format slot 0 of arg 7 with light green glass named "&a実行" to close then run "%arg 1% %arg 2% %arg 3% %arg 4% %arg 5% %arg 6% %arg 7%"
+		format slot 8 of arg 7 with red glass named "&dキャンセル" to close then run ""
+
+command /ch-colorset [<number=0>] [<number=0>]:
+	usage: /error
+	permission: sk.sympholy
+	trigger:
+		
+		if {ch-color-number} = 0:
+			set {_msg} to "black"
+		else if {ch-color-number} = 1:
+			set {_msg} to "dark_aqua"
+		else if {ch-color-number} = 2:
+			set {_msg} to "dark_green"
+		else if {ch-color-number} = 3:
+			set {_msg} to "blue"
+		else if {ch-color-number} = 4:
+			set {_msg} to "dark_purple"
+		else if {ch-color-number} = 5:
+			set {_msg} to "red"
+		else if {ch-color-number} = 6:
+			set {_msg} to "dark_red"
+		else if {ch-color-number} = 7:
+			set {_msg} to "green"
+		else if {ch-color-number} = 8:
+			set {_msg} to "gold"
+		else if {ch-color-number} = 9:
+			set {_msg} to "yellow"
+		else if {ch-color-number} = 10:
+			set {_msg} to "light_purple"
+		else if {ch-color-number} = 11:
+			set {_msg} to "dark_blue"
+		else if {ch-color-number} = 12:
+			set {_msg} to "aqua"
+		add 1 to {ch-color-number}
+		set {ch-color.%arg 1%} to {_msg}
+		execute console command "scoreboard teams option %arg 1% color %{_msg}%"
+
+		
+on rightclick with clock:
+	if name of player's tool is "&4[clanhome]&bアドミンクロック":
+		execute console command "ch-admin menu 0 0 0 %player%"
+		
+on rightclick with nether quartz item of fortune 0:
+	if name of player's tool is "&a[clanhome]&bビルドコア":
+		open chest with 1 rows named "&a[clanhome]&bビルドコア" to player
+		wait a tick
+		format slot 0 of player with light green glass named "&a領土を手に入れる" with lore "&f領土のみ手に入れます" to close then run "ch-core clancreate 0 1 0 0 %player%"
+		format slot 2 of player with light green glass named "&a領土を手に入れる" with lore "&f領土を取得して整地・床貼りをします" to close then run "ch-core clancreate 0 2 0 0 %player%"		
+		format slot 4 of player with light green glass named "&a領土を手に入れる" with lore "&f領土を取得して簡易建築をします" to close then run "ch-core clancreate 0 3 0 0 %player%"
+		format slot 6 of player with map named "&dチャンクを確認する" to close then run "ch-build chunk 4 %player%"
+		format slot 7 of player with map named "&dチャンクを確認する" to close then run "ch-build chunk 4 %player%"
+		format slot 8 of player with map named "&dチャンクを確認する" to close then run "ch-build chunk 4 %player%"
+
+on rightclick with nether quartz item of fortune 0:
+	if name of player's tool is "&a[clanhome]&bビルドコア[隣接]":
+		open chest with 1 rows named "&a[clanhome]&bビルドコア[隣接]" to player
+		wait a tick
+		format slot 0 of player with light green glass named "&a領土を手に入れる" with lore "&f領土のみ手に入れます" to close then run "ch-core clancreate 1 1 0 0 %player%"
+		format slot 2 of player with light green glass named "&a領土を手に入れる" with lore "&f領土を取得して整地・床貼りをします" to close then run "ch-core clancreate 1 2 0 0 %player%"		
+		format slot 4 of player with light green glass named "&a領土を手に入れる" with lore "&f領土を取得して簡易建築をします" to close then run "ch-core clancreate 1 3 0 0 %player%"
+		format slot 6 of player with map named "&dチャンクを確認する" to close then run "ch-build chunk 4 %player%"
+		format slot 7 of player with map named "&dチャンクを確認する" to close then run "ch-build chunk 4 %player%"
+		format slot 8 of player with map named "&dチャンクを確認する" to close then run "ch-build chunk 4 %player%"

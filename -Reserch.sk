@@ -1,0 +1,786 @@
+#====================================================================================================
+#                                          研究システム
+#====================================================================================================
+
+#----------------------
+#Tier毎の必要ポイント
+options:
+	Tier1 : 1000
+	Tier2 : 5000
+	Tier3 : 100000
+
+#----------------------
+#        GUIアイテム
+#----------------------
+on rightclick with strad disc:
+	if player is holding strad disc named "&d研究GUI":
+		cancel event
+		execute console command "/researchGUI %player% open"
+	if player is holding strad disc named "&dAdmin研究システム試験GUI":
+		cancel event
+		execute console command "/AdminresearchGUI %player%"
+	if player is holding strad disc named "&dアイテム登録GUI":
+		cancel event
+		execute console command "/AdminresearchGUI %player% setitem_select"
+
+on leftclick with strad disc:
+	if player is holding strad disc named "&dAdmin研究システム試験GUI":
+		cancel event
+		set name of player's tool to "&dアイテム登録GUI"
+		message "&6[Reserch]&dアイテム登録モード&aに変更しました"
+		stop
+	if player is holding strad disc named "&dアイテム登録GUI":
+		cancel event
+		set name of player's tool to "&dAdmin研究システム試験GUI"
+		message "&6[Reserch]&d総合管理モード&aに変更しました"
+
+#----------------------
+#  GUIを開いている人のリスト
+#----------------------
+#GUIを閉じた
+on inventory close:
+	remove player from {researchGUI.%{myhome.%player%}%::*}
+	remove player from {researchGUI.tree.%{myhome.%player%}%::*}
+	#設定用インベントリなら
+	if inventory name of player's current inventory is not "&2Tree選択":
+		set {_n} to 0
+		loop {faction.number} times:
+			remove player from {setitem.openplayer.%{_n}%.0::*}
+			remove player from {setitem.openplayer.%{_n}%.1::*}
+			add 1 to {_n}
+
+#クラッシュした人対策
+on join:
+	remove player from {researchGUI.%{myhome.%player%}%::*}
+	remove player from {researchGUI.tree.%{myhome.%player%}%::*}
+	set {_n} to 0
+	loop {faction.number} times:
+		remove player from {setitem.openplayer.%{_n}%.0::*}
+		remove player from {setitem.openplayer.%{_n}%.1::*}
+		add 1 to {_n}
+
+	#プレイヤー名変更に対応
+	#UUID登録
+	if {reserch.UUID.%uuid of player%} is not set:
+		set {reserch.UUID.%uuid of player%} to player
+
+	#UUIDと照合
+	if "%{reserch.UUID.%uuid of player%}%" is not "%player%":
+		message "&5[&6ReserchBackUp&5]&d以前のユーザー名が見つかりました、データを移行します"
+		#データの移行
+		remove {reserch.UUID.%uuid of player%} from {reserch.player.list::*}
+		set {reserch.faction.use.%player%::*} to {reserch.faction.use.%{reserch.UUID.%uuid of player%}%::*}
+		set {reserch.faction.next.%player%} to {reserch.faction.next.%{reserch.UUID.%uuid of player%}%}
+		set {_p} to 0
+		loop {faction.number} times:
+			set {reserch.%player%.%{_p}%.0::*} to {reserch.%player%.%{reserch.UUID.%uuid of player%}%.0::*}
+			set {reserch.%player%.%{_p}%.1::*} to {reserch.%player%.%{reserch.UUID.%uuid of player%}%.1::*}
+			add 1 to {_p}
+		set {RP.%player%.0} to {RP.%{reserch.UUID.%uuid of player%}%.0}
+		set {RP.%player%.1} to {RP.%{reserch.UUID.%uuid of player%}%.1}
+
+		#過去データの削除
+		clear {reserch.faction.use.%{reserch.UUID.%uuid of player%}%::*}
+		clear {reserch.faction.next.%{reserch.UUID.%uuid of player%}%}
+		set {_p} to 0
+		loop {faction.number} times:
+			clear {reserch.%player%.%{reserch.UUID.%uuid of player%}%.0::*}
+			clear {reserch.%player%.%{reserch.UUID.%uuid of player%}%.1::*}
+			add 1 to {_p}
+		clear {RP.%{reserch.UUID.%uuid of player%}%.0}
+		clear {RP.%{reserch.UUID.%uuid of player%}%.1}
+
+		#UUIDの更新
+		set {reserch.UUID.%uuid of player%} to player
+
+	#プレイヤーリスト
+		loop {reserch.player.list::*}:
+			if loop-value = {_player}:
+				set {_c} to true
+		if {_c} is not set:
+			add {_player} to {reserch.player.list::*}
+
+#----------------------
+#         管理
+#----------------------
+#                          [player]   [動作]    
+command /AdminResearchGUI [<player>] [<text>] [<number>] [<number>] [<number>]:
+	permission: console.console
+	trigger:
+		#プレイヤーを変数に
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+		if arg-2 is not set:
+			wait 2 tick
+			#使用国家が未選択な場合選択GUIを開く
+			if {reserch.faction.%{myhome.%{_player}%}%} is not set:
+				open chest with 1 row named "&d研究管理" to {_player}
+				format slot 0 of {_player} with blue glass pane named "設定のリロード" with lore "" to run "LoadResearchContents"
+				format slot 8 of {_player} with red glass pane named "進捗データの削除" with lore "&4この操作は取り消しできません" to run "AdminResearchGUI %{_player}% clear"
+
+
+		#進捗削除
+		if arg-2 is "clear":
+			#初期化
+			#プレイヤーの研究リセット
+			message "&6[Reserch]&4プレイヤーごとの研究をリセットしています" to {_player}
+			set {_p} to 0
+			loop {faction.number} times:
+				loop {reserch.player.list::*}:
+					clear {reserch.faction.use.%loop-value-2%::*}
+					set {reserch.faction.next.%loop-value-2%} to 0
+					clear {reserch.%loop-value-2%.%{_p}%.0::*}
+					clear {reserch.%loop-value-2%.%{_p}%.1::*}
+					set {RP.%loop-value%.0} to 0
+					set {RP.%loop-value%.1} to 0
+				add 1 to {_p}
+			#国の研究リセット
+			message "&6[Reserch]&4国家ごとの研究をリセットしています" to {_player}
+			set {_p} to 0
+			loop 200 times:
+				set {_n} to 0
+				loop {faction.number} times:
+					clear {reserch.faction.use.%{_p}%::*}
+					set {reserch.faction.next.%{_p}%} to 0
+					clear {reserch.%{_n}%.%{_p}%.0::*}
+					clear {reserch.%{_n}%.%{_p}%.1::*}
+					clear {RP.%{_p}%.0}
+					clear {RP.%{_p}%.1} 
+					add 1 to {_n}
+				add 1 to {_p}
+			clear {reserch.player.list::*}
+
+		#アイテム
+		if arg-2 is "item":
+			give strad disc named "&d研究GUI" to {_player}
+			give strad disc named "&dAdmin研究システム試験GUI" to {_player}
+
+		#受け渡しアイテムの登録
+		if arg-2 is "setitem_select":
+			wait 2 tick
+			open chest with 3 row named "&2Tree選択" to {_player}
+			wait 1 tick
+			#陸軍
+			set {_p} to 0
+			set {_n} to 0
+			loop {faction.number} times:
+				format slot {_n} of {_player} with green glass pane named "&a%{faction.name.%{_p}%}%陸軍" with lore "&6受け渡しアイテムを登録する" to run "AdminresearchGUI %{_player}% setitem_opentree %{_p}% 0"
+				add 2 to {_n}
+				add 1 to {_p}
+			#空軍
+			set {_p} to 0
+			set {_n} to 9
+			loop {faction.number} times:
+				format slot {_n} of {_player} with blue glass pane named "&b%{faction.name.%{_p}%}%空軍" with lore "&6受け渡しアイテムを登録する" to run "AdminresearchGUI %{_player}% setitem_opentree %{_p}% 1"
+				add 2 to {_n}
+				add 1 to {_p}
+
+			format slot 25 of {_player} with dispenser named "&6ファイルにセーブする" with lore "" to close then run "researchGUI %{_player}% save"
+			format slot 26 of {_player} with hopper named "&6ファイルからロードする" with lore "" to close then run "researchGUI %{_player}% load"
+
+		#Treeを開く
+		if arg-2 is "setitem_opentree":
+			#arg-3[国ID] arg-4[軍Type]
+			wait 2 tick
+			#陸軍海軍識別
+			if arg-4 is 0:
+				set {_type.name} to "陸軍"
+			if arg-4 is 1:
+				set {_type.name} to "空軍"
+			add {_player} to {setitem.openplayer.%arg-3%.%arg-4%::*}
+
+			open chest with 6 row named "%{faction.name.%arg-3%}%&5%{_type.name}%&3Tree&6アイテム登録" to {_player}
+			execute console command "/AdminresearchGUI %{_player}% setitem_writetree %arg-3% %arg-4%"
+
+		if arg-2 is "setitem_allrewritetree":
+			loop {setitem.openplayer.%arg-3%.%arg-4%::*}:
+				execute console command "/AdminresearchGUI %loop-value% setitem_writetree %arg-3% %arg-4%"
+
+
+		#Treeの書き出し
+		if arg-2 is "setitem_writetree":
+			wait 1 tick
+			#arg-3[国ID] arg-4[軍Type]
+			#１番上のTier表示
+			set {_n} to 0
+			loop 4 times:
+				format slot {_n} of {_player} with light green glass pane named "&2Tier1" with lore "" to run [set {_dummy} to 0]
+				add 1 to {_n}
+			loop 3 times:
+				format slot {_n} of {_player} with blue glass pane named "&3Tier2" with lore "" to run [set {_dummy} to 0]
+				add 1 to {_n}
+			loop 2 times:
+				format slot {_n} of {_player} with magenta glass pane named "&5Tier3" with lore "" to run [set {_dummy} to 0]
+				add 1 to {_n}
+
+			#一番下のメニュー
+			format slot 53 of {_player} with compass named "&c戻る" with lore "&6Tree選択に戻る" to close then run "researchGUI %{_player}% setitem_select"
+
+
+			#Tier1
+			#研究スロット
+			set {_ID} to 0
+			set {_n} to 9
+			loop 4 times:
+				loop 4 times:
+					#スロットが使用されているか
+					if {reserch.use.%arg-3%.%arg-4%.%{_ID}%} is true:
+						#アイテムが設定されているか
+						if {reserch.item.%arg-3%.%arg-4%::%{_ID}%} is set:
+							format slot {_n} of {_player} with {reserch.item.%arg-3%.%arg-4%::%{_ID}%} named "&6%{reserch.name.%arg-3%.%arg-4%.%{_ID}%}% &eアイテムを変更する &8%{_ID}%" with lore "&6インベントリの左端のアイテムを登録" to run "AdminresearchGUI %{_player}% setitem_set %arg-3% %arg-4% %{_ID}%"
+						else:
+							format slot {_n} of {_player} with light gray glass pane named "&6%{reserch.name.%arg-3%.%arg-4%.%{_ID}%}% &aアイテムを変更する &8%{_ID}%" with lore "&6インベントリの左端のアイテムを登録" to run "AdminresearchGUI %{_player}% setitem_set %arg-3% %arg-4% %{_ID}%"
+					else:
+						format slot {_n} of {_player} with gray glass pane named " " with lore "" to run [set {_dummy} to 0]
+					add 1 to {_ID}
+					add 1 to {_n}
+				add 5 to {_n}
+
+			#Tier2
+			set {_n} to 13
+			loop 4 times:
+				loop 3 times:
+					#スロットが使用されているか
+					if {reserch.use.%arg-3%.%arg-4%.%{_ID}%} is true:
+						#アイテムが設定されているか
+						if {reserch.item.%arg-3%.%arg-4%::%{_ID}%} is set:
+							format slot {_n} of {_player} with {reserch.item.%arg-3%.%arg-4%::%{_ID}%} named "&6%{reserch.name.%arg-3%.%arg-4%.%{_ID}%}% &eアイテムを変更する &8%{_ID}%" with lore "&6インベントリの左端のアイテムを登録" to run "AdminresearchGUI %{_player}% setitem_set %arg-3% %arg-4% %{_ID}%"
+						else:
+							format slot {_n} of {_player} with light gray glass pane named "&6%{reserch.name.%arg-3%.%arg-4%.%{_ID}%}% &aアイテムを変更する &8%{_ID}%" with lore "&6インベントリの左端のアイテムを登録" to run "AdminresearchGUI %{_player}% setitem_set %arg-3% %arg-4% %{_ID}%"
+					else:
+						format slot {_n} of {_player} with gray glass pane named " " with lore "" to run [set {_dummy} to 0]
+					add 1 to {_ID}
+					add 1 to {_n}
+				add 6 to {_n}
+			
+			#Tier3
+			set {_n} to 16
+			loop 4 times:
+				loop 2 times:
+					#スロットが使用されているか
+					if {reserch.use.%arg-3%.%arg-4%.%{_ID}%} is true:
+						#アイテムが設定されているか
+						if {reserch.item.%arg-3%.%arg-4%::%{_ID}%} is set:
+							format slot {_n} of {_player} with {reserch.item.%arg-3%.%arg-4%::%{_ID}%} named "&6%{reserch.name.%arg-3%.%arg-4%.%{_ID}%}% &eアイテムを変更する &8%{_ID}%" with lore "&6インベントリの左端のアイテムを登録" to run "AdminresearchGUI %{_player}% setitem_set %arg-3% %arg-4% %{_ID}%"
+						else:
+							format slot {_n} of {_player} with light gray glass pane named "&6%{reserch.name.%arg-3%.%arg-4%.%{_ID}%}% &aアイテムを変更する &8%{_ID}%" with lore "&6インベントリの左端のアイテムを登録" to run "AdminresearchGUI %{_player}% setitem_set %arg-3% %arg-4% %{_ID}%"
+					else:
+						format slot {_n} of {_player} with gray glass pane named " " with lore "" to run [set {_dummy} to 0]
+					add 1 to {_n}
+					add 1 to {_ID}
+				add 7 to {_n}
+
+		#アイテム登録処理
+		if arg-2 is "setitem_set":
+			#陸軍海軍識別
+			if arg-4 is 0:
+				set {_type.name} to "陸軍"
+			if arg-4 is 1:
+				set {_type.name} to "空軍"
+
+			if slot 0 of {_player}'s inventory is not air:
+				set {reserch.item.%arg-3%.%arg-4%::%arg-5%} to slot 0 of {_player}'s inventory
+				message "&6[Reserch]&a%{faction.name.%arg-3%}%&2国,&a%{_type.name}%&2軍,ID&a%arg-5%&2の受け渡しアイテムを&a%{reserch.item.%arg-3%.%arg-4%::%arg-5%}%&2に設定しました" to {_player}
+			else:
+				clear {reserch.item.%arg-3%.%arg-4%::%arg-5%}
+				message "&6[Reserch]&c%{faction.name.%arg-3%}%&4国,&c%{_type.name}%&4軍,ID&c%arg-5%&4の受け渡しアイテムを削除しました" to {_player}
+			execute console command "/AdminresearchGUI %{_player}% setitem_allrewritetree %arg-3% %arg-4%"
+
+
+
+
+#----------------------
+#      権限無い版
+#----------------------
+command /research:
+	aliases:/r
+	trigger:
+		execute console command "/researchGUI %player% open"
+#----------------------
+#         本体
+#----------------------
+#       /researchGUI  [プレイヤー]   [動作] [動作補助]   [国ID]   [陸軍|空軍]  [スロットID]:
+command /researchGUI [<player>] [<text>] [<text>] [<number>] [<number>] [<number>]:
+	permission: console.console
+	trigger:
+		#プレイヤーを変数に
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+		#プレイヤーの所属国家国家
+		if {myhome.%{_player}%} is set:
+			set {_playerhome} to {myhome.%{_player}%}
+		else:
+			message "&6[Reserch]&dあなたは国家に所属していません" to {_player}
+			stop
+
+		#第３引数で国ごとのGUIか個人かを判別
+		#編集可能な国ごとのGUI
+		if arg-3 is "faction_editierbare":
+			set {_displayTarget} to {_playerhome}
+		#編集不能な国ごとのGUI
+		else if arg-3 is "faction_uneditable":
+			set {_displayTarget} to {_playerhome}
+		#どちらでもなければプレイヤーごとのGUI
+		else:
+			set {_displayTarget} to {_player}
+
+
+		#デフォルト管理画面
+		if arg-2 is "selectfaction":
+			wait 2 tick
+			#選択GUIを開く
+			if arg-3 is "player":
+				open chest with 1 row named "&b個人&dで研究する国選択" to {_player}
+			if arg-3 is "faction_editierbare":
+				open chest with 1 row named "&6国家&dで研究する国選択" to {_player}
+			play dig gravel at {_player} with pitch 0.8
+			wait 1 tick
+			set {_n} to 0
+			set {_p} to 0
+			loop {faction.number} times:
+				#重複させないように
+				if {reserch.faction.use.%{_displayTarget}%::%{_n}%} is true:
+					format slot {_p} of {_player} with gray glass pane named "&7すでに研究が開始されています" with lore "" to run [set {_dummy} to 0]
+				else:
+					format slot {_p} of {_player} with orange glass pane named "%{faction.name.%{_n}%}%" with lore "%{faction.name.%{_n}%}%&dの研究を開始する" to close then run "researchGUI %{_player}% reserchstart %arg-3% %{_n}%"
+				add 1 to {_n}
+				add 1 to {_p}
+			format slot 8 of {_player} with compass named "&c戻る" with lore "&6Tree選択に戻る" to close then run "researchGUI %{_player}% open"
+
+		#研究の開始
+		if arg-2 is "reserchstart":
+			set {reserch.faction.use.%{_displayTarget}%::%arg-4%} to true
+			if {reserch.faction.next.%{_displayTarget}%} > 0:
+				remove 1 from {reserch.faction.next.%{_displayTarget}%}
+			else:
+				stop
+			execute console command "/researchGUI %{_player}% open"
+			execute console command "/researchGUI %{_player}% allrewrite"
+
+		#同期用
+		if arg-2 is "allrewrite":
+			loop {researchGUI.%{_playerhome}%::*}:
+				if {_player} is not loop-value:
+					execute console command "/researchGUI %loop-value% rewrite"
+
+		#開くツリーの選択
+		if arg-2 is "open":
+			wait 2 tick
+			#サブリーダー以上なら国の編集可能GUIを
+			if {rankhome.%{_player}%} = 1 or 2:
+				open chest with 5 row named "&2Tree選択 &5[国のツリーの研究可]" to {_player}
+			else:
+				open chest with 5 row named "&2Tree選択 &5[国のツリーの研究不可]" to {_player}
+			play dig gravel at {_player} with pitch 0.8
+			#リストに追加
+			add {_player} to {researchGUI.%{_playerhome}%::*}
+			execute console command "/researchGUI %{_player}% rewrite"
+		#描画
+		if arg-2 is "rewrite":	
+			#権限読み取り
+			if {rankhome.%{_player}%} = 1 or 2:
+				set {_edit} to "faction_editierbare"
+			else:
+				set {_edit} to "faction_uneditable"
+
+			wait 1 tick
+
+			#使用国家が未選択な場合選択GUIを開く
+			#個人の場合
+			#未選択なら
+			set {_n} to 0
+			clear {_c}
+			loop {faction.number} times:
+				if {reserch.faction.use.%{_player}%::%{_n}%} is set:
+					set {_c} to true
+				add 1 to {_n}
+			if {_c} is not set:
+				format slot 0 of {_player} with blue glass pane named "&a研究を開始する&2(個人)" with lore "&a最初に研究する国を選択してください" to close then run "researchGUI %{_player}% selectfaction player"
+			else if {reserch.faction.next.%{_player}%} > 0:
+				format slot 0 of {_player} with blue glass pane named "&a研究を開始する&2(個人)" with lore "" to close then run "researchGUI %{_player}% selectfaction player"
+			else:
+				format slot 0 of {_player} with gray glass pane named "&7ロックされています &8研究を開始する(個人)" with lore "&7ツリーの研究を終えてください" to run [set {_dummy} to 0]
+			#国家の場合
+			#国の研究を開始できるか
+			if {_edit} is "faction_editierbare":
+				#未選択なら
+				set {_n} to 0
+				clear {_c}
+				loop {faction.number} times:
+					if {reserch.faction.use.%{_playerhome}%::%{_n}%} is set:
+						set {_c} to true
+					add 1 to {_n}
+				if {_c} is not set:
+					format slot 1 of {_player} with orange glass pane named "&6研究を開始する&2(国家)" with lore "&a最初に研究する国を選択してください" to close then run "researchGUI %{_player}% selectfaction faction_editierbare"
+				else if {reserch.faction.next.%{_playerhome}%} > 0:
+					format slot 1 of {_player} with orange glass pane named "&6研究を開始する&2(国家)" with lore "" to close then run "researchGUI %{_player}% selectfaction faction_editierbare"
+				else:
+					format slot 1 of {_player} with gray glass pane named "&7ロックされています &8研究を開始する(国家)" with lore "&7ツリーの研究を終えてください" to run [set {_dummy} to 0]
+
+			#個人用GUI
+			#陸軍
+			set {_p} to 0
+			set {_n} to 9
+			loop {faction.number} times:
+				#ロックがかかっているか
+				if {reserch.faction.use.%{_player}%::%{_p}%} is true:
+					format slot {_n} of {_player} with light blue glass pane named "&2個人研究ツリー%{faction.name.%{_p}%}%&5陸軍" with lore "%{faction.name.%{_p}%}%&5陸軍&6の研究ツリーを開く" to close then run "researchGUI %{_player}% openTree player %{_p}% 0"
+				else:
+					format slot {_n} of {_player} with gray glass pane named "&7個人研究ツリー%{faction.name.%{_p}%}%陸軍" with lore "&7ロックされています" to run [set {_dummy} to 0]
+				add 2 to {_n}
+				add 1 to {_p}
+			#空軍
+			set {_p} to 0
+			set {_n} to 18
+			loop {faction.number} times:
+				#ロックがかかっているか
+				if {reserch.faction.use.%{_player}%::%{_p}%} is true:
+					format slot {_n} of {_player} with light blue glass pane named "&2個人研究ツリー%{faction.name.%{_p}%}%&5空軍" with lore "%{faction.name.%{_p}%}%&5空軍&6の研究ツリーを開く" to close then run "researchGUI %{_player}% openTree player %{_p}% 1"
+				else:
+					format slot {_n} of {_player} with gray glass pane named "&7個人研究ツリー%{faction.name.%{_p}%}%空軍" with lore "&7ロックされています" to run [set {_dummy} to 0]
+				add 2 to {_n}
+				add 1 to {_p}
+			#国のGUI
+			#陸軍
+			set {_p} to 0
+			set {_n} to 27
+			loop {faction.number} times:
+				#ロックがかかっているか
+				if {reserch.faction.use.%{_playerhome}%::%{_p}%} is true:
+					format slot {_n} of {_player} with orange glass pane named "&3国の研究ツリー%{faction.name.%{_p}%}%&5陸軍" with lore "%{faction.name.%{_p}%}%&5陸軍&6の研究ツリーを開く" to close then run "researchGUI %{_player}% openTree %{_edit}% %{_p}% 0"
+				else:
+					format slot {_n} of {_player} with gray glass pane named "&7国の研究ツリー%{faction.name.%{_p}%}%陸軍" with lore "&7ロックされています" to run [set {_dummy} to 0]
+				add 2 to {_n}
+				add 1 to {_p}
+			#空軍
+			set {_p} to 0
+			set {_n} to 36
+			loop {faction.number} times:
+				#ロックがかかっているか
+				if {reserch.faction.use.%{_playerhome}%::%{_p}%} is true:
+					format slot {_n} of {_player} with orange glass pane named "&3国の研究ツリー%{faction.name.%{_p}%}%&5空軍" with lore "%{faction.name.%{_p}%}%&5空軍&6の研究ツリーを開く" to close then run "researchGUI %{_player}% openTree %{_edit}% %{_p}% 1"
+				else:
+					format slot {_n} of {_player} with gray glass pane named "&7国の研究ツリー%{faction.name.%{_p}%}%空軍" with lore "&7ロックされています" to run [set {_dummy} to 0]
+				add 2 to {_n}
+				add 1 to {_p}
+
+
+		#ツリーを開く
+		if arg-2 is "openTree":
+			#個人か国か判別
+			#編集可能な国ごとのGUI
+			if arg-3 is "faction_editierbare":
+				set {_canedit} to "&5[研究可]"
+				set {_type.target} to "&2%{shortnamehome.%{_playerhome}%}%&3国"
+			#編集不能な国ごとのGUI
+			else if arg-3 is "faction_uneditable":
+				set {_canedit} to "&5[研究不可]"
+				set {_type.target} to "&2%{shortnamehome.%{_playerhome}%}%&3国"
+			#どちらでもなければプレイヤーごとのGUI
+			else:
+				set {_type.target} to "&b%{_player}% "
+				set {_canedit} to " "
+				set {_type.target} to "&2個人研究"
+			#陸軍海軍識別
+			if arg-5 is 0:
+				set {_type.name} to "陸軍"
+			if arg-5 is 1:
+				set {_type.name} to "空軍"
+			#GUIを開く
+			wait 2 tick
+			open chest with 6 row named "%{_type.target}%%{faction.name.%arg-4%}%&5%{_type.name}%&3Tree%{_canedit}%" to {_player}
+			play dig gravel at {_player} with pitch 0.8
+			#リストに追加
+			add {_player} to {researchGUI.tree.%{_playerhome}%::*}
+			execute console command "/researchGUI %{_player}% rewriteTree %arg-3% %arg-4% %arg-5%"
+
+		#描画
+		if arg-2 is "rewriteTree":
+			wait 1 tick
+			#プレイヤーの所属国家からGUIに出す国家を取得
+			#第3引数から研究タイプを取得
+			if arg-3 is "faction_uneditable":
+				set {_canedit} to false
+			else:
+				set {_canedit} to true
+
+
+			#１番上のTier表示
+			set {_n} to 0
+			loop 4 times:
+				format slot {_n} of {_player} with light green glass pane named "&2Tier1" with lore "このTierのすべての研究完了でTier2が解放されます" to run [set {_dummy} to 0]
+				add 1 to {_n}
+			loop 3 times:
+				format slot {_n} of {_player} with blue glass pane named "&3Tier2" with lore "このTierのすべての研究完了でTier3が解放されます" to run [set {_dummy} to 0]
+				add 1 to {_n}
+			loop 2 times:
+				format slot {_n} of {_player} with magenta glass pane named "&5Tier3" with lore "このTierのすべての研究完了で他国Tier1が解放されます" to run [set {_dummy} to 0]
+				add 1 to {_n}
+
+			#一番下のメニュー
+			format slot 53 of {_player} with compass named "&c戻る" with lore "&6Tree選択に戻る" to close then run "researchGUI %{_player}% open"
+			if arg-5 is 0:
+				format slot 45 of {_player} with feather named "&6空軍へ" with lore "&6空軍ツリーへ移動" to close then run "researchGUI %{_player}% openTree %arg-3% %arg-4% 1"
+			if arg-5 is 1:
+				format slot 45 of {_player} with iron helmet named "&6陸軍へ" with lore "&6陸軍ツリーへ移動" to close then run "researchGUI %{_player}% openTree %arg-3% %arg-4% 0"
+
+			#Tier1
+			#研究スロット
+			set {_ID} to 0
+			set {_n} to 9
+			loop 4 times:
+				#列のはじめを検知
+				set {_isfast} to true
+				loop 4 times:
+					#研究のアイコン変更
+
+					#1つ前のIDを格納
+					set {_beforeID} to {_ID} - 1
+
+					#スロットが使用されているか
+					if {reserch.use.%arg-4%.%arg-5%.%{_ID}%} is true:
+						#カウンタ
+						#スキップ可能なら全体量に含めない
+						if {reserch.canskip.%arg-4%.%arg-5%.%{_ID}%} is not set:
+							add 1 to {_totalcount}
+						#研究されているかどうか
+						if {reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%{_ID}%} is true:
+							#アイテムが登録されているか
+							if {reserch.item.%arg-4%.%arg-5%::%{_ID}%} is set:
+								format slot {_n} of {_player} with {reserch.item.%arg-4%.%arg-5%::%{_ID}%} named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&2%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&6クリックでアイテムを受け取る" to run "researchGUI %{_player}% giveitem %arg-3% %arg-4% %arg-5% %{_ID}%"
+							else:
+								format slot {_n} of {_player} with iron bar named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&2%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%" to run [drop {reserch.item.%arg-4%.%arg-5%::%{_ID}%} at {_player}]
+							#カウンタ
+							add 1 to {_endcount}
+						#研究が許可されているか
+						else if {_canedit} is false:
+							format slot {_n} of {_player} with chest named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&2%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&2{@Tier1}||&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+						#列のはじめだったっ場合研究可能に
+						else if {_isfast} is true:
+							format slot {_n} of {_player} with empty map named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&2%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&2{@Tier1}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+							clear {_isfast}
+						
+						#前のスロットが研究されている場合研究可能に
+						else if {reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%{_beforeID}%}:
+							format slot {_n} of {_player} with empty map named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&2%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&2{@Tier1}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+							
+						#どれにも当てはまらない場合UNKNOWNアイコンに
+						else if {reserch.use.%arg-4%.%arg-5%.%{_beforeID}%} is true:
+							format slot {_n} of {_player} with chest named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&2%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&2{@Tier1}||&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+							
+						#前のスロットが使用されていない場合研究可能に
+						else:
+							format slot {_n} of {_player} with empty map named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&2%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&2{@Tier1}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+						
+					#使用されていないスロットをダミーで埋める
+					else:
+						format slot {_n} of {_player} with light gray glass pane named " " to run [set {_dummy} to 0]
+
+					add 1 to {_ID}
+					add 1 to {_n}
+				add 5 to {_n}
+
+			#Tier2
+			#アンロックされているかどうか
+			if {_totalcount} - {_endcount} <= 0:
+				set {_unlockTier2} to true
+			clear {_totalcount}
+			clear {_endcount}
+
+			set {_n} to 13
+			loop 4 times:
+				#列のはじめを検知
+				set {_isfast} to true
+				loop 3 times:
+					#研究のアイコン変更
+
+					#1つ前のIDを格納
+					set {_beforeID} to {_ID} - 1
+
+					#スロットが使用されているか
+					if {reserch.use.%arg-4%.%arg-5%.%{_ID}%} is true:
+						#カウンタ
+						#スキップ可能なら全体量に含めない
+						if {reserch.canskip.%arg-4%.%arg-5%.%{_ID}%} is not set:
+							add 1 to {_totalcount}
+						#研究されているかどうか
+						if {reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%{_ID}%} is true:
+							#アイテムが登録されているか
+							if {reserch.item.%arg-4%.%arg-5%::%{_ID}%} is set:
+								format slot {_n} of {_player} with {reserch.item.%arg-4%.%arg-5%::%{_ID}%} named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&6クリックでアイテムを受け取る" to run "researchGUI %{_player}% giveitem %arg-3% %arg-4% %arg-5% %{_ID}%"
+							else:
+								format slot {_n} of {_player} with book named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%" to run [drop {reserch.item.%arg-4%.%arg-5%::%{_ID}%} at {_player}]
+							#カウンタ
+							add 1 to {_endcount}
+						#Tierがアンロックされているか
+						else if {_unlockTier2} is not set:
+							format slot {_n} of {_player} with ender chest named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&3{@Tier2}||&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+						#研究が許可されているか
+						else if {_canedit} is false:
+							format slot {_n} of {_player} with ender chest named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&3{@Tier2}|&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+						#列のはじめだったっ場合研究可能に
+						else if {_isfast} is true:
+							format slot {_n} of {_player} with ender pearl named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&3{@Tier2}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+							clear {_isfast}
+						
+						#前のスロットが研究されている場合研究可能に
+						else if {reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%{_beforeID}%}:
+							format slot {_n} of {_player} with ender pearl named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&3{@Tier2}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+							
+						#どれにも当てはまらない場合UNKNOWNアイコンに
+						else if {reserch.use.%arg-4%.%arg-5%.%{_beforeID}%} is true:
+							format slot {_n} of {_player} with ender chest named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&3{@Tier2}||&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+							
+						#前のスロットが使用されていない場合研究可能に
+						else:
+							format slot {_n} of {_player} with ender pearl named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&3%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&3{@Tier2}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+						
+					#使用されていないスロットをダミーで埋める
+					else:
+						format slot {_n} of {_player} with light gray glass pane named "%{_ID}%" to run [set {_dummy} to 0]
+
+					add 1 to {_ID}
+					add 1 to {_n}
+				add 6 to {_n}
+			
+			#Tier3
+			#アンロックされているかどうか
+			if {_totalcount} - {_endcount} <= 0:
+				set {_unlockTier3} to true
+			clear {_totalcount}
+			clear {_endcount}
+
+			set {_n} to 16
+			loop 4 times:
+				#列のはじめを検知
+				set {_isfast} to true
+				loop 2 times:
+					#研究のアイコン変更
+
+					#1つ前のIDを格納
+					set {_beforeID} to {_ID} - 1
+
+					#スロットが使用されているか
+					if {reserch.use.%arg-4%.%arg-5%.%{_ID}%} is true:
+						#研究されているかどうか
+						if {reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%{_ID}%} is true:
+							#アイテムが登録されているか
+							if {reserch.item.%arg-4%.%arg-5%::%{_ID}%} is set:
+								format slot {_n} of {_player} with {reserch.item.%arg-4%.%arg-5%::%{_ID}%} named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&6クリックでアイテムを受け取る" to run "researchGUI %{_player}% giveitem %arg-3% %arg-4% %arg-5% %{_ID}%"
+							else:
+								format slot {_n} of {_player} with nether star named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%" to run [drop {reserch.item.%arg-4%.%arg-5%::%{_ID}%} at {_player}]
+						#Tierがアンロックされているか
+						else if {_unlockTier3} is not set:
+							format slot {_n} of {_player} with end portal named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&5{@Tier3}||&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+						#研究が許可されているか
+						else if {_canedit} is false:
+							format slot {_n} of {_player} with end portal named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&5{@Tier3}||&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+						#列のはじめだったっ場合研究可能に
+						else if {_isfast} is true:
+							format slot {_n} of {_player} with enchanted book named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&5{@Tier3}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+							clear {_isfast}
+						
+						#前のスロットが研究されている場合研究可能に
+						else if {reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%{_beforeID}%}:
+							format slot {_n} of {_player} with enchanted book named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&5{@Tier3}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+							
+						#どれにも当てはまらない場合UNKNOWNアイコンに
+						else if {reserch.use.%arg-4%.%arg-5%.%{_beforeID}%} is true:
+							format slot {_n} of {_player} with end portal named "&8%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&c前の研究が終了していません||&7必要な研究ポイント&8:&5{@Tier3}||&7あなたの現在の研究ポイント&8:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run [set {_dummy} to 0]
+							
+						#前のスロットが使用されていない場合研究可能に
+						else:
+							format slot {_n} of {_player} with enchanted book named "%{reserch.name.%arg-4%.%arg-5%.%{_ID}%}%" with lore "&5%{reserch.lore.%arg-4%.%arg-5%.%{_ID}%}%||&aクリックで研究ポイントを使用して研究する||&e必要な研究ポイント&6:&5{@Tier3}||&bあなたの現在の研究ポイント&6:&f%{RP.%{_displayTarget}%.%arg-5%}%" to run "researchGUI %{_player}% reserch %arg-3% %arg-4% %arg-5% %{_ID}%"
+						
+					#使用されていないスロットをダミーで埋める
+					else:
+						format slot {_n} of {_player} with light gray glass pane named "%{_ID}%" to run [set {_dummy} to 0]
+
+					add 1 to {_n}
+					add 1 to {_ID}
+				add 7 to {_n}
+
+		#アイテムを受け渡す
+		if arg-2 is "giveitem":
+			if {_player} has enough space for {reserch.item.%arg-4%.%arg-5%::%arg-6%}:
+				give {reserch.item.%arg-4%.%arg-5%::%arg-6%} to {_player}
+			else:
+				drop {reserch.item.%arg-4%.%arg-5%::%arg-6%} at {_player}
+			message "&6[Reserch]&2%{reserch.name.%arg-4%.%arg-5%.%arg-6%}%&aの設計図を受け取りました" to {_player}
+
+		#処理用
+		#研究の実装
+		if arg-2 is "reserch":
+			#表示定義
+			if arg-5 is 0:
+				set {_display} to "陸軍"
+			else if arg-5 is 1:
+				set {_display} to "空軍"
+		
+			#Tierから研究ポイントを出す
+			if arg-6 <= 15:
+				#Tier1
+				set {_point} to {@Tier1}
+			else if arg-6 <= 27:
+				#Tier1
+				set {_point} to {@Tier2}
+			else:
+				#Tier1
+				set {_point} to {@Tier3}
+
+
+			#研究ポイントの判定
+			if {RP.%{_displayTarget}%.%arg-5%} - {_point} >= 0:
+				#研究処理
+				set {reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%arg-6%} to true
+				#ポイント減算処理
+				remove {_point} from {RP.%{_displayTarget}%.%arg-5%}
+				play level up at location of {_player} with pitch 6
+				message "&6[Reserch]&a研究に成功しました&5国名:&3%{faction.name.%arg-4%}%&6,&5種別:&3%{_display}%&6,&a残り&2%{RP.%{_displayTarget}%.%arg-5%}%" to {_player}
+			else:
+				#研究ポイント不足の処理
+				play dig sand at location of {_player} with pitch 3
+				message "&6[Reserch]&c研究ポイントが不足しています" to {_player}
+				message "&6[Reserch]&5国名:&3%{faction.name.%arg-4%}%&6,&5種別:&3%{_display}%&6,&5不足分ポイント:&4%{_point} - {RP.%{_displayTarget}%.%arg-5%}%" to {_player}
+
+			#最後の研究かどうか
+			#陸軍
+			set {_totalcount} to 0
+			set {_endcount} to 0
+			set {_ID} to 0
+			loop 36 times:
+				if {reserch.use.%arg-4%.0.%{_ID}%} is set:
+					add 1 to {_totalcount}
+					if {reserch.%{_displayTarget}%.%arg-4%.0::%{_ID}%} is set:
+						add 1 to {_endcount}
+				add 1 to {_ID}
+
+				if {_totalcount} - {_endcount} = 0:
+					#空軍
+					set {_totalcount} to 0
+					set {_endcount} to 0
+					set {_ID} to 0
+					loop 36 times:
+						if {reserch.use.%arg-4%.1.%{_ID}%} is set:
+							add 1 to {_totalcount}
+							if {reserch.%{_displayTarget}%.%arg-4%.1::%{_ID}%} is set:
+								add 1 to {_endcount}
+						add 1 to {_ID}
+
+					if {_totalcount} - {_endcount} = 0:
+						add 1 to {reserch.faction.next.%{_displayTarget}%}
+						execute console command "/researchGUI %{_player}% allrewrite"
+						
+		#	broadcast "{reserch.%{_displayTarget}%.%arg-4%.%arg-5%::%arg-6%}"
+			execute console command "/researchGUI %{_player}% allrewriteTree %arg-3% %arg-4% %arg-5%"
+		#同期用
+		if arg-2 is "allrewriteTree":
+			loop {researchGUI.tree.%{_playerhome}%::*}:
+				execute console command "/researchGUI %loop-value% rewriteTree %arg-3% %arg-4% %arg-5%"
+
