@@ -24,7 +24,20 @@ on rightclick with bedrock:
 	cancel event
 	set {_name} to "%slot 0 of player's inventory%"
 	set {_item} to {_name} parsed as item
+	
 	broadcast "%{_name}% %{_item}%"
+
+#===========
+# チームチャット
+#===========
+on chat:
+	cancel event
+	if {Beacon.Faction::%player%} is not set: 
+		broadcast "&6[Chat]&7<%player%>&f%message%"
+	else:
+		loop all players:
+			if {Beacon.Faction::%loop-player%} is {Beacon.Faction::%player%}:
+				message "&6[TeamChat]&7<%player%>&f%message%" to loop-player
 
 
 on rightclick with strad disc:
@@ -153,6 +166,7 @@ command /Beacon [<player>] [<text>] [<number>] [<text>]:
 		if arg-2 is "openFactionGUI":
 			if {Beacon.faction::%{_player}%} is not set:
 				execute console command "/Beacon %{_player}% openFactionChooser"
+				stop
 
 			wait 2 tick
 			open chest with 1 row named "&1出撃先を選択" to {_player}

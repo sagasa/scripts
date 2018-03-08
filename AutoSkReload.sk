@@ -14,6 +14,7 @@ every 20 tick:
 			set {_name} to last element of {_s::*}
 			set {_s::*} to {_name} split at "."
 			execute {skAdmin} command "/sk reload %first element of {_s::*}%"
+			#broadcast "/sk reload %first element of {_s::*}%"
 
 command /skreload [<text>]:
 	trigger:
