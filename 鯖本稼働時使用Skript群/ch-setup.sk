@@ -16,7 +16,6 @@ on join:
 	if player is op:
 		if {ch-enable-op.%player%} is not set:
 			set {ch-enable-op.%player%} to false
-
 	
 #変数初期化
 On Quit:
@@ -43,7 +42,7 @@ command /ch-setup <text> [<number>] [<player=%player%>]:
 				set {ch-number} to 1
 			#隣接領土
 			if {ch-core-near-territory} is not set:
-				set {ch-core-near-territory} to 1
+				set {ch-core-near-territory} to 2
 			#領土外保護
 			if {ch-block-neutral-territory} is not set:
 				set {ch-block-neutral-territory} to true
@@ -116,6 +115,5 @@ command /ch-setup <text> [<number>] [<player=%player%>]:
 			set {ch-admin-houkai-country} to "&a国が崩壊しました"
 		
 			set {ch-in-clan} to "&aに入りました"
-			
 			
 			message "%{ch-title}%言語ファイルを更新しました" to server

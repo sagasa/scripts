@@ -52,6 +52,12 @@ on place:
 				message "%{ch-title}%この領土は&f%{ch-name.%{ch-land-rn.%chunk at location of block%}%}%に隣接しています"
 				cancel event
 				stop
+		#テリトリー
+		if {ch-land-tr.%chunk at location of block%}:
+			if event-item is sapling:			
+				cancel event
+				stop
+
 						
 	#保護あり
 	if {ch-land.%chunk at location of block%} is not {ch-countryid.%player%}:

@@ -2,11 +2,6 @@
 #
 #/ch-build chunk 2
 
-options:
-	#=====================
-	# テリトリーの距離 (メートル)
-	#=====================
-	ch-territory-distance : 64
 
 on join:
 	if {uuid.%uuid of player%} is not set:#uuid登録
@@ -201,68 +196,17 @@ command /ch-core <text> [<number>] [<number>] [<number>] [<number>] [<offlinepla
 							if {ch-countryid.%arg 6%} is set:
 								if {ch-land.%{_chunk}%} is not {ch-countryid.%arg 6%}:
 									add 1 to {_outc}
+					if {ch-land-tr.%{_chunk}%} is set:
+						if {ch-land-tr.%{_chunk}%} is not {ch-countryid.%arg 6%}:
+							add 1 to {_outc}
 									
 					add 16 to x-coordinate of {_loc}
 					add 1 to {_count1}
+								
 				add -16 * {_hloop} to x-coordinate of {_loc}
 				add 16 to z-coordinate of {_loc}
 				add 1 to {_count2}
 
-			#=========================
-			#          テリトリー
-			
-			set {_loc} to location of arg 6
-			set {_chunk} to chunk at location of arg 6
-			set {_schunk} to chunk at location of arg 6
-			#チャンクの切れ目を検索
-			while {_chunk} = {_schunk}:
-				add -1 to x-coordinate of {_loc}
-				set {_schunk} to chunk at location of {_loc}
-			add 1 to x-coordinate of {_loc}
-			set {_schunk} to chunk at location of {_loc}
-			while {_chunk} = {_schunk}:
-				add -1 to z-coordinate of {_loc}
-				set {_schunk} to chunk at location of {_loc}
-			add 1 to z-coordinate of {_loc}
-			set {_schunk} to chunk at location of {_loc}
-			set y-coordinate of {_loc} to 1
-			set {_homeloc} to {_loc}
-
-			#国を全部見る
-			set {_n} to 0
-			loop {country-now-number} times:
-				while {ch-name.%{_n}%} is not set:
-					add 1 to {_n}
-				#broadcast "No.%{_n}% : 国名.%{ch-name.%{_n}%}%"
-				#自国でなければ
-				if {_n} is not {ch-countryid.%arg 6%}:
-					#国の所持している領土
-					loop {ch-land-list.%{_n}%::*}:
-						#broadcast "領土座標.%{ch-spawn-list.%loop-value-2%}%"
-						set {_loc} to {ch-spawn-list.%loop-value-2%}
-						set {_chunk} to loop-value-2
-						set {_schunk} to loop-value-2
-						#チャンクの切れ目を検索
-						while {_chunk} = {_schunk}:
-							add -1 to x-coordinate of {_loc}
-							set {_schunk} to chunk at location of {_loc}
-						add 1 to x-coordinate of {_loc}
-						set {_schunk} to chunk at location of {_loc}
-						while {_chunk} = {_schunk}:
-							add -1 to z-coordinate of {_loc}
-							set {_schunk} to chunk at location of {_loc}
-						add 1 to z-coordinate of {_loc}
-						set {_schunk} to chunk at location of {_loc}
-						set y-coordinate of {_loc} to 1
-						set {_distance} to distance between {_loc} and {_homeloc}
-						#broadcast "現在座標からの距離.%{_distance}%"
-						#broadcast "{@ch-territory-distance} > %{_distance}%"
-						if {@ch-territory-distance} > {_distance}:
-							message "%{ch-title}%&4他国の領土が近すぎます" to arg 6
-							stop
-
-				add 1 to {_n}
-			#=========================
 
 			if {ch-countryid.%arg 6%} is not 0:
 				#隣接する自分の領土をチェック
@@ -358,7 +302,7 @@ command /ch-core <text> [<number>] [<number>] [<number>] [<number>] [<offlinepla
 				execute console command "ch-build chunk 2 0 0 0 %arg 6%"
 			
 			set {_ran} to 1
-			set {_loc} to location of player
+			set {_loc} to location of arg-6
 			add -16 * {_ran} to x-coordinate of {_loc}
 			add -16 * {_ran} to z-coordinate of {_loc}
 			set {_outc} to 0
@@ -372,6 +316,30 @@ command /ch-core <text> [<number>] [<number>] [<number>] [<number>] [<offlinepla
 					set {_chunk} to chunk at location of {_loc}
 					if {ch-land.%{_chunk}%} is not set:
 						set {ch-land-rn.%{_chunk}%} to {ch-countryid.%arg 6%}
+												
+					add 16 to x-coordinate of {_loc}
+					add 1 to {_count1}
+				add -16 * {_hloop} to x-coordinate of {_loc}
+				add 16 to z-coordinate of {_loc}
+				add 1 to {_count2}
+
+			#テリトリー用
+			set {_ran} to {ch-core-near-territory}
+			set {_loc} to location of arg-6
+			add -16 * {_ran} to x-coordinate of {_loc}
+			add -16 * {_ran} to z-coordinate of {_loc}
+			set {_outc} to 0
+			set {_myc} to 0	
+			set {_hloop} to {_ran} * 2 + 1			
+			
+			set {_count2} to 0
+			while {_count2} is less than {_hloop}:
+				set {_count1} to 0
+				while {_count1} is less than {_hloop}:
+					set {_chunk} to chunk at location of {_loc}
+					if {ch-land.%{_chunk}%} is not set:
+						#broadcast "%{_chunk}% %{_ran}%"
+						set {ch-land-tr.%{_chunk}%} to {ch-countryid.%arg 6%}
 												
 					add 16 to x-coordinate of {_loc}
 					add 1 to {_count1}
