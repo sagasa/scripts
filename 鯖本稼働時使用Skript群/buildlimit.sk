@@ -15,7 +15,7 @@ on place:
 	#保護なし
 	if {ch-land.%chunk at location of block%} is not set:
 		if y-coordinate of location of block > {@place}:
-			message "&6[BildLimit]&c工作制限がかかっています &3設置上限高度&9&l{@place} &6&l{@wait}&6秒後に削除されます"
+			message "&6[BuildLimit]&c工作制限がかかっています &3設置上限高度&9&l{@place} &6&l{@wait}&6秒後に削除されます"
 			wait {@wait} second
 			set event-block to air
 
@@ -28,5 +28,5 @@ on Break:
 	#保護なし
 	if {ch-land.%chunk at location of block%} is not set:
 		if y-coordinate of location of block < {@break}:
-			message "&6[BildLimit]&c工作制限がかかっています &3破壊下限高度&9&l{@break}"
+			message "&6[BuildLimit]&c工作制限がかかっています &3破壊下限高度&9&l{@break}"
 			cancel event

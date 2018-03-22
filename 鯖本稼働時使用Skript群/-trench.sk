@@ -1,0 +1,309 @@
+command /trenchcreate <player>:
+	permission:console.console
+	trigger:
+		set {_player} to arg-1
+	
+		set {_location} to {trench.%{_player}%}
+	
+		set {_location1} to {_location}
+		set {_location2} to {_location}
+		set {_tplocation} to {_location}
+	
+		if {trench.direction.%{_player}%} is north:
+	
+			set x-location of {_location1} to x-location of {_location} +1
+			set z-location of {_location1} to z-location of {_location} -2
+			set y-location of {_location1} to y-location of {_location} -3
+		
+			set x-location of {_location2} to x-location of {_location} -1
+			set z-location of {_location2} to z-location of {_location} +2
+
+			set z-location of {_tplocation} to z-location of {_location} +3
+
+		if {trench.direction.%{_player}%} is south:
+	
+			set x-location of {_location1} to x-location of {_location} +1
+			set z-location of {_location1} to z-location of {_location} +2
+			set y-location of {_location1} to y-location of {_location} -3
+		
+			set x-location of {_location2} to x-location of {_location} -1
+			set z-location of {_location2} to z-location of {_location} -2
+
+			set z-location of {_tplocation} to z-location of {_location} -3
+
+		if {trench.direction.%{_player}%} is west:
+	
+			set x-location of {_location1} to x-location of {_location} -2
+			set z-location of {_location1} to z-location of {_location} +1
+			set y-location of {_location1} to y-location of {_location} -3
+		
+			set x-location of {_location2} to x-location of {_location} +2
+			set z-location of {_location2} to z-location of {_location} -1
+
+			set x-location of {_tplocation} to x-location of {_location} +3
+
+		if {trench.direction.%{_player}%} is east:
+	
+			set x-location of {_location1} to x-location of {_location} +2
+			set z-location of {_location1} to z-location of {_location} +1
+			set y-location of {_location1} to y-location of {_location} -3
+		
+			set x-location of {_location2} to x-location of {_location} -2
+			set z-location of {_location2} to z-location of {_location} -1
+
+			set x-location of {_tplocation} to x-location of {_location} -3
+		set y-location of {_tplocation} to y-location of {_location} +1
+
+
+		loop {ch.pretest::*}:
+			set {_loop} to loop-value
+			set y-coordinate of {_loop} to 0
+		
+			set {_loc.xz} to {_location}
+			set y-coordinate of {_loc.xz} to 0
+		
+			if distance between {_loop} and {_loc.xz} < 150:
+				set {_check} to true
+		
+	
+		if {_check} is true:
+			message "&6[ClanHome]&4編集不可能エリアです" to {_player}
+			delete {trench.%{_player}%}
+			delete {trench.direction.%{_player}%}
+			delete {trench.enable.%{_player}%}
+			delete {trench.location.%{_player}%}
+			stop
+	
+		loop blocks within {_location1} to {_location2}:
+			set {_loop} to chunk at location of loop-block
+			
+			if {land.%{_loop}%} is not 0:
+				message "&6[ClanHome]&4この領土は&f%{namehome.%{land.%{_loop}%}%}%&4によって保護されています" to {_player}
+				delete {trench.%{_player}%}
+				delete {trench.direction.%{_player}%}
+				delete {trench.enable.%{_player}%}
+				delete {trench.location.%{_player}%}
+
+				stop
+
+		message "&a塹壕を掘っています・・・" to {_player}
+	
+		loop blocks within {_location1} to {_location2}:
+			
+			set loop-block to air
+
+			teleport {_player} to {_tplocation}
+
+		message "&b塹壕を整えています・・・" to {_player}
+
+		loop blocks within {_location1} to {_location2}:
+
+			if {_used.%loop-block%} is not set:
+
+				if y-location of loop-block is less than y-location of {_location}:
+
+					if {trench.direction.%{_player}%} is north or south:
+
+						if y-location of loop-block is less than y-location of {_location} - 2:
+							set loop-block to dirt:2
+							set {_used.%loop-block%} to true
+
+					else if {trench.direction.%{_player}%} is west or east:
+
+						if y-location of loop-block is less than y-location of {_location} - 2:
+							set loop-block to dirt:2
+							set {_used.%loop-block%} to true
+
+			teleport {_player} to {_tplocation}
+
+		message "&e塹壕を掘り終えました" to {_player}
+
+
+		delete {trench.%{_player}%}
+		delete {trench.direction.%{_player}%}
+		delete {trench.enable.%{_player}%}
+		delete {trench.location.%{_player}%}
+
+
+command /trenchcreate2 <player>:
+	permission:console.console
+	trigger:
+		set {_player} to arg-1
+	
+		set {_location} to {trench.%{_player}%}
+	
+		set {_location1} to {_location}
+		set {_location2} to {_location}
+		set {_tplocation} to {_location}
+	
+		if {trench.direction.%{_player}%} is north:
+	
+			set x-location of {_location1} to x-location of {_location} +1
+			set z-location of {_location1} to z-location of {_location} -2
+			set y-location of {_location1} to y-location of {_location} -2
+		
+			set x-location of {_location2} to x-location of {_location} -1
+			set z-location of {_location2} to z-location of {_location} +2
+
+			set z-location of {_tplocation} to z-location of {_location} +3
+
+		if {trench.direction.%{_player}%} is south:
+	
+			set x-location of {_location1} to x-location of {_location} +1
+			set z-location of {_location1} to z-location of {_location} +2
+			set y-location of {_location1} to y-location of {_location} -2
+		
+			set x-location of {_location2} to x-location of {_location} -1
+			set z-location of {_location2} to z-location of {_location} -2
+
+			set z-location of {_tplocation} to z-location of {_location} -3
+
+		if {trench.direction.%{_player}%} is west:
+	
+			set x-location of {_location1} to x-location of {_location} -2
+			set z-location of {_location1} to z-location of {_location} +1
+			set y-location of {_location1} to y-location of {_location} -2
+		
+			set x-location of {_location2} to x-location of {_location} +2
+			set z-location of {_location2} to z-location of {_location} -1
+
+			set x-location of {_tplocation} to x-location of {_location} +3
+
+		if {trench.direction.%{_player}%} is east:
+	
+			set x-location of {_location1} to x-location of {_location} +2
+			set z-location of {_location1} to z-location of {_location} +1
+			set y-location of {_location1} to y-location of {_location} -2
+		
+			set x-location of {_location2} to x-location of {_location} -2
+			set z-location of {_location2} to z-location of {_location} -1
+
+			set x-location of {_tplocation} to x-location of {_location} -3
+		set y-location of {_tplocation} to y-location of {_location} +1
+
+
+		loop {ch.pretest::*}:
+			set {_loop} to loop-value
+			set y-coordinate of {_loop} to 0
+		
+			set {_loc.xz} to {_location}
+			set y-coordinate of {_loc.xz} to 0
+		
+			if distance between {_loop} and {_loc.xz} < 150:
+				set {_check} to true
+		
+	
+		if {_check} is true:
+			message "&6[ClanHome]&4編集不可能エリアです" to {_player}
+			delete {trench.%{_player}%}
+			delete {trench.direction.%{_player}%}
+			delete {trench.enable.%{_player}%}
+			delete {trench.location.%{_player}%}
+			stop
+	
+		loop blocks within {_location1} to {_location2}:
+			set {_loop} to chunk at location of loop-block
+			
+			if {land.%{_loop}%} is not 0:
+				message "&6[ClanHome]&4この領土は&f%{namehome.%{land.%{_loop}%}%}%&4によって保護されています" to {_player}
+				delete {trench.%{_player}%}
+				delete {trench.direction.%{_player}%}
+				delete {trench.enable.%{_player}%}
+				delete {trench.location.%{_player}%}
+
+				stop
+
+		message "&a塹壕を掘っています・・・" to {_player}
+	
+		loop blocks within {_location1} to {_location2}:
+			
+			set loop-block to air
+
+			teleport {_player} to {_tplocation}
+
+		message "&b塹壕を整えています・・・" to {_player}
+
+		loop blocks within {_location1} to {_location2}:
+
+			if {_used.%loop-block%} is not set:
+
+				if y-location of loop-block is less than y-location of {_location}:
+
+					if {trench.direction.%{_player}%} is north or south:
+
+						if y-location of loop-block is less than y-location of {_location} - 1:
+							set loop-block to dirt:2
+							set {_used.%loop-block%} to true
+
+					else if {trench.direction.%{_player}%} is west or east:
+
+						if y-location of loop-block is less than y-location of {_location} - 1:
+							set loop-block to dirt:2
+							set {_used.%loop-block%} to true
+
+			teleport {_player} to {_tplocation}
+
+		message "&e塹壕を掘り終えました" to {_player}
+
+
+		delete {trench.%{_player}%}
+		delete {trench.direction.%{_player}%}
+		delete {trench.enable.%{_player}%}
+		delete {trench.location.%{_player}%}
+
+
+on leftclick:
+	if player is holding iron shovel named "&d塹壕用ショベル":
+
+		if player's facing is north or south or west or east:
+	
+			if {trench.enable.%player%} is not set:
+				set {trench.%player%} to location of event-block
+				set {trench.direction.%player%} to player's facing
+				set {trench.enable.%player%} to true
+				execute console command "/trenchcreate %player%" 
+	
+			else:
+				message "&c同時に複数の塹壕を掘ることは出来ません。"
+
+		else:
+			message "&c塹壕を掘る角度が悪いようです。"
+
+	else if player is holding iron shovel named "&d塹壕用ショベル2":
+
+		if player's facing is north or south or west or east:
+	
+			if {trench.enable.%player%} is not set:
+				set {trench.%player%} to location of event-block
+				set {trench.direction.%player%} to player's facing
+				set {trench.enable.%player%} to true
+				execute console command "/trenchcreate2 %player%" 
+	
+			else:
+				message "&c同時に複数の塹壕を掘ることは出来ません。"
+
+		else:
+			message "&c塹壕を掘る角度が悪いようです。"
+
+command /getshovel:
+	permission:Skript.OP
+	trigger:
+		give iron shovel named "&d塹壕用ショベル" to player
+
+command /getshovel2:
+	permission:Skript.OP
+	trigger:
+		give iron shovel named "&d塹壕用ショベル2" to player
+
+command /trenchreset <player>:
+	permission: Skript.OP
+	trigger:
+		set {_player} to arg-1
+		delete {trench.%{_player}%}
+		delete {trench.direction.%{_player}%}
+		delete {trench.enable.%{_player}%}
+		delete {trench.location.%{_player}%}
+
+on tool change:
+	if {trench.enable.%player%} is true:
+		cancel event

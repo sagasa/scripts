@@ -549,10 +549,10 @@ command /ch-admin <text> [<number>] [<number>] [<number>] [<number>] [<offlinepl
 				add -16 * {_hloop} to x-coordinate of {_loc}
 				add 16 to z-coordinate of {_loc}
 				add 1 to {_count2}
+			
+			set {_loc} to location (arg-2, arg-3, arg-4) in world "world"
 
-			#テリトリー用
-			set {_ran} to {ch-core-near-territory}
-			set {_loc} to location of arg-6
+			set {_ran} to 1
 			add -16 * {_ran} to x-coordinate of {_loc}
 			add -16 * {_ran} to z-coordinate of {_loc}
 			set {_outc} to 0
@@ -564,15 +564,36 @@ command /ch-admin <text> [<number>] [<number>] [<number>] [<number>] [<offlinepl
 				set {_count1} to 0
 				while {_count1} is less than {_hloop}:
 					set {_chunk} to chunk at location of {_loc}
-					if {ch-land.%{_chunk}%} is not set:
-						clear {ch-land-tr.%{_chunk}%}
-												
+					if {ch-land.%{_chunk}%} is {ch-countryid.%arg 6%}:
+						set {_b} to {_loc}
+						
+
+						set {_ran} to 1
+						add -16 * {_ran} to x-coordinate of {_loc}
+						add -16 * {_ran} to z-coordinate of {_loc}
+						set {_outc} to 0
+						set {_myc} to 0	
+						set {_hloop} to {_ran} * 2 + 1		
+						set {_count2} to 0
+						while {_count2} is less than {_hloop}:
+							set {_count1} to 0
+							while {_count1} is less than {_hloop}:
+								set {_chunk} to chunk at location of {_loc}
+								if {ch-land.%{_chunk}%} is not set:
+									set {ch-land-rn.%{_chunk}%} to {ch-countryid.%arg 6%}
+								add 16 to x-coordinate of {_loc}
+								add 1 to {_count1}
+							add -16 * {_hloop} to x-coordinate of {_loc}
+							add 16 to z-coordinate of {_loc}
+							add 1 to {_count2}
+						set {_loc} to {_b}
+						
+																			
 					add 16 to x-coordinate of {_loc}
 					add 1 to {_count1}
 				add -16 * {_hloop} to x-coordinate of {_loc}
 				add 16 to z-coordinate of {_loc}
 				add 1 to {_count2}
-
 			
 			
 			set {_loc} to location (arg-2, arg-3, arg-4) in world "world"
@@ -586,70 +607,6 @@ command /ch-admin <text> [<number>] [<number>] [<number>] [<number>] [<offlinepl
 			add -1 to {ch-maxchunk-now.%{_country}%}
 			if {ch-maxchunk-now.%{_country}%} = 0:
 				execute console command "ch-admin delcountry %{_id}% %arg 6%"
-			else:
-				set {_loc} to location (arg-2, arg-3, arg-4) in world "world"
-
-				set {_ran} to {ch-core-near-territory}*2
-				add -16 * {_ran} to x-coordinate of {_loc}
-				add -16 * {_ran} to z-coordinate of {_loc}
-				set {_outc} to 0
-				set {_myc} to 0	
-				set {_hloop} to {_ran} * 2 + 1
-				
-				set {_count2} to 0
-				while {_count2} is less than {_hloop}:
-					set {_count1} to 0
-					while {_count1} is less than {_hloop}:
-						set {_chunk} to chunk at location of {_loc}
-						if {ch-land.%{_chunk}%} is {ch-countryid.%arg 6%}:
-							set {_b} to {_loc}
-
-							set {_ran} to 1
-							add -16 * {_ran} to x-coordinate of {_loc}
-							add -16 * {_ran} to z-coordinate of {_loc}
-							set {_outc} to 0
-							set {_myc} to 0	
-							set {_hloop} to {_ran} * 2 + 1		
-							set {_count2} to 0
-							while {_count2} is less than {_hloop}:
-								set {_count1} to 0
-								while {_count1} is less than {_hloop}:
-									set {_chunk} to chunk at location of {_loc}
-									if {ch-land.%{_chunk}%} is not set:
-										set {ch-land-rn.%{_chunk}%} to {ch-countryid.%arg 6%}
-									add 16 to x-coordinate of {_loc}
-									add 1 to {_count1}
-								add -16 * {_hloop} to x-coordinate of {_loc}
-								add 16 to z-coordinate of {_loc}
-								add 1 to {_count2}
-
-							set {_ran} to {ch-core-near-territory}
-							add -16 * {_ran} to x-coordinate of {_loc}
-							add -16 * {_ran} to z-coordinate of {_loc}
-							set {_outc} to 0
-							set {_myc} to 0	
-							set {_hloop} to {_ran} * 2 + 1		
-							set {_count2} to 0
-							while {_count2} is less than {_hloop}:
-								set {_count1} to 0
-								while {_count1} is less than {_hloop}:
-									set {_chunk} to chunk at location of {_loc}
-									if {ch-land.%{_chunk}%} is not set:
-										set {ch-land-tr.%{_chunk}%} to {ch-countryid.%arg 6%}
-									add 16 to x-coordinate of {_loc}
-									add 1 to {_count1}
-								add -16 * {_hloop} to x-coordinate of {_loc}
-								add 16 to z-coordinate of {_loc}
-								add 1 to {_count2}
-
-							set {_loc} to {_b}
-							
-																				
-						add 16 to x-coordinate of {_loc}
-						add 1 to {_count1}
-					add -16 * {_hloop} to x-coordinate of {_loc}
-					add 16 to z-coordinate of {_loc}
-					add 1 to {_count2}
 
 		#国削除
 		else if arg 1 = "delcountry":
