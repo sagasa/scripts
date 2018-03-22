@@ -313,19 +313,22 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 		#  アイテム設定
 		#=============
 		if arg-2 is "set_request":
-			set {facility.%arg-3%::item.request} to slot 0 of {_player}'s inventory
-			message "&6[Facility]&e要求アイテムに&3%{facility.%arg-3%::item.request}%&eを登録しました" to {_player}
+			set {facility.%arg-3%::item.request} to "%slot 0 of {_player}'s inventory%"
+			message "&6[Facility]&e要求アイテムに&3%{facility.%arg-3%::item.request}%&eを登録しました" to {_player}	
 			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
 
 		if arg-2 is "set_output":
-			set {facility.%arg-3%::item.output} to slot 0 of {_player}'s inventory
-			message "&6[Facility]&e出力アイテムに&3%{facility.%arg-3%::item.output}%&eを登録しました" to {_player}
+			set {_n} to 0
+			loop 9 times:
+				set {facility.%arg-3%::item.output.%{_n}%} to "%slot {_n} of {_player}'s inventory%"
+				message "&6[Facility]&e出力アイテムに&3%{facility.%arg-3%::item.output.%{_n}%}%&eを登録しました" to {_player}
+				add 1 to {_n}
 			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
 
 
 		if arg-2 is "set_pointitem":
 			wait 1 tick
-			set {facility.pointitem.%arg-3%} to slot 0 of {_player}'s inventory
+			set {facility.pointitem.%arg-3%} to "%slot 0 of {_player}'s inventory%"
 			message "&6[Facility]&e研究ポイントに&3%{facility.pointitem.%arg-3%}%&eを設定しました" to {_player}
 			execute console command "/facility %{_player}% facility_list"
 
@@ -486,25 +489,28 @@ on rightclick:
 				message "&6[Facility]&eクールタイム:&3%{facility.ct.factory.%{_n}%::%{_ct}%}%秒"
 			else:
 				#要求があるかどうか
-				if {facility.%{_n}%::item.request} is not air:
-					if player is not holding {facility.%{_n}%::item.request}:
+				if {facility.%{_n}%::item.request} parsed as item is set:
+					if player is not holding {facility.%{_n}%::item.request} parsed as item:
 						message "&6[Facility]&4%{facility.%{_n}%::item.request}%&cで右クリックしてください"
 						stop
-					remove {facility.%{_n}%::item.request} from player
+					remove {facility.%{_n}%::item.request}  parsed as item from player
 				set {facility.ct.factory.%{_n}%::%{_ct}%} to {facility.%{_n}%::output.rate}
 
-				if player has enough space for {facility.%{_n}%::item.output}:
-					give {facility.%{_n}%::item.output} to player
-				else:
-					drop {facility.%{_n}%::item.output} at player
-				message "&6[Facility]&b%{facility.%{_n}%::item.output}%&aを受け取りました"
+				set {_p} to 0
+				loop 9 times:
+					if {facility.%{_n}%::item.output.%{_p}%}  parsed as item is set:
+						if player has enough space for {facility.%{_n}%::item.output.%{_p}%} parsed as item:
+							give {facility.%{_n}%::item.output.%{_p}%} parsed as item to player
+						else:
+							drop {facility.%{_n}%::item.output.%{_p}%} parsed as item at player
+						message "&6[Facility]&b%{facility.%{_n}%::item.output.%{_p}%} parsed as item%&aを受け取りました"
+					add 1 to {_p}
 
 				loop {facility.%{_n}%::output.rate} times:
 					wait 20 tick
 					remove 1 from {facility.ct.factory.%{_n}%::%{_ct}%}
 				clear {facility.ct.factory.%{_n}%::%{_ct}%}
-
-
+					
 		#army
 		if {facility.%{_n}%::type} is "army" or "airforce":
 			if {facility.%{_n}%::type} is "army":
