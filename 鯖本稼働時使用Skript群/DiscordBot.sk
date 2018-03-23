@@ -1,0 +1,9 @@
+#----------DiscordBot----------
+on skript load:
+	#トークン設定※必須
+	login to user with token "NDIyODMyOTA2NTM3MjcxMjk4.DYhhcg.L9kbY0PSUcz_9r0QiEHoGqUm2Jk" with name "HiddenFieldBOT"
+
+on command /discord <text>:
+	permission: skript.op
+	trigger:
+		private message sent to arg-1

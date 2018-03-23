@@ -117,10 +117,17 @@ command /timecontrolstart:
 				execute console command "/minelimitreset"
 			if {time.minute0} = 1:
 				execute console command "/skweek"#0:01に曜日取得
-		
 		if {time.hour0} = 1:
 		if {time.hour0} = 2:
 		if {time.hour0} = 3:
+			if {time.minute0} = 30:
+				broadcast "&6[Wipe]&330分後&2に設置されている兵器を削除します"
+			if {time.minute0} = 40:
+				broadcast "&6[Wipe]&320分後&2に設置されている兵器を削除します"
+			if {time.minute0} = 50:
+				broadcast "&6[Wipe]&310分後&2に設置されている兵器を削除します"
+			if {time.minute0} = 59:
+				execute console command "/wipe"
 		if {time.hour0} = 4:
 		if {time.hour0} = 5:
 		if {time.hour0} = 6:
@@ -138,7 +145,6 @@ command /timecontrolstart:
 			if {time.minute0} = 0:
 				execute console command "/facility start"
 				execute console command "/mthiderset"
-			execute console command "/mthidetime"
 		if {time.hour0} = 18:
 			if {time.minute0} = 0:
 				execute console command "/mthiderset"

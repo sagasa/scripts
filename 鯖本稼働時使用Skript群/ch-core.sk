@@ -1,8 +1,6 @@
 #メイン
 #
 #/ch-build chunk 2
-
-
 on join:
 	if {uuid.%uuid of player%} is not set:#uuid登録
 		set {uuid.%uuid of player%} to player#uuid登録
@@ -196,18 +194,12 @@ command /ch-core <text> [<number>] [<number>] [<number>] [<number>] [<offlinepla
 							if {ch-countryid.%arg 6%} is set:
 								if {ch-land.%{_chunk}%} is not {ch-countryid.%arg 6%}:
 									add 1 to {_outc}
-					if {ch-land-tr.%{_chunk}%} is set:
-						if {ch-land-tr.%{_chunk}%} is not {ch-countryid.%arg 6%}:
-							add 1 to {_outc}
 									
 					add 16 to x-coordinate of {_loc}
 					add 1 to {_count1}
-								
 				add -16 * {_hloop} to x-coordinate of {_loc}
 				add 16 to z-coordinate of {_loc}
 				add 1 to {_count2}
-
-
 			if {ch-countryid.%arg 6%} is not 0:
 				#隣接する自分の領土をチェック
 				if arg 2 = 1:
@@ -302,7 +294,7 @@ command /ch-core <text> [<number>] [<number>] [<number>] [<number>] [<offlinepla
 				execute console command "ch-build chunk 2 0 0 0 %arg 6%"
 			
 			set {_ran} to 1
-			set {_loc} to location of arg-6
+			set {_loc} to location of player
 			add -16 * {_ran} to x-coordinate of {_loc}
 			add -16 * {_ran} to z-coordinate of {_loc}
 			set {_outc} to 0
@@ -316,30 +308,6 @@ command /ch-core <text> [<number>] [<number>] [<number>] [<number>] [<offlinepla
 					set {_chunk} to chunk at location of {_loc}
 					if {ch-land.%{_chunk}%} is not set:
 						set {ch-land-rn.%{_chunk}%} to {ch-countryid.%arg 6%}
-												
-					add 16 to x-coordinate of {_loc}
-					add 1 to {_count1}
-				add -16 * {_hloop} to x-coordinate of {_loc}
-				add 16 to z-coordinate of {_loc}
-				add 1 to {_count2}
-
-			#テリトリー用
-			set {_ran} to {ch-core-near-territory}
-			set {_loc} to location of arg-6
-			add -16 * {_ran} to x-coordinate of {_loc}
-			add -16 * {_ran} to z-coordinate of {_loc}
-			set {_outc} to 0
-			set {_myc} to 0	
-			set {_hloop} to {_ran} * 2 + 1			
-			
-			set {_count2} to 0
-			while {_count2} is less than {_hloop}:
-				set {_count1} to 0
-				while {_count1} is less than {_hloop}:
-					set {_chunk} to chunk at location of {_loc}
-					if {ch-land.%{_chunk}%} is not set:
-						#broadcast "%{_chunk}% %{_ran}%"
-						set {ch-land-tr.%{_chunk}%} to {ch-countryid.%arg 6%}
 												
 					add 16 to x-coordinate of {_loc}
 					add 1 to {_count1}

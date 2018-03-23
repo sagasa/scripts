@@ -3,7 +3,6 @@
 #日付変更時に			/mthiderset
 
 on right click with redstone:
-	wait 1 tick
 	player is op
 	cancel event
 	if name of player's tool is "鉱山用":
@@ -22,7 +21,6 @@ on right click with redstone:
 			add 1 to {_count}
 	
 on left click with redstone:
-	wait 1 tick
 	player is op
 	cancel event
 	if name of player's tool is "鉱山用":
@@ -52,74 +50,69 @@ on inventory close:
 			message "&d[system]&f報酬%{mth.%player%}%を決定しました"
 			set {mth.%player%} to 0
 on join:
-	set {_count} to 0
-	loop 8 times:
-		if {mthide.type.%{_count}%} is 1:
-			set {_daikouzan} to {_count}
-		else if {mthide.type.%{_count}%} is 3:
-			set {_shoukouzan} to {_count}
-		add 1 to {_count}
-	if {_daikouzan} and {_shoukouzan} is set:
-		message "&b現在、&c%{_daikouzan}%番の大鉱山&bと&e%{_shoukouzan}%番の小鉱山&bが&a稼働中です。"
 	set {mtct.%player%} to 30
 	while {mtct.%player%} is more than 0:
 		add -1 to {mtct.%player%}
 		wait 1 seconds
 	
-on right click with iron pickaxe or diamond hoe or diamond pickaxe:
-	wait 1 tick
-	if {mthide.locnum.%location of event-block%} is set:
-		if {mthide.loc.%{mthide.locnum.%location of event-block%}%} = location of event-block:
-			set {_num} to {mthide.locnum.%location of event-block%}
-			if {mthide.time.%{_num}%} = -1:
-				message "&d[system]&fこの鉱山はロック中です"
-			else if {mthide.time.%{_num}%} = 0:
-				message "&d[system]&fこの鉱山は停止中です"
-				if player has 1 diamond hoe:
-					remove 1 diamond hoe from the player
+on right click with iron pickaxe or stick or diamond pickaxe:
+	if event-block is diamond block:
+		loop blocks in radius 3 around location of event-block:
+			if {mthide.locnum.%location of loop-block%} is set:
+				if {mthide.loc.%{mthide.locnum.%location of loop-block%}%} = location of loop-block:
+					set {_num} to {mthide.locnum.%location of loop-block%}
+				else:
+					clear {mthide.loc.%{mthide.locnum.%location of loop-block%}%}
+
+				
+	if {_num} is set:
+		if {mthide.time.%{_num}%} = -1:
+			message "&d[system]&fこの鉱山はロック中です"
+		else if {mthide.time.%{_num}%} = 0:
+			message "&d[system]&fこの鉱山は停止中です"
+			if player is holding stick:
+				if player has 1 stick:
+					remove 1 stick from the player
 					set {mthide.type.%{_num}%} to 4
 					set {mthide.time.%{_num}%} to 30
 					broadcast "&d[system]&f鉱山%{_num}%を30分強制稼働させます"
 
-			else:
-				if {mtct.%player%} is less than 1:
-					if player has 1 diamond pickaxe:
-						remove 1 diamond pickaxe from the player
-						message "&d[system]&f報酬を与えました"
-						set {_count} to 0
-						set {_loc} to location of player
-						add 2 to y-coordinate of {_loc}
-						loop 9 times:
-							drop {hideslot.%{_count}%.%{mthide.type.%{_num}%}%} at {_loc}
-							drop {hideslot.%{_count}%.%{mthide.type.%{_num}%}%} at {_loc}
-							
-							add 1 to {_count}
-						set {mtct.%player%} to 30
-						while {mtct.%player%} is more than 0:
-							add -1 to {mtct.%player%}
-							wait 1 seconds
-					
-					else if player has 1 iron pickaxe:
-						remove 1 iron pickaxe from the player
-						message "&d[system]&f報酬を与えました"
-						set {_count} to 0
-						set {_loc} to location of player
-						add 2 to y-coordinate of {_loc}
-						loop 9 times:
-							drop {hideslot.%{_count}%.%{mthide.type.%{_num}%}%} at {_loc}
-							add 1 to {_count}
-						set {mtct.%player%} to 30
-						while {mtct.%player%} is more than 0:
-							add -1 to {mtct.%player%}
-							wait 1 seconds
-					else:
-						message "&d[system]&fあなたは鉄ピッケルを所持していません"
-				else:
-					message "&d[system]&fクールタイム中です(残り%{mtct.%player%}%秒)"
-					
 		else:
-			clear {mthide.loc.%{mthide.locnum.%location of event-block%}%}
-			
+			if {mtct.%player%} is less than 1:
+				if player has 1 diamond pickaxe:
+					remove 1 diamond pickaxe from the player
+					message "&d[system]&f報酬を与えました"
+					set {_count} to 0
+					set {_loc} to location of player
+					add 2 to y-coordinate of {_loc}
+					loop 9 times:
+						drop {hideslot.%{_count}%.%{mthide.type.%{_num}%}%} at {_loc}
+						drop {hideslot.%{_count}%.%{mthide.type.%{_num}%}%} at {_loc}
+						
+						add 1 to {_count}
+					set {mtct.%player%} to 30
+					while {mtct.%player%} is more than 0:
+						add -1 to {mtct.%player%}
+						wait 1 seconds
+				
+				else if player has 1 iron pickaxe:
+					remove 1 iron pickaxe from the player
+					message "&d[system]&f報酬を与えました"
+					set {_count} to 0
+					set {_loc} to location of player
+					add 2 to y-coordinate of {_loc}
+					loop 9 times:
+						drop {hideslot.%{_count}%.%{mthide.type.%{_num}%}%} at {_loc}
+						add 1 to {_count}
+					set {mtct.%player%} to 30
+					while {mtct.%player%} is more than 0:
+						add -1 to {mtct.%player%}
+						wait 1 seconds
+				else:
+					message "&d[system]&fあなたは鉄ピッケルを所持していません"
+			else:
+				message "&d[system]&fクールタイム中です(残り%{mtct.%player%}%秒)"
+								
 command /mthidetime:
 	permission: shop.sk
 	trigger:	
@@ -131,17 +124,6 @@ command /mthidetime:
 					if {mthide.time.%{_count}%} = 0:
 						broadcast "&d[system]&fNo.%{_count}%鉱山が稼働を停止しました"
 						set {mthide.type.%{_count}%} to 0
-			add 1 to {_count}
-
-command /mthidestop:
-	permission: shop.sk
-	trigger:	
-		set {_count} to 0
-		loop 18 times:
-			if {mthide.time.%{_count}%} is set:
-				if {mthide.time.%{_count}%} is not 0 or -1:
-					broadcast "&d[system]&fNo.%{_count}%鉱山が稼働を停止しました"
-					set {mthide.type.%{_count}%} to 0
 			add 1 to {_count}
 
 command /mthiderset:
@@ -278,8 +260,6 @@ command /mthide <text> [<player>] [<number>] [<number>]:
 			format slot 8 of arg 2 with red wool named "&b鉱山を削除する" to close then run "mthide delete %arg 2% %arg 3%"
 			format slot 9 of arg 2 with green wool named "&b大鉱山に指定する" to close then run "mthide size1 %arg 2% %arg 3%"
 			format slot 11 of arg 2 with green wool named "&b小鉱山に指定する" to close then run "mthide size3 %arg 2% %arg 3%"
-
-
 #
 #以下しゃうーらが幸せになるエリア
 #

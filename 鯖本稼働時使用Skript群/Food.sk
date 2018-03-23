@@ -90,3 +90,7 @@ on join:
 			apply regeneration 10 to player for 1 tick
 
 			clear {healing.%player%}
+
+on death of player:
+	clear {healing.%player%}
+	set player's food level to 20

@@ -50,14 +50,6 @@ on rightclick with name tag:
 		remove {_stump} from {drop.stump.list::*}
 		set {_stump::*} to {_stump} split at "."
 		drop first element of {_stump::*} parsed as player's skull
-On teleport:
-	if "%player%" is "SagasaYuuaka":
-		set {_l} to location of player
-		wait a tick
-		if y-coordinate of location of player < 0:
-			teleport player to {_l}
-		if y-coordinate of location of player > 300:
-			teleport player to {_l}
 command /ItemCompression [<text>]:
 	permission: console.console
 	trigger:
