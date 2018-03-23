@@ -825,14 +825,16 @@ command /ocptTotalization <text> [<number>] [<number>]:
 
 		if arg-1 is "point":
 			if arg-2 is set:
-				#リストに入ってなければ追加
-				loop {cap.list.%arg-2%::*}:
-					if {OT.win.%arg-2%} is loop-value:
-						set {_p} to true
-				if {_p} is not set:
-					add {OT.win.%arg-2%} to {cap.list.%arg-2%::*}
-				#ポイント
-				add 1 to {cap.point.%arg-2%::%{OT.win.%arg-2%}%}
+				#None国防止
+				if {OT.win.%arg-2%} is not set:
+					#リストに入ってなければ追加
+					loop {cap.list.%arg-2%::*}:
+						if {OT.win.%arg-2%} is loop-value:
+							set {_p} to true
+					if {_p} is not set:
+						add {OT.win.%arg-2%} to {cap.list.%arg-2%::*}
+					#ポイント
+					add 1 to {cap.point.%arg-2%::%{OT.win.%arg-2%}%}
 				
 				broadcast "  &6==&5%{OT.name.%arg-2%}%&dの占領が更新されました&6=="
 				broadcast " &e----------------------------------------"
