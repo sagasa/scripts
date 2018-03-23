@@ -25,12 +25,25 @@
 #{facility.[ID]::output.rate}	クールタイム
 #{facility.[ID]::ct.private}	個人クールタイムかどうか
 
+#---------------
+#   稼働関連
+#---------------
+#{facility.operation_all}		全体稼働
+#{facility.operation_all::*} 	全体稼働に含まれる施設ID
+#{facility.operation::*}		各施設の稼働状態
+
+#{facility.operation_rotate_p}	ローテーションのポインタ
+
+
 #========================
 #  外部から実行してほしいコマンド  
 #========================
 #TCLから/facility start で稼働			戦争時間開始に
 #TCLから/facility stop で停止			戦争時間終了に
 #TCLから/facility time で時間経過の回復	1分おきに呼んで
+
+#TCLから/facility rotate_next でローテーションを進める
+#TCLから/facility rotate_stop で稼働中の施設を止める
 
 #/facility transfer で振込GUI
 
@@ -47,24 +60,66 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 		#    稼働
 		#=============
 		if arg-2 is "start":
-			broadcast "&6[Facility]&d施設が稼働しました"
-			set {facility.operation} to true
-			set {_n} to 0
-			loop 45 times:
-				if {facility.ID.list::%{_n}%} is true:
-					loop {facility.sign.%{_n}%::*}:
-						set line 3 of loop-value-2 to "[&a稼働中&0]"
-				add 1 to {_n}
+			if arg-3 is not set:
+				set {_n} to 0
+				loop 45 times:
+					if {facility.ID.list::%{_n}%} is true:
+						if {facility.operation_all::%{_n}%} is set:
+							execute console command "/facility %{_player}% start %{_n}%"
+					add 1 to {_n}
+			else:		
+				broadcast "&6[Facility]&3%{facility.%arg-3%::name}%&dが稼働しました"
+				if {facility.ID.list::%arg-3%} is true:
+					set {facility.operation::%arg-3%} to true
+					loop {facility.sign.%arg-3%::*}:
+						set line 3 of loop-value to "[&a稼働中&0]"
 
 		if arg-2 is "stop":
-			broadcast "&6[Facility]&d施設が停止しました"
-			clear {facility.operation}
-			set {_n} to 0
-			loop 45 times:
-				if {facility.ID.list::%{_n}%} is true:
-					loop {facility.sign.%{_n}%::*}:
-						set line 3 of loop-value-2 to "[&4停止中&0]"
-				add 1 to {_n}
+			if arg-3 is not set:
+				set {_n} to 0
+				loop 45 times:
+					if {facility.ID.list::%{_n}%} is true:
+						if {facility.operation_all::%{_n}%} is set:
+							execute console command "/facility %{_player}% stop %{_n}%"
+					add 1 to {_n}
+			else:
+				broadcast "&6[Facility]&3%{facility.%arg-3%::name}%&dが停止しました"
+				if {facility.ID.list::%arg-3%} is true:
+					clear {facility.operation::%arg-3%}
+					loop {facility.sign.%arg-3%::*}:
+						set line 3 of loop-value to "[&4停止中&0]"
+
+		if arg-2 is "rotate_next":
+			if {facility.operation_rotate_p} is not set:
+				set {facility.operation_rotate_p} to 0
+			add 1 to {facility.operation_rotate_p}
+			if {facility.operation_rotate.%{facility.operation_rotate_p}%::*} is not set:
+				set {_new} to 0
+				set {_old} to {facility.operation_rotate_p} - 1
+				set {facility.operation_rotate_p} to 0
+			else:
+				set {_new} to {facility.operation_rotate_p}
+				set {_old} to {facility.operation_rotate_p} - 1
+			#稼働処理
+			loop {facility.operation_rotate.%{_old}%::*}:
+				execute console command "/facility %{_player}% stop %loop-value%"
+			loop {facility.operation_rotate.%{_old}%::*}:
+				execute console command "/facility %{_player}% start %loop-value%"
+
+		if arg-2 is "rotate_stop":
+			if {facility.operation_rotate_p} is not set:
+				set {facility.operation_rotate_p} to 0
+			add 1 to {facility.operation_rotate_p}
+			if {facility.operation_rotate.%{facility.operation_rotate_p}%::*} is not set:
+				set {_new} to 0
+				set {_old} to {facility.operation_rotate_p} - 1
+				set {facility.operation_rotate_p} to 0
+			else:
+				set {_new} to {facility.operation_rotate_p}
+				set {_old} to {facility.operation_rotate_p} - 1
+			#稼働処理
+			loop {facility.operation_rotate.%{_old}%::*}:
+				execute console command "/facility %{_player}% stop %loop-value%"
 
 		#===============
 		# 研究ポイントの振込
@@ -168,15 +223,84 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 
 				add 1 to {_n}
 		
-			format slot 45 of {_player} with light green glass pane named "&2稼働開始" with lore "" to close then run "facility %{_player}% start"
 			format slot 46 of {_player} with red glass pane named "&4稼働停止" with lore "" to close then run "facility %{_player}% stop"
+			format slot 45 of {_player} with light green glass pane named "&2稼働開始" with lore "" to close then run "facility %{_player}% start"
+			format slot 47 of {_player} with white glass pane named "&6稼働する施設の選択" with lore "" to close then run "facility %{_player}% operation_all_info"
 
+			format slot 49 of {_player} with red glass pane named "&4ローテーション停止" with lore "" to close then run "facility %{_player}% rotate_stop"
+			format slot 48 of {_player} with light green glass pane named "&2ローテーションを進める" with lore "" to close then run "facility %{_player}% rotate_next"
+			format slot 50 of {_player} with white glass pane named "&6稼働する施設の選択" with lore "" to close then run "facility %{_player}% operation_rote_info"
 
-
-			format slot 50 of {_player} with white glass pane named "&a陸軍&3研究ポイントのアイテムを設定" with lore "&61陸軍研究ポイント:&e%{facility.pointitem.0}%" to close then run "facility %{_player}% set_pointitem 0"
-			format slot 51 of {_player} with white glass pane named "&b空軍&3研究ポイントのアイテムを設定" with lore "&61空軍研究ポイント:&e%{facility.pointitem.1}%" to close then run "facility %{_player}% set_pointitem 1"
+			format slot 51 of {_player} with sign item named "&a陸軍&3研究ポイントのアイテムを設定" with lore "&61陸軍研究ポイント:&e%{facility.pointitem.0}%" to close then run "facility %{_player}% set_pointitem 0"
+			format slot 52 of {_player} with sign item named "&b空軍&3研究ポイントのアイテムを設定" with lore "&61空軍研究ポイント:&e%{facility.pointitem.1}%" to close then run "facility %{_player}% set_pointitem 1"
 
 			format slot 53 of {_player} with paper named "&d新規追加" with lore "&6施設を新規追加する" to close then run "facility %{_player}% facility_add"
+
+		#=============
+		#   稼働管理
+		#=============
+		#全体稼働の内容編集
+		if arg-2 is "operation_all_info":
+			wait 2 tick
+			open chest with 6 row named "&a全体稼働に含める施設" to {_player}
+			wait 1 tick
+			set {_n} to 0
+			loop 45 times:
+				if {facility.ID.list::%{_n}%} is true:
+					if {facility.operation_all::%{_n}%} is set:
+						format slot {_n} of {_player} with light green glass pane named "&dName:&f%{facility.%{_n}%::name}%" with lore "&dLore:&f%{facility.%{_n}%::lore}%||&c稼働リストから外す" to close then run "facility %{_player}% operation_all_clear %{_n}%"
+					else:
+						format slot {_n} of {_player} with black glass pane named "&dName:&f%{facility.%{_n}%::name}%" with lore "&dLore:&f%{facility.%{_n}%::lore}%||&b稼働リストに入れる" to close then run "facility %{_player}% operation_all_set %{_n}%"
+					add 1 to {_n}
+
+		if arg-2 is "operation_all_clear":
+			clear {facility.operation_all::%arg-3%}
+			execute console command "/facility %{_player}% operation_all_info"
+
+		if arg-2 is "operation_all_set":
+			set {facility.operation_all::%arg-3%} to arg-3
+			execute console command "/facility %{_player}% operation_all_info"
+
+		#ローテーション稼働管理
+		if arg-2 is "operation_rote_info":
+			wait 2 tick
+			open chest with 6 row named "&1ローテーション稼働に含める施設" to {_player}
+			wait 1 tick
+			set {_n} to 0
+			loop 9 times:
+				set {_slot} to {_n}
+				loop 4 times:
+					format slot {_slot} of {_player} with light gray glass pane named "&6No.%{_n}%に追加する施設を選択" with lore "" to close then run "facility %{_player}% operation_rote_add %{_n}%"
+					add 9 to {_slot}
+				add 1 to {_n}	
+
+			set {_n} to 0
+			loop 9 times:
+				if {facility.operation_rotate.%{_n}%::*} is set:
+					set {_slot} to {_n}
+					loop {facility.operation_rotate.%{_n}%::*}:
+						format slot {_slot} of {_player} with light green glass pane named "&dName:&f%{facility.%loop-value-2%::name}%" with lore "&dLore:&f%{facility.%loop-value-2%::lore}%||&c稼働リストから外す" to close then run "facility %{_player}% operation_rote_remove %{_n}% %loop-value-2%"
+						add 9 to {_slot}
+				add 1 to {_n}
+
+		if arg-2 is "operation_rote_add":
+			if arg-4 is not set:
+				wait 2 tick
+				open chest with 6 row named "&1ローテーションNo.&2%arg-3%&1に追加する施設を選択" to {_player}
+				wait 1 tick
+				set {_n} to 0
+				loop 45 times:
+					if {facility.ID.list::%{_n}%} is true:
+						if {facility.operation_rotate.%arg-3%::%arg-3%} is not set:
+							format slot {_n} of {_player} with light green glass pane named "&dName:&f%{facility.%{_n}%::name}%" with lore "&dLore:&f%{facility.%{_n}%::lore}%||&b稼働リストに入れる" to close then run "facility %{_player}% operation_rote_add %arg-3% %{_n}%"
+					add 1 to {_n}
+			else:
+				set {facility.operation_rotate.%arg-3%::%arg-4%} to arg-4
+				execute console command "/facility %{_player}% operation_rote_info"
+
+		if arg-2 is "operation_rote_remove":
+			clear {facility.operation_rotate.%arg-3%::%arg-4%}
+			execute console command "/facility %{_player}% operation_rote_info"
 
 		#=============
 		#   施設管理
@@ -213,7 +337,10 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 			message "&6[Facility]&4施設&cID:%arg-3%,Name:%{facility.%arg-3%::name}%&4を削除しました" to {_player}
 			clear {facility.ID.list::%arg-3%}
 			clear {facility.%arg-3%::*}
-
+			loop {facility.sign.%arg-3%::*}:
+				clear {facility.interface.%loop-value%}
+			loop {facility.block.%arg-3%::*}:
+				clear {facility.interface.%loop-value%}
 			clear {facility.sign.%arg-3%::*}
 			clear {facility.block.%arg-3%::*}
 
@@ -221,9 +348,9 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 		if arg-2 is "facility_edit_open":
 			wait 2 tick
 			open chest with 3 row named "&1施設の設定 &dID:&3%arg-3%" to {_player}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 		#書き込み
-		if arg-2 is "facility_edit_white":
+		if arg-2 is "facility_edit_write":
 			wait 1 tick
 			#表示用看板
 			format slot 0 of {_player} with sign item named "&d表示用看板の追加" with lore "" to close then run "facility %{_player}% sign_add %arg-3%"
@@ -316,12 +443,12 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 		if arg-2 is "ct_public":
 			clear {facility.%arg-3%::ct.private}
 			message "&6[Facility]&eクールタイムTypeを&3Public&eに設定しました" to {_player}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 		if arg-2 is "ct_private":
 			set {facility.%arg-3%::ct.private} to true
 			message "&6[Facility]&eクールタイムTypeを&3Private&eに設定しました" to {_player}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 		#=============
 		#  アイテム設定
@@ -329,7 +456,7 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 		if arg-2 is "set_request":
 			set {facility.%arg-3%::item.request} to "%slot 0 of {_player}'s inventory%"
 			message "&6[Facility]&e要求アイテムに&3%{facility.%arg-3%::item.request}%&eを登録しました" to {_player}	
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 		if arg-2 is "set_output":
 			set {_n} to 0
@@ -337,7 +464,7 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 				set {facility.%arg-3%::item.output.%{_n}%} to "%slot {_n} of {_player}'s inventory%"
 				message "&6[Facility]&e出力アイテムに&3%{facility.%arg-3%::item.output.%{_n}%}%&eを登録しました" to {_player}
 				add 1 to {_n}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 
 		if arg-2 is "set_pointitem":
@@ -355,7 +482,7 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 			if arg-2 is "capacity.max":
 				if {facility.%arg-3%::capacity.max} < {facility.%arg-3%::capacity}:
 					set {facility.%arg-3%::capacity} to {facility.%arg-3%::capacity.max}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 		#=============
 		#   名前変更
@@ -379,17 +506,17 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 		if arg-2 is "type_army":
 			set {facility.%arg-3%::type} to "army"
 			message "&6[Facility]&d施設のTypeを&5戦車工場&dに変更しました" to {_player}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 		if arg-2 is "type_airforce":
 			set {facility.%arg-3%::type} to "airforce"
 			message "&6[Facility]&d施設のTypeを&5航空機工場&dに変更しました" to {_player}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 		if arg-2 is "type_factory":
 			set {facility.%arg-3%::type} to "factory"
 			message "&6[Facility]&d施設のTypeを&5戦略物資工場&dに変更しました" to {_player}
-			execute console command "/facility %{_player}% facility_edit_white %arg-3%"
+			execute console command "/facility %{_player}% facility_edit_write %arg-3%"
 
 		#=============
 		#   看板関連
@@ -483,12 +610,12 @@ on rightclick:
 		if block is not set:
 			stop
 
+		set {_n} to {facility.interface.%block%}
+
 		#稼働しているか
-		if {facility.operation} is not set:
+		if {facility.operation::%{_n}%} is not set:
 			message "&6[Facility]&c現在稼働していません"
 			stop
-
-		set {_n} to {facility.interface.%block%}
 
 		#factory
 		if {facility.%{_n}%::type} is "factory":
@@ -596,7 +723,7 @@ on leftclick:
 		if {facility.ct.%player%} is not set:
 			set {facility.ct.%player%} to true
 
-			if {facility.operation} is true:
+			if {facility.operation::%{facility.interface.%block%}%} is true:
 				message "&6[Facility] &a稼働状況:&a&l稼働中"
 			else:
 				message "&6[Facility] &a稼働状況:&4&l停止中"
