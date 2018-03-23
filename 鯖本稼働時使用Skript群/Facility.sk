@@ -155,6 +155,12 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 
 					else:
 						set {_type} to "||&dType:&6アイテム交換"
+						set {_p} to 0
+						set {_txt} to "%{facility.%{_n}%::item.output.%{_n}%}%"
+						loop 8 times:
+							add 1 to {_p}
+							if {facility.%{_n}%::item.output.%{_p}%} parsed as item is set:
+								set {_txt} to "%{_txt}%&e,&3%{facility.%{_n}%::item.output.%{_p}%}%"
 						set {_lore} to "||&d要求アイテム:&6%{facility.%{_n}%::item.request}%||&d出力アイテム:&6%{facility.%{_n}%::item.output}%||&dクールタイム:&6%{facility.%{_n}%::output.rate}%"
 
 					format slot {_slot} of {_player} with beacon named "&dName:&f%{facility.%{_n}%::name}%" with lore "&dLore:&f%{facility.%{_n}%::lore}%%{_type}%%{_lore}%||&e施設の管理を開く" to close then run "facility %{_player}% facility_edit_open %{_n}%"
@@ -165,8 +171,10 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 			format slot 45 of {_player} with light green glass pane named "&2稼働開始" with lore "" to close then run "facility %{_player}% start"
 			format slot 46 of {_player} with red glass pane named "&4稼働停止" with lore "" to close then run "facility %{_player}% stop"
 
-			format slot 48 of {_player} with white glass pane named "&a陸軍&3研究ポイントのアイテムを設定" with lore "&61陸軍研究ポイント:&e%{facility.pointitem.0}%" to close then run "facility %{_player}% set_pointitem 0"
-			format slot 49 of {_player} with white glass pane named "&b空軍&3研究ポイントのアイテムを設定" with lore "&61空軍研究ポイント:&e%{facility.pointitem.1}%" to close then run "facility %{_player}% set_pointitem 1"
+
+
+			format slot 50 of {_player} with white glass pane named "&a陸軍&3研究ポイントのアイテムを設定" with lore "&61陸軍研究ポイント:&e%{facility.pointitem.0}%" to close then run "facility %{_player}% set_pointitem 0"
+			format slot 51 of {_player} with white glass pane named "&b空軍&3研究ポイントのアイテムを設定" with lore "&61空軍研究ポイント:&e%{facility.pointitem.1}%" to close then run "facility %{_player}% set_pointitem 1"
 
 			format slot 53 of {_player} with paper named "&d新規追加" with lore "&6施設を新規追加する" to close then run "facility %{_player}% facility_add"
 
@@ -276,7 +284,13 @@ command /facility [<player>] [<text>] [<number>] [<number>]:
 				#要求アイテム
 				format slot 9 of {_player} with hopper named "&3要求アイテムを設定" with lore "&6要求アイテム:&e%{facility.%arg-3%::item.request}%||&3インベントリの左端のアイテムを要求アイテムに登録" to run "facility %{_player}% set_request %arg-3%"
 				#出力アイテム
-				format slot 10 of {_player} with dispenser named "&3出力アイテムを設定" with lore "&6出力アイテム:&e%{facility.%arg-3%::item.output}%||&3インベントリの左端のアイテムを出力アイテムに登録" to run "facility %{_player}% set_output %arg-3%"
+				set {_n} to 0
+				set {_txt} to "&6出力アイテム:&e%{facility.%arg-3%::item.output.%{_n}%}%"
+				loop 8 times:
+					add 1 to {_n}
+					set {_txt} to "%{_txt}%||&6出力アイテム:&e%{facility.%arg-3%::item.output.%{_n}%}%"
+
+				format slot 10 of {_player} with dispenser named "&3出力アイテムを設定" with lore "%{_txt}%||&3インベントリのホットバーのアイテムを出力アイテムに登録" to run "facility %{_player}% set_output %arg-3%"
 				#クールタイム
 				format slot 11 of {_player} with light green glass pane named "&aクールタイムを&610秒&2追加" with lore "&6クールタイム:&e%{facility.%arg-3%::output.rate}%秒" to run "facility %{_player}% output.rate %arg-3% 10"
 				format slot 12 of {_player} with light green glass pane named "&aクールタイムを&61秒&2追加" with lore "&6クールタイム:&e%{facility.%arg-3%::output.rate}%秒" to run "facility %{_player}% output.rate %arg-3% 1"
@@ -493,7 +507,7 @@ on rightclick:
 					if player is not holding {facility.%{_n}%::item.request} parsed as item:
 						message "&6[Facility]&4%{facility.%{_n}%::item.request}%&cで右クリックしてください"
 						stop
-					remove {facility.%{_n}%::item.request}  parsed as item from player
+					remove {facility.%{_n}%::item.request} parsed as item from player
 				set {facility.ct.factory.%{_n}%::%{_ct}%} to {facility.%{_n}%::output.rate}
 
 				set {_p} to 0
@@ -604,7 +618,13 @@ on leftclick:
 					message "&6[Facility] &e1回の獲得量:&3%{facility.%{facility.interface.%block%}%::output.max}% &eクールタイム:&3%{facility.%{facility.interface.%block%}%::output.rate}%秒"
 				else:
 					message "&6[Facility] &e施設Type:&5戦略物資工場"
-					message "&6[Facility] &e要求アイテム:&3%{facility.%{facility.interface.%block%}%::item.request}% &e出力アイテム:&3%{facility.%{facility.interface.%block%}%::item.output}%"
+					set {_n} to 0
+					set {_txt} to "%{facility.%{facility.interface.%block%}%::item.output.%{_n}%}%"
+					loop 8 times:
+						add 1 to {_n}
+						if {facility.%{facility.interface.%block%}%::item.output.%{_n}%} parsed as item is set:
+							set {_txt} to "%{_txt}%&e,&3%{facility.%{facility.interface.%block%}%::item.output.%{_n}%}%"
+					message "&6[Facility] &e要求アイテム:&3%{facility.%{facility.interface.%block%}%::item.request}% &e出力アイテム:&3%{_txt}%"
 					message "&6[Facility] &eクールタイム:&3%{facility.%{facility.interface.%block%}%::output.rate}%秒"
 
 			wait 5 tick

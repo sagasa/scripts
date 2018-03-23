@@ -10,7 +10,7 @@ on death of player:
 	set {_n} to 0
 	#テストデータを-1に
 	set {inventory.%{_stump}%::-1} to true
-	loop 36 times:
+	loop 40 times:
 		if slot {_n} of player's inventory is name tag:
 			drop slot {_n} of player's inventory at player
 			set slot {_p} of player's inventory to air
@@ -33,7 +33,7 @@ on rightclick with name tag:
 		cancel event
 		#めんどくさいのでドロップする
 		set {_n} to 0
-		loop 36 times:
+		loop 40 times:
 			set {_p} to 0
 			loop 36 times:
 				if slot {_p} of player's inventory is air:
