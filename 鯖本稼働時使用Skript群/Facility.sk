@@ -680,7 +680,7 @@ on rightclick:
 				#振込処理
 				add round {facility.%{_n}%::output.max}/10*3 to {RP.%player%.%{_type}%}
 				if {ch-countryid.%player%} is set:
-					add round {facility.%{_n}%::output.max}/10*1 to {RP.%{ch-countryid.%player%}%.%{_type}%}
+					add round {facility.%{_n}%::output.max}/10*3 to {RP.%{ch-countryid.%player%}%.%{_type}%}
 
 
 				message "&6[Facility]%{_type.name}%&aの研究ポイント&b%round {facility.%{_n}%::output.max}/10*7%&eを受け取りました"
