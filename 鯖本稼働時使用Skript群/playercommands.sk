@@ -26,6 +26,32 @@ command /commands [<offlineplayer>]:
 
 		format slot 15 of player with bottle of enchanting named "&e所持金を確認する" with lore "&6自分の所持金を確認します。||&d/money" to close then run [execute player command "/money"]
 
+		loop {cap.running::*}:
+			if loop-value = 0:
+				add loop-value to {_list::*}
+
+		if {_list::*} is not set:
+			set {_list::*} to "&bなし"
+
+		set {_mines} to {mthide.smallmine}
+		if {_mines} is not set:
+			set {_mines} to "&bなし"
+
+		set {_minesloc} to {mthide.loc.%{mthide.smallmine}%}
+		if {_minesloc} is not set:
+			set {_minesloc} to "&bなし"
+
+		set {_mineb} to {mthide.bigmine}
+		if {_mineb} is not set:
+			set {_mineb} to "&bなし"
+
+		set {_minebloc} to {mthide.loc.%{mthide.bigmine}%}
+		if {_minebloc} is not set:
+			set {_minebloc} to "&bなし"
+
+
+		format slot 17 of player with enchanted book named "&d情報を閲覧する" with lore "&6稼働中の小鉱山：&a%{_mines}%番||&6小鉱山座標：&a%{_minesloc}%||&6稼働中の大鉱山：&a%{_mineb}%番||&6大鉱山座標：&a%{_minebloc}%||&6占領戦開催中の占領地：%{_list::*}%" to close
+
 command /exemethod <text> <text> <player> [<player>]:
 	permission:PC.console
 	trigger:
