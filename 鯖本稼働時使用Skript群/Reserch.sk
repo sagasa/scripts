@@ -13,6 +13,14 @@ command /researchreset [<text>] [<player>]:
 			message "&6[Research]&3/researchreset resetall -- &2全プレイヤーの研究リセット(国家研究は無理ぞ"
 			message "&6[Research]&3/researchreset reset [player] -- &2全プレイヤーの研究リセット"
 		if arg-1 is "resetall":
+			set {_count} to 1
+			loop {ch-number} times:
+				if {ch-name.%{_count}%} is set:
+					clear {RP.%{_count}%.0}
+					clear {RP.%{_count}%.1}
+					clear {research.saves.%{_count}%::*}
+				add 1 to {_count}
+				
 			loop {research.player.list::*}:
 				clear {RP.%loop-value%.0}
 				clear {RP.%loop-value%.1}
