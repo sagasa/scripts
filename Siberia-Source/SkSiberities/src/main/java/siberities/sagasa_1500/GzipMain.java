@@ -73,7 +73,7 @@ public class GzipMain {
 			FileWriter filewriter = new FileWriter(aliasFile);
 
 			// filewriter.write("こんにちは¥r¥n");
-			filewriter.write("aliases:\n");
+			filewriter.write("\naliases:\n");
 
 			int i2 = 0;
 			while (!itemData[i2].equals("end")) {

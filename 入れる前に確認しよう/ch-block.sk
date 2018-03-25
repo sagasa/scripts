@@ -48,10 +48,11 @@ on place:
 			cancel event
 			stop
 		if {ch-land-rn.%chunk at location of block%} is set:
-			if {ch-land-rn.%chunk at location of block%} is not {ch-countryid.%player%}:
-				message "%{ch-title}%この領土は&f%{ch-name.%{ch-land-rn.%chunk at location of block%}%}%に隣接しています"
-				cancel event
-				stop
+			if {ch-name.%{ch-land-rn.%chunk at location of block%}%} is not "<none>":
+				if {ch-land-rn.%chunk at location of block%} is not {ch-countryid.%player%}:
+					message "%{ch-title}%この領土は&f%{ch-name.%{ch-land-rn.%chunk at location of block%}%}%に隣接しています"
+					cancel event
+					stop
 						
 	#保護あり
 	if {ch-land.%chunk at location of block%} is not {ch-countryid.%player%}:
@@ -72,10 +73,11 @@ on Break:
 			cancel event
 			stop
 		if {ch-land-rn.%chunk at location of block%} is set:
-			if {ch-land-rn.%chunk at location of block%} is not {ch-countryid.%player%}:
-				message "%{ch-title}%この領土は&f%{ch-name.%{ch-land-rn.%chunk at location of block%}%}%に隣接しています"
-				cancel event
-				stop
+			if {ch-name.%{ch-land-rn.%chunk at location of block%}%} is not "<none>":
+				if {ch-land-rn.%chunk at location of block%} is not {ch-countryid.%player%}:
+					message "%{ch-title}%この領土は&f%{ch-name.%{ch-land-rn.%chunk at location of block%}%}%に隣接しています"
+					cancel event
+					stop
 	#保護あり
 	if {ch-land.%chunk at location of block%} is not {ch-countryid.%player%}:
 		message "%{ch-title}%%{ch-block-edit-message1}%&f%{ch-name.%{ch-land.%chunk at location of block%}%}%%{ch-block-edit-message2}%"
