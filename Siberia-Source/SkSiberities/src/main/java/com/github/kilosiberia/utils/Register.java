@@ -1,5 +1,6 @@
 package com.github.kilosiberia.utils;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Team;
 
@@ -7,6 +8,7 @@ import com.github.kilosiberia.BukkitEvent.SiberitiesPacketEvent;
 import com.github.kilosiberia.effects.EffAddPlayerTeam;
 import com.github.kilosiberia.effects.EffCreateTeam;
 import com.github.kilosiberia.effects.EffDeleteTeam;
+import com.github.kilosiberia.effects.EffGenAliases;
 import com.github.kilosiberia.effects.EffRemovePlayerTeam;
 import com.github.kilosiberia.effects.EffSendPacketHash;
 import com.github.kilosiberia.effects.EffSendPacketMods;
@@ -20,6 +22,7 @@ import com.github.kilosiberia.expressions.ExprAmountTeam;
 import com.github.kilosiberia.expressions.ExprChannelOfSPacket;
 import com.github.kilosiberia.expressions.ExprItemAmount;
 import com.github.kilosiberia.expressions.ExprListTeams;
+import com.github.kilosiberia.expressions.ExprMemberofTeam;
 import com.github.kilosiberia.expressions.ExprMessageOfSPacket;
 import com.github.kilosiberia.expressions.ExprModList;
 import com.github.kilosiberia.expressions.ExprPlayerHash;
@@ -27,7 +30,6 @@ import com.github.kilosiberia.expressions.ExprPlayerOfSPacket;
 import com.github.kilosiberia.expressions.ExprSPacketTitle;
 import com.github.kilosiberia.expressions.ExprSPacketValue;
 import com.github.kilosiberia.expressions.ExprServerHash;
-import com.github.kilosiberia.expressions.ExprTeamMember;
 import com.github.kilosiberia.expressions.PlayerPing;
 import com.github.kilosiberia.expressions.SkConfigLoad;
 import com.github.kilosiberia.expressions.StringSize;
@@ -102,7 +104,7 @@ public class Register {
 		Skript.registerExpression(ExprSPacketValue.class, String.class, ExpressionType.SIMPLE, "value of %spacket%");
 		Skript.registerExpression(ExprListTeams.class, Team.class, ExpressionType.SIMPLE, "list of teams");
 		Skript.registerExpression(ExprAmountTeam.class, Number.class, ExpressionType.SIMPLE, "number of team %string%");
-		Skript.registerExpression(ExprTeamMember.class, Player.class, ExpressionType.SIMPLE, "team member of %string%");
+		Skript.registerExpression(ExprMemberofTeam.class, OfflinePlayer.class, ExpressionType.SIMPLE, "team member of %string%");
 		Skript.registerExpression(ExprItemAmount.class, Number.class, ExpressionType.SIMPLE,
 				"(amount|size|number) of item %itemstack%");
 
@@ -123,5 +125,7 @@ public class Register {
 				"(spawn|create|apply) (a|the|an) tornado (effect|formation) at %entity/location% with id %string% [with tornado particle[s] %EffectLibParticle% and cloud particle[s] %EffectLibParticle%] [(set|and) radius %number%] [(set|and) max height %number%]");
 		Skript.registerEffect(EffEffectLibWave.class,
 				"(spawn|create|apply) (a|the|an) wave (effect|formation) at %entity/location% with id %string% [with particle[s] %EffectLibParticle%]");
+
+		Skript.registerEffect(EffGenAliases.class, "generate mod aliases");
 	}
 }

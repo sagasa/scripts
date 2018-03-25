@@ -1,0 +1,5 @@
+#Auto Aliases Reload v_0.1
+
+on command "/sk reload":
+	wait 10 tick
+	execute player command "/skript reload SAGASA/FlansAliases"
