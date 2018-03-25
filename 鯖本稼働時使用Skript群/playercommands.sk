@@ -28,7 +28,7 @@ command /commands [<offlineplayer>]:
 
 		loop {cap.running::*}:
 			if loop-value = 0:
-				add loop-value to {_list::*}
+				add {OT.name.%loop-index%} to {_list::*}
 
 		if {_list::*} is not set:
 			set {_list::*} to "&bなし"
