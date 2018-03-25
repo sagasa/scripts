@@ -41,6 +41,9 @@ on mine of stone:
 	if {_y} < 56:
 		if random integer from 1 to {@density} * 200/{_fortune} is 1:
 			#9
+			if {ch-land.%chunk at event-location%} is not {ch-countryid.%player%}:
+				stop
+
 			if {limit::%player%} - {@coal} >= 0:
 				remove {@coal} from {limit::%player%}
 				drop 9 coal at event-block
@@ -51,6 +54,8 @@ on mine of stone:
 	if {_y} < 16:
 		if random integer from 1 to {@density} * 256/{_fortune} is 1:
 			#9
+			if {ch-land.%chunk at event-location%} is not {ch-countryid.%player%}:
+				stop
 			if {limit::%player%} - {@redstone} >= 0:
 				remove {@redstone} from {limit::%player%}
 				drop 9 redstone dust at event-block
@@ -61,6 +66,8 @@ on mine of stone:
 	if {_y} < 20:
 		if random integer from 1 to {@density} * 400/{_fortune} is 1:
 			#16
+			if {ch-land.%chunk at event-location%} is not {ch-countryid.%player%}:
+				stop
 			if {limit::%player%} - {@lapis} >= 0:
 				remove {@lapis} from {limit::%player%}
 				drop 16 lapis at event-block
@@ -71,6 +78,8 @@ on mine of stone:
 	if {_y} < 56:
 		if random integer from 1 to {@density} * 100/{_fortune} is 1:
 			#5
+			if {ch-land.%chunk at event-location%} is not {ch-countryid.%player%}:
+				stop
 			if {limit::%player%} - {@iron} >= 0:
 				remove {@iron} from {limit::%player%}
 				drop 5 iron bar at event-block
@@ -81,6 +90,8 @@ on mine of stone:
 	if {_y} < 40:
 		if random integer from 1 to {@density} * 300/{_fortune} is 1:
 			#5
+			if {ch-land.%chunk at event-location%} is not {ch-countryid.%player%}:
+				stop
 			if {limit::%player%} - {@gold} >= 0:
 				remove {@gold} from {limit::%player%}
 				drop 5 gold bar at event-block
@@ -91,6 +102,8 @@ on mine of stone:
 	if {_y} < 16:
 		if random integer from 1 to {@density} * 1600/{_fortune} is 1:
 			#4
+			if {ch-land.%chunk at event-location%} is not {ch-countryid.%player%}:
+				stop
 			if {limit::%player%} - {@diamond} >= 0:
 				remove {@diamond} from {limit::%player%}
 				drop 4 diamond at event-block
@@ -101,6 +114,8 @@ on mine of stone:
 	if {_y} < 33:
 		if random integer from 1 to {@density} * 1800/{_fortune} is 1:
 			#1
+			if {ch-land.%chunk at event-location%} is not {ch-countryid.%player%}:
+				stop
 			if {limit::%player%} - {@emerald} >= 0:
 				remove {@emerald} from {limit::%player%}
 				drop 1 emerald at event-block
