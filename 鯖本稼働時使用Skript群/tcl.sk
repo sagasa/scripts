@@ -110,11 +110,12 @@ command /timecontrolstart:
 		#		execute console command "実行するコマンド"
 		if {time.hour0} = 0:
 			if {time.minute0} = 0:
-				execute console command "/facility stop"
+				execute console command "/facilitystop"
 				execute console command "/ch-admin daycount"
 				execute console command "/mthidestop"
 				execute console command "/ItemCompression clear"
 				execute console command "/minelimitreset"
+				execute console command "/MineLimitChange"
 			if {time.minute0} = 1:
 				execute console command "/skweek"#0:01に曜日取得
 		if {time.hour0} = 1:
@@ -143,8 +144,9 @@ command /timecontrolstart:
 		if {time.hour0} = 16:
 		if {time.hour0} = 17:
 			if {time.minute0} = 0:
-				execute console command "/facility start"
+				execute console command "/facilitystart"
 				execute console command "/mthiderset"
+				execute console command "/MineLimitChange"
 		if {time.hour0} = 18:
 			if {time.minute0} = 0:
 				execute console command "/mthiderset"
@@ -174,7 +176,7 @@ command /timecontrolstart:
 			if {time.minute0} = 0:
 				execute console command "/ocptTotalization End"
 				execute console command "/mthiderset"
-			execute console command "/mthidetime"
+		execute console command "/mthidetime"
 #ここまで
 		set {double.load} to 1
 
