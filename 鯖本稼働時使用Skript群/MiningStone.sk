@@ -43,8 +43,11 @@ command /MineLimitReset:
 		clear {limit::*}
 		broadcast "&6[Mine]&d採掘の制限をリセットしました"
 
-on break of stone:
-	if {ch-land-rn.%chunk at event-location%} is not {ch-countryid.%player%}:
+on mine of stone:
+	if {ch-land.%chunk at location of block%} != {ch-countryid.%player%}:
+		stop
+
+	else if {ch-land.%chunk at location of block%} is not set:
 		stop
 
 	set {_y} to y-coordinate of event-block
