@@ -19,7 +19,7 @@ command /setperm <player> <text> :
 			if {nu.%arg 1%.ban} is not set:
 				set {nu.%arg 1%.ban} to true
 				send "&a%arg 1%のBAN権限を許可しました。"
-			else
+			else:
 				clear {nu.%arg 1%.ban}
 				send "&c%arg 1%のBAN権限を無効にしました。"
 
@@ -27,12 +27,12 @@ command /setperm <player> <text> :
 			if {nu.%arg 1%.kick} is not set:
 				set {nu.%arg 1%.kick} to true
 				send "&a%arg 1%のKick権限を許可しました。"
-			else
+			else:
 				clear {nu.%arg 1%.kick}
 				send "&c%arg 1%のKick権限を無効にしました。"
 
 on portal create:
-	send "&cポータルを作成することはできません。"
+#	send "&cポータルを作成することはできません。"
 	cancel event
 
 on craft:
@@ -57,6 +57,8 @@ on craft:
 	if event-item is enchanted golden apple:
 		cancel event
 	if event-item is bed item:
+		cancel event
+	if event-item is clock:
 		cancel event
 		
 on right click on enchanted golden apple:

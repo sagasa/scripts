@@ -6,8 +6,8 @@ options:
 
 #----------TwitterBot----------
 on skript load:
-#	twitter debug connect with consumer key "{@ConsumerKey}", consumer secret "{@ConsumerSecret}", access token "{@AccessToken}" and secret token "{@SecretToken}"
-	twitter debug connect with consumer key "TZyug2Jnyl5jquUXEXw1LMGnb", consumer secret "r2xESN0jHzfrjCuRPT4tBbbIJtUZEvX3Mbgp2pEqkLCVmU5YUd", access token "798157935842971648-QznfNoI4Kpr9sNKhi6p6zFomeDKRpgK" and secret token "qV6py3W7zqq5XoScwmbw0xS4GgDhnL9HIocHmZbB303C5"
+	twitter debug connect with consumer key "{@ConsumerKey}", consumer secret "{@ConsumerSecret}", access token "{@AccessToken}" and secret token "{@SecretToken}"
+#	twitter debug connect with consumer key "TZyug2Jnyl5jquUXEXw1LMGnb", consumer secret "r2xESN0jHzfrjCuRPT4tBbbIJtUZEvX3Mbgp2pEqkLCVmU5YUd", access token "798157935842971648-QznfNoI4Kpr9sNKhi6p6zFomeDKRpgK" and secret token "qV6py3W7zqq5XoScwmbw0xS4GgDhnL9HIocHmZbB303C5"
 
 command /tweet <text>:
 	permission: skript.op
@@ -29,3 +29,11 @@ command /ff:
 		loop {_l::*}:
 			#follow loop-value
 			send "%loop-value%"
+
+command /ocptTweet <number>:
+	permission: skript.op
+	trigger:
+		tweet "【ServerStats】%newline%%{OT.name.%arg-1%}%にて占領戦を開始しました。"
+
+on command "/restart":
+	tweet "【ServerStats】%newline%サーバを再起動します(%now%)"
