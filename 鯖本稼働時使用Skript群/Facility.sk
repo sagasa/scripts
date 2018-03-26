@@ -782,3 +782,27 @@ on chat:
 on break:
 	if {facility.interface.%block%} is set:
 		cancel event
+
+command /facilitystart:
+	permission:console.console
+	trigger:
+		set {_n} to 0
+		loop 45 times:
+			if {facility.ID.list::%{_n}%} is true:
+				broadcast "&6[Facility]&3%{facility.%{_n}%::name}%&dが稼働しました"
+				set {facility.operation::%{_n}%} to true
+				loop {facility.sign.%{_n}%::*}:
+					set line 3 of loop-value-2 to "[&a稼働中&0]"
+				add 1 to {_n}
+
+command /facilitystop:
+	permission:console.console
+	trigger:
+		set {_n} to 0
+		loop 45 times:
+			if {facility.ID.list::%{_n}%} is true:
+				broadcast "&6[Facility]&3%{facility.%{_n}%::name}%&dが停止しました"
+				clear {facility.operation::%{_n}%}
+				loop {facility.sign.%{_n}%::*}:
+					set line 3 of loop-value-2 to "[&4停止中&0]"
+				add 1 to {_n}
