@@ -43,14 +43,16 @@ command /MineLimitReset:
 		clear {limit::*}
 		broadcast "&6[Mine]&d採掘の制限をリセットしました"
 
-on mine of stone:
+on break of stone:
+	if {ch-land-rn.%chunk at event-location%} is not {ch-countryid.%player%}:
+		stop
+
 	set {_y} to y-coordinate of event-block
 
 	set {_fortune} to 2 + level of fortune of the player's tool
 
 	if {limit::%player%} is not set:
 		set {limit::%player%} to {@limit}
-
 
 	#石炭鉱石
 	if {_y} < 56:
@@ -134,7 +136,7 @@ on mine of stone:
 	#エメラルド鉱石
 	if {_y} < 33:
 		if random integer from 1 to {@density} * 1800/{_fortune} is 1:
-			#1
+			#1	
 			if {minelimit.switch} is true:
 				if {limit::%player%} - {@emerald} >= 0:
 					remove {@emerald} from {limit::%player%}
