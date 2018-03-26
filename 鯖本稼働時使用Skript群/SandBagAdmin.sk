@@ -10,16 +10,20 @@ command /unneiwokorose:
 				message "&a安寧の時来れん。&cだが、これで終わりだと思うなよ…" to {_admin}
 		else if {Sandbag.enable} is false:
 			set {Sandbag.enable} to true
-			broadcast "&a管理人がサンドバッグになりました。"
+			message "&a管理人がサンドバッグになりました。"
 
 		else if {Sandbag.enable} is not set:
 			set {Sandbag.enable} to true
-			broadcast "&a管理人がサンドバッグになりました。"
+			message "&a管理人がサンドバッグになりました。"
 
 on damage:
 	if {Sandbag.enable} is true:
 		if {hideList::%victim%} is set:
 			if attacker is player:
 				drop 1 iron ingot at attacker's location
+				wait 1 tick
+				execute console command "/heal %victim%"
 			else if "%attacker%" is "entity":
 				drop 1 coal at attacker's location
+				wait 1 tick
+				execute console command "/heal %victim%"
