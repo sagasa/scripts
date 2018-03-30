@@ -187,7 +187,7 @@ command /giftbox_ui [<player>] [<text>] [<number>] [<text>]:
 				set {_lore} to {_list::1}
 				set {_item} to {_list::2} parsed as item
 				set {_count} to {_list::3} parsed as number
-				if {_n} <= 45:
+				if {_n} < 45:
 					clear {GiftBox.%{_target}%::%{_count}%}
 					if {_player} has enough space for {_item}:
 						give {_item} to {_player}
