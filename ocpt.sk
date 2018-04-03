@@ -34,16 +34,16 @@ command /ocpt [<player>] [<text>] [<number>]:
 				#全レギオンを回す
 				clear {_c}
 				loop regions at {_player}:
-					if "%loop-value-2%" is "%{OT.region.%{_n}%}%":
+					if "%loop-value-2%" is {ocpt.ot.%{_n}%::region}:
 						set {_c} to true
 
 				if {_c} is true:
 					if region at {_player} is not set:
-						format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
+						format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{ocpt.ot.%{_n}%::name}%" to run "ocpt dummy"
 					else:
-						format slot {_p} of {_player} with light green glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
+						format slot {_p} of {_player} with light green glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{ocpt.ot.%{_n}%::name}%" to run "ocpt dummy"
 				else:
-					format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
+					format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{ocpt.ot.%{_n}%::name}%" to run "ocpt dummy"
 				add 1 to {_p}
 				add 1 to {_n}
 
@@ -52,7 +52,7 @@ command /ocpt [<player>] [<text>] [<number>]:
 			set {_n} to 0
 			set {_p} to 10
 			loop 8 times:
-				format slot {_p} of {_player} with book named "&6名称 &dNo.%{_n}%" with lore "&d現在&6%{OT.name.%{_n}%}%" to close then run "ocpt %{_player}% OTnameset %{_n}%"
+				format slot {_p} of {_player} with book named "&6名称 &dNo.%{_n}%" with lore "&d現在&6%{ocpt.ot.%{_n}%::name}%" to close then run "ocpt %{_player}% OTnameset %{_n}%"
 				add 1 to {_p}
 				add 1 to {_n}
 
@@ -61,7 +61,7 @@ command /ocpt [<player>] [<text>] [<number>]:
 			set {_n} to 0
 			set {_p} to 19
 			loop 8 times:
-				format slot {_p} of {_player} with compass named "&6レギオン &dNo.%{_n}%" with lore "&d現在&6%{OT.region.%{_n}%}%" to run "ocpt %{_player}% OTregionset %{_n}%"
+				format slot {_p} of {_player} with compass named "&6レギオン &dNo.%{_n}%" with lore "&d現在&6%{ocpt.ot.%{_n}%::region}%" to run "ocpt %{_player}% OTregionset %{_n}%"
 				add 1 to {_p}
 				add 1 to {_n}
 
@@ -70,7 +70,7 @@ command /ocpt [<player>] [<text>] [<number>]:
 			set {_n} to 0
 			set {_p} to 28
 			loop 8 times:
-				if {OT.use.%{_n}%} is true:
+				if {ocpt.ot.%{_n}%::use} is true:
 					format slot {_p} of {_player} with light green glass pane named "&6使用 &dNo.%{_n}%" with lore "&d現在&2使用する" to run "ocpt %{_player}% OTuseset %{_n}%"
 				else:
 					if {OT.use.%{_n}%} is not set:
@@ -84,7 +84,7 @@ command /ocpt [<player>] [<text>] [<number>]:
 			set {_n} to 0
 			set {_p} to 37
 			loop 8 times:
-				format slot {_p} of {_player} with lava bucket named "&6変数リセット &dNo.%{_n}%" with lore "&dこの占領地の変数をリセット" to run "ocpt %{_player}% OTreset %{_n}%"
+				format slot {_p} of {_player} with lava bucket named "&6変数リセット &dNo.%{_n}%" with lore "&dこの占領地の占領状態を初期化します" to run "ocpt %{_player}% OTreset %{_n}%"
 				add 1 to {_p}
 				add 1 to {_n}
 
@@ -106,102 +106,80 @@ command /ocpt [<player>] [<text>] [<number>]:
 				add 1 to {_c}
 
 			if {_c} <= 1:
+				set {_region} to "%region at {_player}%"
 				#変更前のレギオン側の変数をクリア
 				clear {region.use.%{OT.region.%arg-3%}%}
-				set {OT.region.%arg-3%} to "%region at {_player}%"
-				#レギオンが既に使用中だった場合
-				if {region.use.%{OT.region.%arg-3%}%} is set:
-					clear {OT.region.%{region.use.%{OT.region.%arg-3%}%}%}
-					message "&d[OCPT]&6占領地No.&d%{region.use.%{OT.region.%arg-3%}%}%&6のレギオンを&d<none>&6に変更しました" to {_player}
-				#なぜか消えるため再度代入
-				set {OT.region.%arg-3%} to "%region at {_player}%"
-				set {region.use.%{OT.region.%arg-3%}%} to arg-3
-				message "&d[OCPT]&6占領地No.&d%arg-3%&6のレギオンを&d%{OT.region.%arg-3%}%&6に変更しました" to {_player}
-
-				#再描画
-				#i行目の占領地名 自分が中にいるならその占領地を緑に
-				set {_n} to 0
-				set {_p} to 1
-				loop 8 times:
-					#全レギオンを回す
-					clear {_c}
-					loop regions at {_player}:
-						if "%loop-value-2%" is "%{OT.region.%{_n}%}%":
-							set {_c} to true
-
-					if {_c} is true:
-						if region at {_player} is not set:
-							format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
-						else:
-							format slot {_p} of {_player} with light green glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
-					else:
-						format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
-					add 1 to {_p}
-					add 1 to {_n}
-
-				format slot 19+arg-3 of {_player} with compass named "&6レギオン &dNo.%arg-3%" with lore "&d現在&6%{OT.region.%arg-3%}%" to run "ocpt %{_player}% OTregionset %arg-3%"
-
+				set {ocpt.ot.%arg-3%::region} to {_region}
+				#レギオンが既に使用中だった場合他の登録を削除
+				if {ocpt.region.use.%{_region}%} is set:
+					clear {ocpt.ot.%{ocpt.region.use.%{_region}%}%::region}
+					message "&d[OCPT]&6占領地No.&d%{ocpt.region.use.%{_region}%}%&6のレギオンを&d<none>&6に変更しました" to {_player}
+				#新しい登録
+				set {ocpt.ot.%arg-3%::region} to {_region}
+				set {ocpt.region.use.%{_region}%} to arg-3
+				message "&d[OCPT]&6占領地No.&d%arg-3%&6のレギオンを&d%{_region}%&6に変更しました" to {_player}
 
 			if {_c} > 1:
 				#ポインター
-				if {OT.region.pointer.%arg-3%} is not set:
-					set {OT.region.pointer.%arg-3%} to 1
+				if {ocpt.ot.%arg-3%::region_p} is not set:
+					set {ocpt.ot.%arg-3%::region_p} to 1
 
 				#ポインタを進めていきすぎたら1に
-				add 1 to {OT.region.pointer.%arg-3%}
+				add 1 to {ocpt.ot.%arg-3%::region_p}
 
-				if {OT.region.pointer.%arg-3%} > {_c}:
-					set {OT.region.pointer.%arg-3%} to 1
+				if {ocpt.ot.%arg-3%::region_p} > {_c}:
+					set {ocpt.ot.%arg-3%::region_p} to 1
 
 				#ポインター番目のレギオンを格納
 				set {_n} to 1
 				loop regions at {_player}:
-					if {_n} is {OT.region.pointer.%arg-3%}:
+					if {_n} is {ocpt.ot.%arg-3%::region_p}:
 						set {_region} to "%loop-value%"
 					add 1 to {_n}
 
 				#変更前のレギオン側の変数をクリア
 				clear {region.use.%{OT.region.%arg-3%}%}
-				set {OT.region.%arg-3%} to {_region}
-				#レギオンが既に使用中だった場合
-				if {region.use.%{OT.region.%arg-3%}%} is set:
-					clear {OT.region.%{region.use.%{OT.region.%arg-3%}%}%}
-					message "&d[OCPT]&6占領地No.&d%{region.use.%{OT.region.%arg-3%}%}%&6のレギオンを&d<none>&6に変更しました" to {_player}
-				#なぜか消えるため再度代入
-				set {OT.region.%arg-3%} to {_region}
-				set {region.use.%{OT.region.%arg-3%}%} to arg-3
-				message "&d[OCPT]&6占領地No.&d%arg-3%&6のレギオンを&d%{OT.region.%arg-3%}%&6に変更しました" to {_player}
+				set {ocpt.ot.%arg-3%::region} to {_region}
+				#レギオンが既に使用中だった場合他の登録を削除
+				if {ocpt.region.use.%{_region}%} is set:
+					clear {ocpt.ot.%{ocpt.region.use.%{_region}%}%::region}
+					message "&d[OCPT]&6占領地No.&d%{ocpt.region.use.%{_region}%}%&6のレギオンを&d<none>&6に変更しました" to {_player}
+				#新しい登録
+				set {ocpt.ot.%arg-3%::region} to {_region}
+				set {ocpt.region.use.%{_region}%} to arg-3
+				message "&d[OCPT]&6占領地No.&d%arg-3%&6のレギオンを&d%{_region}%&6に変更しました" to {_player}
 
-				#再描画
-				#i行目の占領地名 自分が中にいるならその占領地を緑に
-				set {_n} to 0
-				set {_p} to 1
-				loop 8 times:
-					#全レギオンを回す
-					clear {_c}
-					loop regions at {_player}:
-						if "%loop-value-2%" is "%{OT.region.%{_n}%}%":
-							set {_c} to true
+			#再描画
+			#i行目の占領地名 自分が中にいるならその占領地を緑に
+			set {_n} to 0
+			set {_p} to 1
+			loop 8 times:
+				#全レギオンを回す
+				clear {_c}
+				loop regions at {_player}:
+					if "%loop-value-2%" is {ocpt.ot.%{_n}%::region}:
+						set {_c} to true
 
-					if {_c} is true:
-						if region at {_player} is not set:
-							format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
-						else:
-							format slot {_p} of {_player} with light green glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
+				if {_c} is true:
+					if region at {_player} is not set:
+						format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{ocpt.ot.%{_n}%::name}%" to run "ocpt dummy"
 					else:
-						format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{OT.name.%{_n}%}%" to run "ocpt dummy"
-					add 1 to {_p}
-					add 1 to {_n}
-				format slot 19+arg-3 of {_player} with compass named "&6レギオン &dNo.%arg-3%" with lore "&d現在&6%{OT.region.%arg-3%}%" to run "ocpt %{_player}% OTregionset %arg-3%"
+						format slot {_p} of {_player} with light green glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{ocpt.ot.%{_n}%::name}%" to run "ocpt dummy"
+				else:
+					format slot {_p} of {_player} with cyan glass pane named "&d占領地No.&6%{_n}%" with lore "&d名称&6%{ocpt.ot.%{_n}%::name}%" to run "ocpt dummy"
+				add 1 to {_p}
+				add 1 to {_n}
+
+			format slot 19+arg-3 of {_player} with compass named "&6レギオン &dNo.%arg-3%" with lore "&d現在&6%{ocpt.ot.%arg-3%::region}%" to run "ocpt %{_player}% OTregionset %arg-3%"
 
 		#占領地の使用の可否の変更
 		if arg-2 is "OTuseset":
-			if {OT.use.%arg-3%} is true:
-				set {OT.use.%arg-3%} to false
+			if {ocpt.ot.%arg-3%::use} is true:
+				set {ocpt.ot.%arg-3%::use} to false
 				message "&d[OCPT]&6占領地No.&d%arg-3%&4を使用しません" to {_player}
 				format slot 28+arg-3 of {_player} with red glass pane named "&6使用 &dNo.%{_n}%" with lore "&d現在&4使用しない" to run "ocpt %{_player}% OTuseset %arg-3%"
 			else:
-				set {OT.use.%arg-3%} to true
+				set {ocpt.ot.%arg-3%::use} to true
 				message "&d[OCPT]&6占領地No.&d%arg-3%&2を使用します" to {_player}
 				format slot 28+arg-3 of {_player} with light green glass pane named "&6使用 &dNo.%{_n}%" with lore "&d現在&2使用する" to run "ocpt %{_player}% OTuseset %arg-3%"
 			
@@ -225,6 +203,17 @@ command /ocpt [<player>] [<text>] [<number>]:
 				execute console command "/ocpttimer %{_OTnum}% -1 0"
 				add 1 to {_OTnum}
 
+		#設定
+		if arg-2 is "reload":
+			set {_num} to 1
+			set {ocpt.oc.%{_num}%.reward} to 0
+			set {ocpt.oc.%{_num}%.msg} to "試験用占領戦"
+			add 0 to {ocpt.oc.%{_num}%.ot::*}
+
+			set {_num} to 0
+			add "iron block" to {ocpt.reward.%{_num}%::*}
+
+			clear {ocpt.}
 
 		#占領戦管理画面
 		if arg-2 is "OC":
