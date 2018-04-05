@@ -236,45 +236,30 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 				loop regions at loop-player:
 					set {_region} to "%loop-value-2%"
 					if {ocpt.region.%{_region}%} is set:
-						if {ch-countryid.%loop-player%} is 0:
-							stop
-						set {_OTnum} to {ocpt.region.%{_region}%}
-
-						add loop-player to {ocpt.ot.%{_OTnum}%.players::*}
-						add 1 to {ocpt.ot.%{_OTnum}%.points::%{ch-countryid.%loop-player%}%}
-						#リストに自分のチームが入ってなければ追加
-						clear {_c}
-						loop {ocpt.ot.%{_OTnum}%.teams::*}:
-							if loop-value-3 is {ch-countryid.%loop-player%}:
-								set {_c} to true
-						if {_c} is not set:
-							add {ch-countryid.%loop-player%} to {ocpt.ot.%{_OTnum}%.teams::*}
-
-
+						execute console command "/ocptcommon enter %{ocpt.region.%{_region}%}% %loop-player%"
 
 		#進入時の処理
 		if arg-1 is "enter":
-			#使用しない場合はカウントしない
-			if {OT.use.%{_OTnum}%} is not true:
-				stop
 			#プレイヤーがチームに入ってるなら
-			if {ch-countryid.%{_player}%} is not 0:
-				#プレイヤーの重複がないか判別
-				loop {OT.caping.players.%{_OTnum}%::*}:
-					if loop-value is {_player}:
-						stop
-				#チームごとの人数カウント
-				add 1 to {ocpt.ot.%{_OTnum}%.points::%{ch-countryid.%{_player}%}%}
-				#リストに自分のチームが入ってなければ追加
-				loop {OT.caping.teams.%{_OTnum}%::*}:
-					if loop-value is {ch-countryid.%{_player}%}:
-						set {_c} to true
-				if {_c} is not set:
-					add {ch-countryid.%{_player}%} to {OT.caping.teams.%{_OTnum}%::*}
-				#占領中のプレイヤーリスト
-				add {_player} to {OT.caping.players.%{_OTnum}%::*}
-				#プレイヤー側に占領状態格納
-				set {caping.%{_player}%} to {_OTnum}
+			if {ch-countryid.%{_player}%} is 0:
+				stop
+			set {_OTnum} to {ocpt.region.%{_region}%}
+
+			loop {ocpt.ot.%{_OTnum}%.players::*}:
+				if loop-value is {_player}:
+					stop
+			add {_player} to {ocpt.ot.%{_OTnum}%.players::*}
+			add 1 to {ocpt.ot.%{_OTnum}%.points::%{ch-countryid.%{_player}%}%}
+			#リストに自分のチームが入ってなければ追加
+			clear {_c}
+			loop {ocpt.ot.%{_OTnum}%.teams::*}:
+				if loop-value is {ch-countryid.%{_player}%}:
+					set {_c} to true
+			if {_c} is not set:
+				add {ch-countryid.%{_player}%} to {ocpt.ot.%{_OTnum}%.teams::*}
+
+			#プレイヤー側に占領状態格納
+			set {caping.%{_player}%} to {_OTnum}
 
 		#退出時の処理
 		if arg-1 is "exit":
@@ -287,33 +272,33 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 					log "人数がー1になったため0に修正しました at ocptcommon exit in 占領地%{_OTnum}%"
 					set {OT.count.%{_OTnum}%::%{ch-countryid.%{_player}%}%} to 0
 				#占領中リストから削除
-				remove {_player} from {OT.caping.players.%{caping.%{_player}%}%::*}
+				remove {_player} from {ocpt.ot.%{_OTnum}%.players::*}
 				clear {caping.%{_player}%}
 				#メッセージ
 				if {OT.win.%{_OTnum}%} is not {ch-countryid.%{_player}%}:
 					message "&6[OCPT]&c占領地を退出しました" to {_player}
 		#占領判定
-		if arg-1 is "enter" or "exit" or "reset":
+		if arg-1 is "enter" or "exit":
 			#プレイヤーがチームに入ってるなら
 			if {ch-countryid.%{_player}%} is set:
 				#占領中になるかの判別
 				set {_n} to 0
-				loop {OT.caping.teams.%{_OTnum}%::*}:
+				loop {ocpt.ot.%{_OTnum}%.teams::*}:
 					if {_n} is 0:
 						#1番目を暫定で代入
 						set {_top.team} to loop-value
-						set {_top.number} to {OT.count.%{_OTnum}%::%loop-value%}
+						set {_top.number} to {ocpt.ot.%{_OTnum}%.points::%loop-value%}
 					else:
 						#同立の場合チーム名をクリア
-						if {OT.count.%{_OTnum}%::%loop-value%} = {_top.number}:
+						if {ocpt.ot.%{_OTnum}%.points::%loop-value%} = {_top.number}:
 							#broadcast "&5clear"
 							clear {_top.team}
 							#clear {_top.number}
 						#多い場合代入
-						if {OT.count.%{_OTnum}%::%loop-value%} > {_top.number}:
+						if {ocpt.ot.%{_OTnum}%.points::%loop-value%} > {_top.number}:
 							#broadcast "&5topset"
 							set {_top.team} to loop-value
-							set {_top.number} to {OT.count.%{_OTnum}%::%loop-value%}
+							set {_top.number} to {ocpt.ot.%{_OTnum}%.points::%loop-value%}
 					add 1 to {_n}
 					#broadcast "&4test&2%loop-value%国%{OT.count.%{_OTnum}%::%loop-value%}%人"
 				#0人ならクリア
@@ -815,58 +800,59 @@ command /ocptTotalization <text> [<number>] [<number>]:
 #           占領地に侵入
 #-------------------------------
 on region enter:
+	set {ch-countryid.%player%} to 2
 	if "%player's vehicle%" is "entity":
 		stop
-	set {_p} to "%region%"
+	set {_region} to "%region%"
 	#占領地なら
-	if {region.use.%{_p}%} is set:	
-		execute console command "/ocptcommon enter %{region.use.%{_p}%} % %player%"
+	if {ocpt.region.%{_region}%} is set:	
+		execute console command "/ocptcommon enter %{ocpt.region.%{_region}%}% %player%"
 
 on respawn:
 	if "%player's vehicle%" is "entity":
 		stop
 	loop regions at player:
-		set {_p} to "%loop-value%"
+		set {_region} to "%loop-value%"
 		#占領地なら
-		if {region.use.%{_p}%} is set:
-			execute console command "/ocptcommon enter %{region.use.%{_p}%} % %player%"
+		if {ocpt.region.%{_region}%} is set:
+			execute console command "/ocptcommon enter %{ocpt.region.%{_region}%}% %player%"
 
 on join:
 	if "%player's vehicle%" is "entity":
 		stop
 	loop regions at player:
-		set {_p} to "%loop-value%"
+		set {_region} to "%loop-value%"
 		#占領地なら
-		if {region.use.%{_p}%} is set:
-			execute console command "/ocptcommon enter %{region.use.%{_p}%} % %player%"
+		if {ocpt.region.%{_region}%} is set:
+			execute console command "/ocptcommon enter %{ocpt.region.%{_region}%}% %player%"
 #--------------------------------
 #           占領地から退出
 #--------------------------------
 on region exit:
 	if "%player's vehicle%" is "entity":
 		stop
-	set {_p} to "%region%"
+	set {_region} to "%region%"
 	#占領地なら
-	if {region.use.%{_p}%} is set:
-		execute console command "/ocptcommon exit %{region.use.%{_p}%} % %player%"
+	if {ocpt.region.%{_region}%} is set:
+		execute console command "/ocptcommon exit %{ocpt.region.%{_region}%}% %player%"
 
 on death of player:
 	if "%player's vehicle%" is "entity":
 		stop
 	loop regions at victim:
-		set {_p} to "%loop-value%"
+		set {_region} to "%loop-value%"
 		#占領地なら
-		if {region.use.%{_p}%} is set:
-			execute console command "/ocptcommon exit %{region.use.%{_p}%} % %victim%"
+		if {ocpt.region.%{_region}%} is set:
+			execute console command "/ocptcommon exit %{ocpt.region.%{_region}%}% %victim%"
 
 on quit:
 	if "%player's vehicle%" is "entity":
 		stop
 	loop regions at player:
-		set {_p} to "%loop-value%"
+		set {_region} to "%loop-value%"
 		#占領地なら
-		if {region.use.%{_p}%} is set:
-			execute console command "/ocptcommon exit %{region.use.%{_p}%} % %player%"
+		if {ocpt.region.%{_region}%} is set:
+			execute console command "/ocptcommon exit %{ocpt.region.%{_region}%}% %player%"
 
 on join:
 	loop {cap.running::*}:
