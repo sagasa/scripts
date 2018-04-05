@@ -221,18 +221,37 @@ on join:
 command /ocptcommon [<text>] [<number>] [<player>] :
 	permission: console.console
 	trigger:
-
-		
-		loop all players:
-			loop regions at loop-player:
-				set {_region} to "%loop-value-2%"
-				if {ocpt.region.%{_region}%} is set:
-
-
-		stop
 		#変数に引数を代入
 		set {_player} to arg-3
 		set {_OTnum} to arg-2
+
+		#全体集計
+		if arg-1 is "reset":
+			#リセット
+			loop {ocpt.ot.list::*}:
+				clear {ocpt.ot.%loop-value%.teams::*}
+				clear {ocpt.ot.%loop-value%.players::*}
+				clear {ocpt.ot.%loop-value%.points::*}
+			loop all players:
+				loop regions at loop-player:
+					set {_region} to "%loop-value-2%"
+					if {ocpt.region.%{_region}%} is set:
+						if {ch-countryid.%loop-player%} is 0:
+							stop
+						set {_OTnum} to {ocpt.region.%{_region}%}
+
+						add loop-player to {ocpt.ot.%{_OTnum}%.players::*}
+						add 1 to {ocpt.ot.%{_OTnum}%.points::%{ch-countryid.%loop-player%}%}
+						#リストに自分のチームが入ってなければ追加
+						clear {_c}
+						loop {ocpt.ot.%{_OTnum}%.teams::*}:
+							if loop-value-3 is {ch-countryid.%loop-player%}:
+								set {_c} to true
+						if {_c} is not set:
+							add {ch-countryid.%loop-player%} to {ocpt.ot.%{_OTnum}%.teams::*}
+
+
+
 		#進入時の処理
 		if arg-1 is "enter":
 			#使用しない場合はカウントしない
@@ -245,7 +264,7 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 					if loop-value is {_player}:
 						stop
 				#チームごとの人数カウント
-				add 1 to {OT.count.%{_OTnum}%::%{ch-countryid.%{_player}%}%}
+				add 1 to {ocpt.ot.%{_OTnum}%.points::%{ch-countryid.%{_player}%}%}
 				#リストに自分のチームが入ってなければ追加
 				loop {OT.caping.teams.%{_OTnum}%::*}:
 					if loop-value is {ch-countryid.%{_player}%}:
@@ -262,9 +281,10 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 			#プレイヤーが占領中なら
 			if {caping.%{_player}%} is set:
 				#チームごとの人数カウント
-				add -1 to {OT.count.%{_OTnum}%::%{ch-countryid.%{_player}%}%}
+				add -1 to {ocpt.ot.%{_OTnum}%.points::%{ch-countryid.%{_player}%}%}
 				#-だったら0にする
 				if {OT.count.%{_OTnum}%::%{ch-countryid.%{_player}%}%} < 0:
+					log "人数がー1になったため0に修正しました at ocptcommon exit in 占領地%{_OTnum}%"
 					set {OT.count.%{_OTnum}%::%{ch-countryid.%{_player}%}%} to 0
 				#占領中リストから削除
 				remove {_player} from {OT.caping.players.%{caping.%{_player}%}%::*}
@@ -273,10 +293,7 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 				if {OT.win.%{_OTnum}%} is not {ch-countryid.%{_player}%}:
 					message "&6[OCPT]&c占領地を退出しました" to {_player}
 		#占領判定
-		if arg-1 is "enter" or "exit":
-			#使用しない場合はアナウンスしない
-			if {OT.use.%{_OTnum}%} is not true:
-				stop
+		if arg-1 is "enter" or "exit" or "reset":
 			#プレイヤーがチームに入ってるなら
 			if {ch-countryid.%{_player}%} is set:
 				#占領中になるかの判別
