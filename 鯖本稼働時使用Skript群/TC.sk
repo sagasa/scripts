@@ -323,10 +323,7 @@ command /chat_ui [<player>] [<text>] [<offline player>] [<number>]:
 			loop all players:
 				#自分自身をs除外
 				if loop-player is not {_player}:
-					if {tc.Mute.%{_player}%::%loop-player%} is true:
-						format slot {_n} of {_player} with red glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
-					else:
-						format slot {_n} of {_player} with light green glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
+					format slot {_n} of {_player} with light green glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
 					add 1 to {_n}
 
 		if arg-2 is "MuteGlobalChat":
@@ -372,7 +369,6 @@ command /chat_ui [<player>] [<text>] [<offline player>] [<number>]:
 
 		#個人ミュート
 		if arg-2 is "MutePlayer":
-			wait 1 tick
 			if {tc.Mute.%{_player}%::%arg-3%} is true:
 				clear {tc.Mute.%{_player}%::%arg-3%}
 				message "&6[Chat]&2%arg-3%&aのミュートを解除しました" to {_player}
