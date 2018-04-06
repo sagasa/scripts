@@ -68,7 +68,7 @@ command /ocpt [<player>] [<text>] [<number>]:
 		if arg-2 is "ot_remove":
 			clear {ocpt.ot.list::%arg-3%}
 			clear {ocpt.ot.%arg-3%::*}
-			message "&d[ocpt]&c占領地を削除しました &3No.%{_n}%" to {_player}
+			message "&d[ocpt]&c占領地を削除しました &3No.%arg-3%" to {_player}
 
 		#占領地名の変更
 		if arg-2 is "OTnameset":
@@ -365,11 +365,11 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 					#ダミーならスキップ
 					if {_top.team} is not -1:
 						#占領地内の全員へ
-						loop {OT.caping.players.%{_OTnum}%::*}:
+						loop {ocpt.ot.%{_OTnum}%.players::*}:
 							if {ch-countryid.%loop-value%} is {OT.win.%{_OTnum}%}:
 								message "&6[OCPT]&4%{ch-name.%arg-2%}%&c国が&4この占領地&cを占領中" to loop-value
 							else:
-								message "&6[OCPT]&2%{OT.name.%{_OTnum}%}%&aの占領を開始" to loop-value
+								message "&6[OCPT]&2%{ocpt.ot.%{_OTnum}%::name}%&aの占領を開始" to loop-value
 
 				#同盟に所属しているなら
 				if {ch-alliance.%{_player}%} is not 0:
@@ -424,7 +424,7 @@ command /ocpttimer <number> <number> <number>:
 					execute console command "/scoreboard players set &6%{_displaydata}%&8%arg-1% clock %(arg-1*-5)-2+{_offset}%"
 					execute console command "/scoreboard players set &8%arg-1% clock %(arg-1*-5)-1+{_offset}%"
 					execute console command "/scoreboard players set &a■■■■■■■■&8%arg-1% clock %(arg-1*-5)-3+{_offset}%"
-					execute console command "/scoreboard players set &d%{OT.name.%arg-1%}% clock %(arg-1*-5)-4+{_offset}%"
+					execute console command "/scoreboard players set &d%{ocpt.ot.%arg-1%::name}% clock %(arg-1*-5)-4+{_offset}%"
 					execute console command "/scoreboard players set &a■■■■■■■■&8%arg-1%. clock %(arg-1*-5)-5+{_offset}%"
 				if loop-number is 6:
 					execute console command "/scoreboard players reset &a■■■■■■■■&8%arg-1%"
@@ -440,13 +440,13 @@ command /ocpttimer <number> <number> <number>:
 					loop all players:
 						#同盟国が占領した場合
 						if {ch-alliance.%{OT.win.%arg-1%}%} is {ch-alliance.%arg-2%}:
-							message "&6[OCPT]&2%{OT.name.%arg-1%}%&aを占領中" to loop-player
+							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&aを占領中" to loop-player
 						#占領された側
 						else if {ch-countryid.%loop-player%} is {OT.win.%arg-1%}:
-							message "&6[OCPT]&4%{ch-name.%arg-2%}%&c国が&a%{OT.name.%arg-1%}%&cを占領中" to loop-player
+							message "&6[OCPT]&4%{ch-name.%arg-2%}%&c国が&a%{ocpt.ot.%arg-1%::name}%&cを占領中" to loop-player
 						#占領した側
 						else if {ch-countryid.%loop-player%} is arg-2:
-							message "&6[OCPT]&2%{OT.name.%arg-1%}%&aを占領中" to loop-player
+							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&aを占領中" to loop-player
 						#その他
 						else:
 							message "&6[OCPT]&3%{ch-name.%arg-2%}%&b国が&3%{OT.name.%arg-1%}%&bを占領中" to loop-player
@@ -487,28 +487,28 @@ command /ocpttimer <number> <number> <number>:
 						if {ch-alliance.%{OT.win.%arg-1%}%} is {ch-alliance.%arg-2%}:
 							message "&a===============================================" to loop-player
 							message "" to loop-player
-							message "&6[OCPT]&2%{OT.name.%arg-1%}%&aの占領が完了しました" to loop-player
+							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&aの占領が完了しました" to loop-player
 							message "" to loop-player
 							message "&a===============================================" to loop-player
 						#占領された側
 						else if {ch-countryid.%loop-player%} is {OT.win.%arg-1%}:
 							message "&c===============================================" to loop-player
 							message "" to loop-player
-							message "&6[OCPT]&4%{ch-name.%arg-2%}%&c国によって&a%{OT.name.%arg-1%}%&cが占領されました" to loop-player
+							message "&6[OCPT]&4%{ch-name.%arg-2%}%&c国によって&a%{ocpt.ot.%arg-1%::name}%&cが占領されました" to loop-player
 							message "" to loop-player
 							message "&c===============================================" to loop-player
 						#占領した側
 						else if {ch-countryid.%loop-player%} is arg-2:
 							message "&a===============================================" to loop-player
 							message "" to loop-player
-							message "&6[OCPT]&2%{OT.name.%arg-1%}%&aの占領が完了しました" to loop-player
+							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&aの占領が完了しました" to loop-player
 							message "" to loop-player
 							message "&a===============================================" to loop-player
 						#その他
 						else:
 							message "&b===============================================" to loop-player
 							message "" to loop-player
-							message "&6[OCPT]&3%{ch-name.%arg-2%}%&b国による&3%{OT.name.%arg-1%}%&bの占領が完了しました" to loop-player
+							message "&6[OCPT]&3%{ch-name.%arg-2%}%&b国による&3%{ocpt.ot.%arg-1%::name}%&bの占領が完了しました" to loop-player
 							message "" to loop-player
 							message "&b===============================================" to loop-player
 					set {OT.win.%arg-1%} to arg-2
@@ -533,7 +533,7 @@ command /ocpttimer <number> <number> <number>:
 				execute console command "/scoreboard players reset &a■■■■■■■■&8%arg-1%."
 				execute console command "/scoreboard players reset &6%{_displaydata}%&8%arg-1%"
 				execute console command "/scoreboard players reset &8%arg-1%"
-				execute console command "/scoreboard players reset &d%{OT.name.%arg-1%}%"
+				execute console command "/scoreboard players reset &d%{ocpt.ot.%arg-1%::name}%"
 				clear {ocpt.ot.%arg-1%::caping_team}
 				clear {ocpt.ot.%arg-1%::caping_count}
 				#ある程度占領済みなら
@@ -542,13 +542,13 @@ command /ocpttimer <number> <number> <number>:
 					loop all players:
 						#占領された側
 						if {ch-countryid.%loop-player%} is {OT.win.%arg-1%}:
-							message "&6[OCPT]&2%{OT.name.%arg-1%}%&aの占領が阻止されました" to loop-player
+							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&aの占領が阻止されました" to loop-player
 						#占領した側
 						else if {ch-countryid.%loop-player%} is arg-2:
-							message "&6[OCPT]&4%{OT.name.%arg-1%}%&cの占領が阻止されました" to loop-player
+							message "&6[OCPT]&4%{ocpt.ot.%arg-1%::name}%&cの占領が阻止されました" to loop-player
 						#その他
 						else:
-							message "&6[OCPT]&2%{OT.name.%arg-1%}%&3の占領が阻止されました" to loop-player
+							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&3の占領が阻止されました" to loop-player
 				stop
 
 		clear {ocpt.ot.%arg-1%::caping_team}
@@ -556,7 +556,7 @@ command /ocpttimer <number> <number> <number>:
 		execute console command "/scoreboard players reset &6%{_displaydata}%&8%arg-1%"
 		execute console command "/scoreboard players reset &8%arg-1%"
 		execute console command "/scoreboard players reset &b■■■■■■■■&8%arg-1%"
-		execute console command "/scoreboard players reset &d%{OT.name.%arg-1%}%"
+		execute console command "/scoreboard players reset &d%{ocpt.ot.%arg-1%::name}%"
 		execute console command "/scoreboard players reset &b■■■■■■■■&8%arg-1%."
 
 #====================================================================================================
@@ -831,12 +831,14 @@ command /ocptTotalization <text> [<number>] [<number>]:
 #====================================================================================================
 #                                      　　　　出入関連
 #====================================================================================================
+command /setFaction <number>:
+	trigger:
+		set {ch-countryid.%player%} to arg-1
 
 #-------------------------------
 #           占領地に侵入
 #-------------------------------
 on region enter:
-	set {ch-countryid.%player%} to 2
 	if "%player's vehicle%" is "entity":
 		stop
 	set {_region} to "%region%"
