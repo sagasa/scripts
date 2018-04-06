@@ -25,7 +25,7 @@ command /ocpt [<player>] [<text>] [<number>]:
 			wait 2 tick
 			open chest with 6 row named "<blue>占領地リスト" to {_player}
 			wait 1 tick
-			format slot 45 of {_player} with light gray glass pane named "&d動作\占領地" with lore "&d現在&6%region at {_player}%&dにいます" to close then run "ocpt %{_player}%"
+			format slot 27 of {_player} with light gray glass pane named "&d動作\占領地" with lore "&d現在&6%region at {_player}%&dにいます" to close then run "ocpt %{_player}%"
 
 			set {_slot} to 0
 			loop {ocpt.ot.list::*}:
@@ -51,12 +51,15 @@ command /ocpt [<player>] [<text>] [<number>]:
 			wait 1 tick
 			format slot 0 of {_player} with book named "&6名称変更" with lore "&d現在&6%{ocpt.ot.%arg-3%::name}%" to close then run "ocpt %{_player}% OTnameset %arg-3%"
 			format slot 1 of {_player} with compass named "&6レギオン変更" with lore "&d現在&6%{ocpt.ot.%arg-3%::region}%" to close then run "ocpt %{_player}% OTregionset %arg-3%"
-
+			
 		#占領地追加
 		if arg-2 is "ot_add":
 			set {_n} to 0
 			while {ocpt.ot.list::%{_n}%} is set:
 				add 1 to {_n}
+				if {_n} >= 27:
+					message "&d[ocpt]&c占領地の数が上限です" to {_player}
+					stop
 			set {ocpt.ot.list::%{_n}%} to {_n}
 			set {ocpt.ot.%{_n}%::name} to "未設定"
 			message "&d[ocpt]&6新しい占領地を作成しました &3No.%{_n}%" to {_player}
@@ -110,6 +113,39 @@ command /ocpt [<player>] [<text>] [<number>]:
 			message "&d[ocpt]&6占領地No.&d%arg-3%&6のレギオンを&d%{_region}%&6に変更しました" to {_player}
 
 			execute console command "/ocpt %{_player}% ot_list"
+
+		#占領戦設定書き込み
+		if arg-2 is "load":
+			#占領戦定義
+			#占領戦ID
+			set {_n} to 0
+			add {_n} to {ocpt.op.list::*}
+			#名称
+			set {ocpt.op.%{_n}%::cap_name} to "&d試験用占領戦"
+
+			#使用する占領地
+			add 0 to {ocpt.op.%{_n}%.ot_list::*}
+			#0で全てで開催 1以上でリストから指定個数をランダムに選択して開催
+			set {ocpt.op.%{_n}%::ot_type} to 0
+			#0で集計を占領地ごとに 1で集計を占領戦全体で
+			set {ocpt.op.%{_n}%::cap_type} to 0
+
+			#勝利報酬 報酬IDで定義
+			set {ocpt.op.%{_n}%::reward_win} to 0
+			#ポイント報酬 報酬の総数 報酬IDで定義
+			set {ocpt.op.%{_n}%::reward_point} to 0
+			#参加報酬 報酬IDで定義
+			set {ocpt.op.%{_n}%::reward_base} to 0
+			#0でポイント報酬 1でポイント順位報酬:1位ポイント報酬の100%2位75%3位50%
+			set {ocpt.op.%{_n}%::reward_type} to 0
+
+			#報酬定義
+			#報酬ID
+			set {_n} to 0
+			#"itemName/number"の形式で追加
+			add "iron block/100" to {ocpt.reward.%{_n}%::*}
+
+
 
 		#占領戦管理画面
 		if arg-2 is "OC":
@@ -341,10 +377,10 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 				else:
 					set {_alliance} to ""
 				#タイマーを呼ぶ
-				execute console command "/ocpttimer %{_OTnum}% %{_top.team}% %{_top.number}% %{_alliance}%"
+				execute console command "/ocpttimer %{_OTnum}% %{_top.team}% %{_top.number}%"
 
 #/ocpttimer <占領地ID> <チームID> <人数> <同盟ID>
-command /ocpttimer <number> <number> <number> [<number>]:
+command /ocpttimer <number> <number> <number>:
 	permission: console.console
 	trigger:
 		#-オフセット
@@ -363,27 +399,27 @@ command /ocpttimer <number> <number> <number> [<number>]:
 		#表示名を格納
 		set {_displaydata} to "%{shortnamehome.%arg-2%}%国が占領中"
 		#占領人数の更新
-		set {caping.count.%arg-1%} to arg-3
+		set {ocpt.ot.%arg-1%::caping_count} to arg-3
 		#占領時間の人数による変化
-		set {OT.waittime.%arg-1%} to {_basewait} - ({_caping.count.%arg-1%} * {_coefficient})
+		set {ocpt.ot.%arg-1%::waittime} to {_basewait} - ({ocpt.ot.%arg-1%::caping_count} * {_coefficient})
 		#-にならないように
-		if {OT.waittime.%arg-1%} < 1:
-			set {OT.waittime.%arg-1%} to 1
+		if {ocpt.ot.%arg-1%::waittime} < 1:
+			set {ocpt.ot.%arg-1%::waittime} to 1
 		#人数だけ変わった場合はスキップ
-		if {OT.caping.teams.%arg-1%} is {_caping.team.%arg-1%}:
+		if {ocpt.ot.%arg-1%::caping_team} is {_caping.team.%arg-1%}:
 			stop
 		#占領チームの更新
-		set {OT.caping.teams.%arg-1%} to arg-2
+		set {ocpt.ot.%arg-1%::caping_team} to arg-2
 		#ダミーの場合占領処理をスキップ
 		if arg-2 is -1:
-			clear {OT.caping.teams.%arg-1%}
+			clear {ocpt.ot.%arg-1%::caping_team}
 			stop
 		#占領済みの場合タイマーを起動しない
 		if {OT.win.%arg-1%} is arg-2:
-			clear {OT.caping.teams.%arg-1%}
+			clear {ocpt.ot.%arg-1%::caping_team}
 			stop
 		loop 43 times:
-			if {OT.caping.teams.%arg-1%} is {_caping.team.%arg-1%}:
+			if {ocpt.ot.%arg-1%::caping_team} is {_caping.team.%arg-1%}:
 				if loop-number is 1:
 					execute console command "/scoreboard players set &6%{_displaydata}%&8%arg-1% clock %(arg-1*-5)-2+{_offset}%"
 					execute console command "/scoreboard players set &8%arg-1% clock %(arg-1*-5)-1+{_offset}%"
@@ -403,7 +439,7 @@ command /ocpttimer <number> <number> <number> [<number>]:
 				if loop-number is 16:
 					loop all players:
 						#同盟国が占領した場合
-						if arg-4 is {ch-alliance.%loop-player%}:
+						if {ch-alliance.%{OT.win.%arg-1%}%} is {ch-alliance.%arg-2%}:
 							message "&6[OCPT]&2%{OT.name.%arg-1%}%&aを占領中" to loop-player
 						#占領された側
 						else if {ch-countryid.%loop-player%} is {OT.win.%arg-1%}:
@@ -443,12 +479,12 @@ command /ocpttimer <number> <number> <number> [<number>]:
 					execute console command "/scoreboard players reset &b■■■■■■■&a■&8%arg-1%."
 					execute console command "/scoreboard players set &b■■■■■■■■&8%arg-1% clock %(arg-1*-5)-3+{_offset}%"
 					execute console command "/scoreboard players set &b■■■■■■■■&8%arg-1%. clock %(arg-1*-5)-5+{_offset}%"
-				loop {OT.waittime.%arg-1%} times:
+				loop {ocpt.ot.%arg-1%::waittime} times:
 					wait 1 tick
 				if loop-number is 43:
 					loop all players:
 						#同盟国が占領した場合
-						if arg-4 is {ch-alliance.%loop-player%}:
+						if {ch-alliance.%{OT.win.%arg-1%}%} is {ch-alliance.%arg-2%}:
 							message "&a===============================================" to loop-player
 							message "" to loop-player
 							message "&6[OCPT]&2%{OT.name.%arg-1%}%&aの占領が完了しました" to loop-player
@@ -498,8 +534,8 @@ command /ocpttimer <number> <number> <number> [<number>]:
 				execute console command "/scoreboard players reset &6%{_displaydata}%&8%arg-1%"
 				execute console command "/scoreboard players reset &8%arg-1%"
 				execute console command "/scoreboard players reset &d%{OT.name.%arg-1%}%"
-				clear {OT.caping.teams.%arg-1%}
-				clear {caping.count.%arg-1%}
+				clear {ocpt.ot.%arg-1%::caping_team}
+				clear {ocpt.ot.%arg-1%::caping_count}
 				#ある程度占領済みなら
 				if loop-number >16:
 					#占領中断のメッセージ
@@ -515,8 +551,8 @@ command /ocpttimer <number> <number> <number> [<number>]:
 							message "&6[OCPT]&2%{OT.name.%arg-1%}%&3の占領が阻止されました" to loop-player
 				stop
 
-		clear {OT.caping.teams.%arg-1%}
-		clear {caping.count.%arg-1%}
+		clear {ocpt.ot.%arg-1%::caping_team}
+		clear {ocpt.ot.%arg-1%::caping_count}
 		execute console command "/scoreboard players reset &6%{_displaydata}%&8%arg-1%"
 		execute console command "/scoreboard players reset &8%arg-1%"
 		execute console command "/scoreboard players reset &b■■■■■■■■&8%arg-1%"
