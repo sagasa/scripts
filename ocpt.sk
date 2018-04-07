@@ -567,77 +567,101 @@ command /ocpttimer <number> <number> <number>:
 #{cap.l.pointer.[番号]}
 #{cap.l.[番号].[ID]::*}
 
-#/ocptTotalization start [<占領地ID>] [<占領報酬ID>]占領戦開始
-#/ocptTotalization point [<占領地ID>] チェックポイント
-#/ocptTotalization End [<占領地ID>] チェックポイント
+#/ocptTotalization start [<占領戦ID>] [<占領報酬ID>]占領戦開始
+#/ocptTotalization point [<占領戦ID>] チェックポイント
+#/ocptTotalization End [<占領戦ID>] チェックポイント
 command /ocptTotalization <text> [<number>] [<number>]:
 	permission: console.console
 	trigger:
 		#---------------------
-		#   占領戦(ローテーション)
-		#---------------------
-		if arg-1 is "start_l":
-			if arg-2 is set:
-				clear {cap.running::%{_n}%}
-
-				if {cap.l.pointer.%arg-2%} is not set:
-					set {cap.l.pointer.%arg-2%} to 0
-
-
-				loop {cap.l.%arg-2%.%{cap.l.pointer.%arg-2%}%::*}:
-					set {_exist} to true
-				
-				if {_exist} is true:
-					loop {cap.l.%arg-2%.%{cap.l.pointer.%arg-2%}%::*}:
-						execute console command "/ocptTotalization start %loop-value% %arg-2%"
-				else:
-					set {cap.l.pointer.%arg-2%} to 0
-					loop {cap.l.%arg-2%.%{cap.l.pointer.%arg-2%}%::*}:
-						execute console command "/ocptTotalization start %loop-value% %arg-2%"
-
-				add 1 to {cap.l.pointer.%arg-2%}
-
-		#---------------------
-		#     占領戦(占領地)
+		#   占領戦(ID)
 		#---------------------
 		if arg-1 is "start":
 			if arg-2 is set:
-				broadcast " &b%{OT.name.%arg-2%}%&6で占領戦を開始しました"
-				clear {cap.point.%arg-2%::*}
-				clear {cap.list.%arg-2%::*}
-				set {cap.running::%arg-2%} to 0
-			else:
-				clear {cap.running::*}
+				if {ocpt.op.%arg-2%::cap_name} is not set:
+					log "有効な占領戦ではありません"
+					stop
+				add arg-2 to {ocpt.op.run::*}
+				#占領地の決定
+				clear {ocpt.op.%arg-2%.ot_run::*}
+				clear {ocpt.op.%arg-2%.points::*}
+				if {ocpt.op.%arg-2%::ot_type} is 0:
+					loop {ocpt.op.%arg-2%.ot_list::*}:
+						add loop-value to {ocpt.op.%arg-2%.ot_run::*}:
+						broadcast " &b%{ocpt.ot.%loop-value%::name}%&6で占領戦を開始しました"
+				else:
+
+					set {_list::*} to {ocpt.op.%arg-2%.ot_list::*}
+					loop {ocpt.op.%arg-2%::ot_type} times:
+						#ランダムに選択して保存
+						add  to {ocpt.op.%arg-2%.ot_run::*}
 
 
 		if arg-1 is "point":
 			if arg-2 is set:
-				#リストに入ってなければ追加
-				loop {cap.list.%arg-2%::*}:
-					if {OT.win.%arg-2%} is loop-value:
-						set {_p} to true
-				if {_p} is not set:
-					add {OT.win.%arg-2%} to {cap.list.%arg-2%::*}
-				#ポイント
-				add 1 to {cap.point.%arg-2%::%{OT.win.%arg-2%}%}
-				
-				broadcast "  &6==&5%{OT.name.%arg-2%}%&dの占領が更新されました&6=="
-				broadcast " &e----------------------------------------"
-				loop {cap.list.%arg-2%::*}:
-					broadcast "    &3%{ch-name.%loop-value%}%&b国 &3%{cap.point.%arg-2%::%loop-value%}%&bポイント"
-				broadcast " &e----------------------------------------"
-				broadcast ""
+				loop {ocpt.op.%arg-2%.ot_run::*}:
+					#集計方法で分岐
+					if {ocpt.op.%arg-2%::cap_type} is 0:
+						set {_index} to "%{OT.win.%loop-value%}%_%loop-value%"
+					else if {ocpt.op.%arg-2%::cap_type} is 1:
+						set {_index} to "%{OT.win.%loop-value%}%"
+
+					#リストに入ってなければ初期値
+					if {ocpt.op.%arg-2%.points::%{_index}%} is not set:
+						set {ocpt.op.%arg-2%.points::%{_index}%} to 0
+
+					add 1 to {ocpt.op.%arg-2%.points::%{_index}%}
+
+				#メッセージ
+				if {ocpt.op.%arg-2%::cap_type} is 1:
+					broadcast "  &6==&5%{ocpt.op.%arg-2%::cap_name}%&dが更新されました&6=="
+					broadcast " &e----------------------------------------"
+					loop {ocpt.op.%arg-2%.points::*}:
+						broadcast "    &3%{ch-name.%loop-index%}%&b国 &3%loop-value%&bポイント"
+					broadcast " &e----------------------------------------"
+			
+				else if {ocpt.op.%arg-2%::cap_type} is 0:
+					loop {ocpt.op.%arg-2%.ot_run::*}:
+						broadcast "  &6==&5%{ocpt.ot.%loop-value%::name}%&dの占領が更新されました&6=="
+						broadcast " &e----------------------------------------"
+						loop {ocpt.op.%arg-2%.points::*}:
+							set {_list::*} to loop-index split at "_"
+							if {_list::2} is "%loop-value-1%":
+								broadcast "    &3%{ch-name.%{_list::1}%}%&b国 &3%loop-value-2%&bポイント"
+						broadcast " &e----------------------------------------"
 
 			else:
-				set {_n} to 0
-				loop 8 times:
-					if {cap.running::%{_n}%} is set:
-						execute console command "/ocptTotalization point %{_n}%"
-						
-					add 1 to {_n}
+				loop {ocpt.op.run::*}:
+					execute console command "/ocptTotalization point %loop-value%"
 
 		if arg-1 is "end":
 			if arg-2 is set:
+				#3位まで判定
+				set {_teams::*} to {ocpt.op.%arg-2%.points::*}
+				set {_num} to 1
+				loop 3 times:
+					set {_n} to 0
+					loop {_teams::*}:
+						set {_list::*} to loop-index split at "_"
+						if {_n} is 0:
+							#1番目を暫定で代入
+							add {_list::1} to {_%{_num}%.team::*}
+							set {_top.number} to loop-value
+						else:
+							#同立の場合チーム名を代入
+							if loop-value = {_top.number}:
+								add {_list::1} to {_%{_num}%.team::*}
+								#clear {_top.number}
+							#多い場合代入
+							if loop-value > {_top.number}:
+								#broadcast "&5topset"
+								clear {_top.team::*}
+								add {_list::1} to {_%{_num}%.team::*}
+								set {_top.number} to loop-value
+						add 1 to {_n}
+					add 1 to {_num}
+
+
 				set {_ID} to {cap.running::%arg-2%}
 				#=======================
 				# ポイント報酬と参加報酬を渡す
@@ -759,6 +783,7 @@ command /ocptTotalization <text> [<number>] [<number>]:
 				loop {cap.list.%arg-2%::*}:
 					loop all players:
 						#勝ったチームのプレイヤーなら
+
 						if loop-value-1 is {ch-countryid.%loop-player%}:
 							message "&6獲得ポイント報酬が振り込まれました" to loop-player
 							message "&6参加報酬が振り込まれました" to loop-player
