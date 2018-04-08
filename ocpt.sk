@@ -124,6 +124,7 @@ command /ocpt [<player>] [<text>] [<number>]:
 			set {ocpt.op.%{_n}%::cap_name} to "&d試験用占領戦"
 
 			#使用する占領地
+			clear {ocpt.op.%{_n}%.ot_list::*}
 			add 0 to {ocpt.op.%{_n}%.ot_list::*}
 			#0で全てで開催 1以上でリストから指定個数をランダムに選択して開催
 			set {ocpt.op.%{_n}%::ot_type} to 0
@@ -137,14 +138,16 @@ command /ocpt [<player>] [<text>] [<number>]:
 			#参加報酬 報酬IDで定義
 			set {ocpt.op.%{_n}%::reward_base} to 0
 			#0でポイント報酬 1でポイント順位報酬:1位ポイント報酬の100%2位75%3位50%
-			set {ocpt.op.%{_n}%::reward_type} to 0
+			set {ocpt.op.%{_n}%::reward_type} to 1
 
 			#報酬定義
 			#報酬ID
 			set {_n} to 0
-			#"itemName/number"の形式で追加
-			add "iron block/100" to {ocpt.reward.%{_n}%::*}
+			#"itemName/number/name"の形式で追加
+			clear {ocpt.reward.%{_n}%::*}
+			add "iron block/100/仮報酬" to {ocpt.reward.%{_n}%::*}
 
+			message "&6[OCPT]&3設定をロード" to {_player}
 
 
 		#占領戦管理画面
@@ -581,20 +584,24 @@ command /ocptTotalization <text> [<number>] [<number>]:
 				if {ocpt.op.%arg-2%::cap_name} is not set:
 					log "有効な占領戦ではありません"
 					stop
+				loop {ocpt.op.run::*}:
+					if loop-value is arg-2:
+						log "すでに占領戦が開始されていました 占領戦%arg-2%"
+						stop
 				add arg-2 to {ocpt.op.run::*}
 				#占領地の決定
 				clear {ocpt.op.%arg-2%.ot_run::*}
 				clear {ocpt.op.%arg-2%.points::*}
 				if {ocpt.op.%arg-2%::ot_type} is 0:
 					loop {ocpt.op.%arg-2%.ot_list::*}:
-						add loop-value to {ocpt.op.%arg-2%.ot_run::*}:
+						add loop-value to {ocpt.op.%arg-2%.ot_run::*}
 						broadcast " &b%{ocpt.ot.%loop-value%::name}%&6で占領戦を開始しました"
 				else:
 
 					set {_list::*} to {ocpt.op.%arg-2%.ot_list::*}
 					loop {ocpt.op.%arg-2%::ot_type} times:
 						#ランダムに選択して保存
-						add  to {ocpt.op.%arg-2%.ot_run::*}
+						add random element of {_list::*} to {ocpt.op.%arg-2%.ot_run::*}
 
 
 		if arg-1 is "point":
@@ -611,7 +618,7 @@ command /ocptTotalization <text> [<number>] [<number>]:
 						set {ocpt.op.%arg-2%.points::%{_index}%} to 0
 
 					add 1 to {ocpt.op.%arg-2%.points::%{_index}%}
-
+					broadcast "%{_index}%"
 				#メッセージ
 				if {ocpt.op.%arg-2%::cap_type} is 1:
 					broadcast "  &6==&5%{ocpt.op.%arg-2%::cap_name}%&dが更新されました&6=="
@@ -625,7 +632,8 @@ command /ocptTotalization <text> [<number>] [<number>]:
 						broadcast "  &6==&5%{ocpt.ot.%loop-value%::name}%&dの占領が更新されました&6=="
 						broadcast " &e----------------------------------------"
 						loop {ocpt.op.%arg-2%.points::*}:
-							set {_list::*} to loop-index split at "_"
+							set {_index} to "%loop-index-2%"
+							set {_list::*} to {_index} split at "_"
 							if {_list::2} is "%loop-value-1%":
 								broadcast "    &3%{ch-name.%{_list::1}%}%&b国 &3%loop-value-2%&bポイント"
 						broadcast " &e----------------------------------------"
@@ -637,222 +645,180 @@ command /ocptTotalization <text> [<number>] [<number>]:
 		if arg-1 is "end":
 			if arg-2 is set:
 				#3位まで判定
-				set {_teams::*} to {ocpt.op.%arg-2%.points::*}
+				set {_count} to 0
+				loop {ocpt.op.%arg-2%.points::*}:
+					set {_teams::%loop-index%} to loop-value
+					add loop-value to {_count}
+					#チームリストを制作
+					set {_index} to "%loop-index%"
+					set {_list::*} to {_index} split at "_"
+					set {_teamList::%loop-index%} to {_list::1}						
+
 				set {_num} to 1
 				loop 3 times:
 					set {_n} to 0
 					loop {_teams::*}:
-						set {_list::*} to loop-index split at "_"
+						set {_index} to "%loop-index%"
+						set {_list::*} to {_index} split at "_"
+						#集計タイプ
+						if {ocpt.op.%arg-2%::cap_type} is 0:
+							set {_ot} to "%{_list::2}%."
+						else:
+							set {_ot} to ""
+
 						if {_n} is 0:
 							#1番目を暫定で代入
-							add {_list::1} to {_%{_num}%.team::*}
-							set {_top.number} to loop-value
+							add {_list::1} to {_%{_ot}%%{_num}%.team::*}
+							add loop-index to {_top.index::*}
+							set {_top.number} to loop-value-2
 						else:
 							#同立の場合チーム名を代入
-							if loop-value = {_top.number}:
-								add {_list::1} to {_%{_num}%.team::*}
+							if loop-value-2 = {_top.number}:
+								add {_list::1} to {_%{_ot}%%{_num}%.team::*}
+								add loop-index to {_top.index::*}
 								#clear {_top.number}
 							#多い場合代入
-							if loop-value > {_top.number}:
+							if loop-value-2 > {_top.number}:
 								#broadcast "&5topset"
 								clear {_top.team::*}
-								add {_list::1} to {_%{_num}%.team::*}
-								set {_top.number} to loop-value
+								clear {_top.index::*}
+								add {_list::1} to {_%{_ot}%%{_num}%.team::*}
+								set {_top.number} to loop-value-2
 						add 1 to {_n}
+					#リストから削除
+					loop {_top.index::*}:
+						clear {_teams::%loop-value-2%}
 					add 1 to {_num}
 
+				#勝利チーム
+				if {ocpt.op.%arg-2%::cap_type} is 0:
+					loop {ocpt.op.%arg-2%.ot_run::*}:
+						add {_%loop-value%.1.team::*} to {_op.win::*}
+						if {ocpt.op.%arg-2%::reward_type} is 0:
+							add {OT.win.%loop-value%} to {_op.win::*}
+				else if {ocpt.op.%arg-2%::cap_type} is 1:
+					loop {ocpt.op.%arg-2%.ot_run::*}:
+						add {_1.team::*} to {_op.win::*}
+						if {ocpt.op.%arg-2%::reward_type} is 0:
+							add {OT.win.%loop-value%} to {_op.win::*}
 
-				set {_ID} to {cap.running::%arg-2%}
-				#=======================
-				# ポイント報酬と参加報酬を渡す
-				#=======================
-				set {_total.number} to 0
-				loop {cap.list.%arg-2%::*}:
-					add {cap.point.%arg-2%::%loop-value%} to {_total.number}
+				#ポイント報酬なら
+				if {ocpt.op.%arg-2%::reward_type} is 0:
+					#ポイント報酬
+					loop {ocpt.op.%arg-2%.points::*}:
+						set {_index} to "%loop-index%"
+						set {_index::*} to {_index} split at "_"
+						loop {ocpt.reward.%{ocpt.op.%arg-2%::reward_point}%::*}:
+							set {_list::*} to loop-value-2 split at "/"
+							set {_list::2} to floor({_list::2} parsed as number * loop-value-1 / {_count})
+							loop all players:
+								#メッセージ
+								if {_index::1} is "%{ch-countryid.%loop-player%}%":
+									message "&6ポイント報酬が振り込まれました" to loop-player
+							execute console command "/addtogiftbox %{_index::1}% %{_list::3}% %{_list::2}% %{_list::1}%"
 
-				#参加報酬を渡す
-				loop {cap.list.%arg-2%::*}:
-					#参加報酬を渡す
-					set {_n} to 0
-					While {cap.reward.base.%{_ID}%::%{_n}%} is set:
-						set {_item} to {cap.reward.base.%{_ID}%::%{_n}%}
-						add 1 to {_n}
-						set {_number} to {cap.reward.base.%{_ID}%::%{_n}%}
-						add 1 to {_n}
-						#もし鉄ならブロックに圧縮
-						if {_item} is iron ingot:
-							while {_number} > 576:
-								set {_give} to 64 iron blocks
-								execute console command "/addtogiftbox %loop-value% &b占領戦&3参加報酬&r %{_give}%"
-								remove 576 from {_number}
-								
-							set {_block} to 0
-							while {_number} > 9:
-								add 1 to {_block}
-								remove 9 from {_number}
-								
-							set {_give} to "%{_block}% iron blocks"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3参加報酬&r %{_give}%"
+				#順位報酬
+				else if {ocpt.op.%arg-2%::reward_type} is 1:
+					if {ocpt.op.%arg-2%::cap_type} is 0:
+						loop {ocpt.op.%arg-2%.ot_run::*}:
 
-							set {_give} to "%{_number}% %{_item}%s"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3参加報酬&r %{_give}%"
-						else:
-							#スタックで渡す
-							while {_number} > 64:
-								set {_give} to "64 %{_item}%"
-								execute console command "/addtogiftbox %loop-value% &b占領戦&3参加報酬&r %{_give}%"
-								remove 64 from {_number}
-							#残りを渡す
-							set {_give} to "%{_number}% %{_item}%"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3参加報酬&r %{_give}%"
+							loop {ocpt.reward.%{ocpt.op.%arg-2%::reward_point}%::*}:
+								if {_%loop-value-1%.1.team::*} is set:
+									set {_list::*} to loop-value-2 split at "/"
+									set {_list::2} to floor({_list::2} parsed as number)
+									execute console command "/addtogiftbox %{_%loop-value-1%.1.team::*}% %{_list::3}% %{_list::2}% %{_list::1}%"
+								if {_%loop-value-1%.2.team::*} is set:
+									set {_list::*} to loop-value-2 split at "/"
+									set {_list::2} to floor({_list::2} parsed as number * 0.75)
+									execute console command "/addtogiftbox %{_%loop-value-1%.2.team::*}% %{_list::3}% %{_list::2}% %{_list::1}%"
+								if {_%loop-value-1%.3.team::*} is set:
+									set {_list::*} to loop-value-2 split at "/"
+									set {_list::2} to floor({_list::2} parsed as number * 0.5)
+									execute console command "/addtogiftbox %{_%loop-value-1%.3.team::*}% %{_list::3}% %{_list::2}% %{_list::1}%"
 
-					#ポイント報酬を渡す
-					set {_reward} to {cap.point.%arg-2%::%loop-value%} / {_total.number}
-					set {_reward} to floor({_reward})
+								loop all players:
+									#メッセージ
+									if {_%loop-value-1%.1.team::*} is "%{ch-countryid.%loop-player%}%":
+										message "&a===============================================" to loop-player
+										message "    &6ポイント1位の報酬が振り込まれました" to loop-player
+										message "&a===============================================" to loop-player
+									if {_%loop-value-1%.2.team::*} is "%{ch-countryid.%loop-player%}%":
+										message "&62位の報酬が振り込まれました" to loop-player
+									if {_%loop-value-1%.3.team::*} is "%{ch-countryid.%loop-player%}%":
+										message "&63位の報酬が振り込まれました" to loop-player
 
-					set {_n} to 0
-					While {cap.reward.point.%{_ID}%::%{_n}%} is set:
-						set {_item} to {cap.reward.point.%{_ID}%::%{_n}%}
-						add 1 to {_n}
-						set {_number} to {cap.reward.point.%{_ID}%::%{_n}%} * {_reward}
-						add 1 to {_n}
-						#もし鉄ならブロックに圧縮
-						if {_item} is iron ingot:
-							while {_number} > 576:
-								set {_give} to 64 iron blocks
-								execute console command "/addtogiftbox %loop-value% &b占領戦&3ポイント報酬&r %{_give}%"
-								set {_number} to {_number} - 576
-								
-							set {_block} to 0
-							while {_number} > 9:
-								add 1 to {_block}
-								set {_number} to {_number} - 9
-								
-							set {_give} to "%{_block}% iron blocks"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3ポイント報酬&r %{_give}%"
+					else if {ocpt.op.%arg-2%::cap_type} is 1:
+						loop {ocpt.reward.%{ocpt.op.%arg-2%::reward_point}%::*}:
+							set {_list::*} to loop-value split at "/"
+							if {_1.team::*} is set:
+								set {_num} to floor({_list::2} parsed as number)
+								execute console command "/addtogiftbox %{_1.team::*}% %{_list::3}% %{_num}% %{_list::1}%"
+							if {_2.team::*} is set:
+								set {_num} to floor({_list::2} parsed as number * 0.75)
+								execute console command "/addtogiftbox %{_2.team::*}% %{_list::3}% %{_num}% %{_list::1}%"
+							if {_3.team::*} is set:
+								set {_num} to floor({_list::2} parsed as number * 0.5)
+								execute console command "/addtogiftbox %{_3.team::*}% %{_list::3}% %{_num}% %{_list::1}%"
 
-							set {_give} to "%{_number}% %{_item}%s"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3ポイント報酬&r %{_give}%"
-						else:
-							#スタックで渡す
-							while {_number} > 64:
-								set {_give} to "64 %{_item}%"
-								execute console command "/addtogiftbox %loop-value% &b占領戦&3ポイント報酬&r %{_give}%"
-								set {_number} to {_number} - 64
-							#残りを渡す
-							set {_give} to "%{_number}% %{_item}%"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3ポイント報酬&r %{_give}%"
+							loop all players:
+								#メッセージ
+								if {_1.team::*} is "%{ch-countryid.%loop-player%}%":
+									message "&a===============================================" to loop-player
+									message "    &6ポイント1位の報酬が振り込まれました" to loop-player
+									message "&a===============================================" to loop-player
+								if {_2.team::*} is "%{ch-countryid.%loop-player%}%":
+									message "&a===============================================" to loop-player
+									message "    &6ポイント2位の報酬が振り込まれました" to loop-player
+									message "&a===============================================" to loop-player
+								if {_3.team::*} is "%{ch-countryid.%loop-player%}%":
+									message "&a===============================================" to loop-player
+									message "    &6ポイント3位の報酬が振り込まれました" to loop-player
+									message "&a===============================================" to loop-player
 
+				#勝利報酬
+				#同盟を追加
+				loop {_op.win::*}:
+					if {ch-alliance.%loop-value%} is not 0:
+						set {_n} to 1
+						loop {ch-number} times:
+							#同盟国なら勝利チームリストに入れる
+							if {ch-alliance.%loop-value-1%} is {ch-alliance.%{_n}%}:
+								clear {_c}
+								loop {_op.win::*}:
+									if loop-value-3 is {_n}:
+										set {_c} to true
+								if {_c} is not set:
+									add {_n} to {_op.win::*}
+							add 1 to {_n}
 
- 
-				#======================
-				#   最多ポイントの国を判定
-				#======================
-				#1位の判別
-				set {_n} to 0
-				loop {cap.list.%arg-2%::*}:
-
-					#broadcast "&5%loop-value% %{cap.point.%arg-2%::%loop-value%}%"
-					if {_n} is 0:
-						#1番目を暫定で代入
-						add loop-value to {_top.team::*}
-						set {_top.number} to {cap.point.%arg-2%::%loop-value%}
-					else:
-						#同立の場合チーム名を代入
-						if {cap.point.%arg-2%::%loop-value%} = {_top.number}:
-							add loop-value to {_top.team::*}
-							#clear {_top.number}
-						#多い場合代入
-						if {cap.point.%arg-2%::%loop-value%} > {_top.number}:
-							#broadcast "&5topset"
-							clear {_top.team::*}
-							add loop-value to {_top.team::*}
-							set {_top.number} to {cap.point.%arg-2%::%loop-value%}
-					add 1 to {_n}
-
-				#占領していたチームを確定
-				set {_OT.win} to {OT.win.%arg-2%}
-				#メッセージ
-				broadcast "&6-----------------------------------------------"
-				broadcast "&3      %{OT.name.%arg-2%}%&bの占領戦が終了しました"
-				loop {_top.team::*}:
-					broadcast "       &a最多獲得ポイント &6%{ch-name.%loop-value%}%&3国"	
-				broadcast "     &a最後に占領していた国 &6%{ch-name.%{OT.win.%arg-2%}%}%&3国"
-				broadcast "&6-----------------------------------------------"
-			
-				loop {cap.list.%arg-2%::*}:
+				#勝利報酬を渡す
+				loop {_op.win::*}:
 					loop all players:
 						#勝ったチームのプレイヤーなら
-
-						if loop-value-1 is {ch-countryid.%loop-player%}:
-							message "&6獲得ポイント報酬が振り込まれました" to loop-player
-							message "&6参加報酬が振り込まれました" to loop-player
-
-				#最後に占領していた国を変数に
-				add {_OT.win} to {_top.team::*}
-				if {ch-alliance.%{_OT.win}%} is not 0:
-					set {_n} to 1
-					loop {ch-number} times:
-						#同盟国なら勝利チームリストに入れる
-						if {ch-alliance.%{_OT.win}%} is {ch-alliance.%{_n}%}:
-							add {_n} to {_top.team::*}
-						add 1 to {_n}
-
-				#勝ったチームへのメッセージ
-				loop {_top.team::*}:
-					#報酬を渡す
-					set {_n} to 0
-					While {cap.reward.win.%{_ID}%::%{_n}%} is set:
-						set {_item} to {cap.reward.win.%{_ID}%::%{_n}%}
-						add 1 to {_n}
-						set {_number} to {cap.reward.win.%{_ID}%::%{_n}%}
-						add 1 to {_n}
-						#もし鉄ならブロックに圧縮
-						if {_item} is iron ingot:
-							while {_number} > 576:
-								set {_give} to 64 iron blocks
-								execute console command "/addtogiftbox %loop-value% &b占領戦&3勝利報酬&r %{_give}%"
-								set {_number} to {_number} - 576
-								
-							set {_block} to 0
-							while {_number} > 9:
-								add 1 to {_block}
-								set {_number} to {_number} - 9
-								
-							set {_give} to "%{_block}% iron blocks"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3勝利報酬&r %{_give}%"
-
-							set {_give} to "%{_number}% %{_item}%s"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3勝利報酬&r %{_give}%"
-						else:
-							#スタックで渡す
-							while {_number} > 64:
-								set {_give} to "64 %{_item}%"
-								execute console command "/addtogiftbox %loop-value% &b占領戦&3勝利報酬&r %{_give}%"
-								set {_number} to {_number} - 64
-							#残りを渡す
-							set {_give} to "%{_number}% %{_item}%"
-							execute console command "/addtogiftbox %loop-value% &b占領戦&3勝利報酬&r %{_give}%"
-					loop all players:
-						#勝ったチームのプレイヤーなら
-						if loop-value-1 is {ch-countryid.%loop-player%}:
+						if "%loop-value-1%" is "%{ch-countryid.%loop-player%}%":
 							message "&6勝利報酬が振り込まれました" to loop-player
 							message "&a===============================================" to loop-player
 							message "                &a自軍の勝利です" to loop-player
 							message "&a===============================================" to loop-player
+					loop {ocpt.reward.%{ocpt.op.%arg-2%::reward_win}%::*}:
+						set {_list::*} to loop-value-2 split at "/"
+						execute console command "/addtogiftbox %loop-value-1% %{_list::3}% %{_list::2}% %{_list::1}%"
+
+
+				#参加報酬を渡す
+				loop {_teamList::*}:
+					loop all players:
+						if "%loop-value-1%" is "%{ch-countryid.%loop-player%}%":
+							message "&6参加報酬が振り込まれました" to loop-player
+					loop {ocpt.reward.%{ocpt.op.%arg-2%::reward_win}%::*}:
+						set {_list::*} to loop-value-2 split at "/"
+						execute console command "/addtogiftbox %loop-value-1% %{_list::3}% %{_list::2}% %{_list::1}%"
+
+				loop {ocpt.op.run::*}:
+					if loop-value is arg-2:
+						clear {ocpt.op.run::%loop-index%}
+
 				
-				#初期化
-				clear {cap.point.%arg-2%::*}
-				clear {cap.list.%arg-2%::*}
-
-			else:
-				set {_n} to 0
-				loop 8 times:
-					if {cap.running::%{_n}%} is set:
-						execute console command "/ocptTotalization end %{_n}%"
-
-					add 1 to {_n}
-				clear {cap.running::*}
 #====================================================================================================
 #                                      　　　　出入関連
 #====================================================================================================
