@@ -979,6 +979,7 @@ command /ocptTotalization <text> [<number>] [<number>]:
 							if {ch-alliance.%{_index}%} is {ch-alliance.%{_n}%}:
 								add {_n} to {_top.team::*}
 							add 1 to {_index}
+							add 1 to {_n}
 
 				#占領していたチームを確定
 				set {_OT.win} to {OT.win.%arg-2%}
@@ -1002,9 +1003,6 @@ command /ocptTotalization <text> [<number>] [<number>]:
 				if {ch-alliance.%{_OT.win}%} is not 0:
 					set {_n} to 1
 					loop {country-now-number} times:
-						#国に当たるまで回す
-						while {ch-color.%{_n}%} is not set:
-							add 1 to {_n}
 						#同盟国なら勝利チームリストに入れる
 						if {ch-alliance.%{_OT.win}%} is {ch-alliance.%{_n}%}:
 							add {_n} to {_top.team::*}

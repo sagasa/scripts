@@ -31,6 +31,7 @@ on rightclick with name tag:
 	#broadcast "%{_stump}%"
 	if {inventory.%{_stump}%::-1} is true:
 		cancel event
+		remove 1 name tag named "%{_stump}%" from player
 		#めんどくさいのでドロップする
 		set {_n} to 0
 		loop 40 times:
@@ -45,7 +46,6 @@ on rightclick with name tag:
 				drop {inventory.%{_stump}%::%{_n}%} at player
 			add 1 to {_n}
 		#データ削除
-		remove 1 name tag named "%{_stump}%" from player
 		clear {inventory.%{_stump}%::*}
 		remove {_stump} from {drop.stump.list::*}
 		set {_stump::*} to {_stump} split at "."

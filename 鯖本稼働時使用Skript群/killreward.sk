@@ -200,7 +200,7 @@ command /ranking [<text>]:
 							clear {_top.player::*}
 							add loop-value to {_top.player::*}
 						#比較
-						if {_top.number} = {%arg-1%.count::%loop-value%}:
+						else if {_top.number} = {%arg-1%.count::%loop-value%}:
 							add loop-value to {_top.player::*}
 				#1位を除外 メッセージを表示
 				loop {_top.player::*}:
@@ -228,7 +228,11 @@ command /ranking [<text>]:
 			set {_player.number} to 0
 			loop {_players::*}:
 				add 1 to {_player.number}
-				set {_kdr::%loop-value%} to {kill.count::%loop-value%} / {death.count::%loop-value%}
+				if {death.count::%loop-value%} = 0:
+					set {_kdr::%loop-value%} to {kill.count::%loop-value%}
+				else:
+					set {_kdr::%loop-value%} to {kill.count::%loop-value%} / {death.count::%loop-value%}
+				
 			#1番目を算出してリストから除外 カウンタを進める
 			message " &2=-------------------------="
 			message "    &2| &4KDR &cranking &6TOP10 &2|"
@@ -251,14 +255,15 @@ command /ranking [<text>]:
 						set {_top.number} to {_kdr::%loop-value%}
 						add loop-value to {_top.player::*}
 					else:
-						#比較
-						if {_top.number} < {_kdr::%loop-value%}:
-							set {_top.number} to {_kdr::%loop-value%}
-							clear {_top.player::*}
-							add loop-value to {_top.player::*}
-						#比較
-						if {_top.number} = {_kdr::%loop-value%}:
-							add loop-value to {_top.player::*}
+						if "%{_kdr::%loop-value%}%" is not "NaN":	
+							#比較
+							if {_top.number} < {_kdr::%loop-value%}:
+								set {_top.number} to {_kdr::%loop-value%}
+								clear {_top.player::*}
+								add loop-value to {_top.player::*}
+							#比較
+							else if {_top.number} = {_kdr::%loop-value%}:
+								add loop-value to {_top.player::*}
 				#1位を除外 メッセージを表示
 				loop {_top.player::*}:
 					remove loop-value from {_players::*}

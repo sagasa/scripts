@@ -49,11 +49,11 @@ on chat:
 			loop all players:
 				if loop-player = player:
 
-					send "&d[GlobalChat]%{_title}%&7<%player's name%>&f %message%" to loop-player
+					send "&d[GlobalChat]%{_title}%&7<%player's name%>&f %substring of message between index 2 to (length of message)%" to loop-player
 				else if {tc.MuteGlobalChat.%loop-player%} is true:
 				
 				else if {tc.Mute.%loop-player%::%player%} is not set:
-					send "&d[GlobalChat][&6%{ch-name.%{ch-countryid.%player%}%}%&d]%{_title}%&7<%player's name%>&f %message%" to loop-player
+					send "&d[GlobalChat][&6%{ch-name.%{ch-countryid.%player%}%}%&d]%{_title}%&7<%player's name%>&f %substring of message between index 2 to (length of message)%" to loop-player
 			log "Global <%{ch-name.%{ch-countryid.%player%}%}%> <%player's name%> %message%"
 		else if {tc.mode.%player%} is "team":
 			loop all players:
@@ -66,7 +66,7 @@ on chat:
 		
 		else if {tc.mode.%player%} is "alliance":
 			loop all players:
-				if {ch-countryid.%player%} = {ch-countryid.%loop-player%}:
+				if {ch-alliance.%{ch-countryid.%player%}%} = {ch-alliance.%{ch-countryid.%loop-player%}%}:
 					message "&3[AllianceChat]%{_title}%&7<%player's name%>&f %message%" to loop-value
 					log "Alliance <%{ch-name.%{ch-countryid.%player%}%}%> <%player's name%> %message%"
 
@@ -323,7 +323,10 @@ command /chat_ui [<player>] [<text>] [<offline player>] [<number>]:
 			loop all players:
 				#自分自身をs除外
 				if loop-player is not {_player}:
-					format slot {_n} of {_player} with light green glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
+					if {tc.Mute.%{_player}%::%loop-player%} is true:
+						format slot {_n} of {_player} with red glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
+					else:
+						format slot {_n} of {_player} with light green glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
 					add 1 to {_n}
 
 		if arg-2 is "MuteGlobalChat":
@@ -369,6 +372,7 @@ command /chat_ui [<player>] [<text>] [<offline player>] [<number>]:
 
 		#個人ミュート
 		if arg-2 is "MutePlayer":
+			wait 1 tick
 			if {tc.Mute.%{_player}%::%arg-3%} is true:
 				clear {tc.Mute.%{_player}%::%arg-3%}
 				message "&6[Chat]&2%arg-3%&aのミュートを解除しました" to {_player}
