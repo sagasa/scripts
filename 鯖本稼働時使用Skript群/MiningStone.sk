@@ -44,6 +44,15 @@ command /MineLimitReset:
 		broadcast "&6[Mine]&d採掘の制限をリセットしました"
 
 on mine of stone:
+<<<<<<< HEAD
+=======
+	if {ch-land.%chunk at location of block%} != {ch-countryid.%player%}:
+		stop
+
+	else if {ch-land.%chunk at location of block%} is not set:
+		stop
+
+>>>>>>> 2133b39439e636fe2b3ec487aefe8b0fd402ab34
 	set {_y} to y-coordinate of event-block
 
 	set {_fortune} to 2 + level of fortune of the player's tool

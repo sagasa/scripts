@@ -825,16 +825,14 @@ command /ocptTotalization <text> [<number>] [<number>]:
 
 		if arg-1 is "point":
 			if arg-2 is set:
-				#None国防止
-				if {OT.win.%arg-2%} is not set:
-					#リストに入ってなければ追加
-					loop {cap.list.%arg-2%::*}:
-						if {OT.win.%arg-2%} is loop-value:
-							set {_p} to true
-					if {_p} is not set:
-						add {OT.win.%arg-2%} to {cap.list.%arg-2%::*}
-					#ポイント
-					add 1 to {cap.point.%arg-2%::%{OT.win.%arg-2%}%}
+				#リストに入ってなければ追加
+				loop {cap.list.%arg-2%::*}:
+					if {OT.win.%arg-2%} is loop-value:
+						set {_p} to true
+				if {_p} is not set:
+					add {OT.win.%arg-2%} to {cap.list.%arg-2%::*}
+				#ポイント
+				add 1 to {cap.point.%arg-2%::%{OT.win.%arg-2%}%}
 				
 				broadcast "  &6==&5%{OT.name.%arg-2%}%&dの占領が更新されました&6=="
 				broadcast " &e----------------------------------------"
@@ -904,7 +902,8 @@ command /ocptTotalization <text> [<number>] [<number>]:
 
 					#ポイント報酬を渡す
 					set {_reward} to {cap.point.%arg-2%::%loop-value%} / {_total.number}
-					
+					set {_reward} to floor({_reward})
+
 					set {_n} to 0
 					While {cap.reward.point.%{_ID}%::%{_n}%} is set:
 						set {_item} to {cap.reward.point.%{_ID}%::%{_n}%}
@@ -972,15 +971,14 @@ command /ocptTotalization <text> [<number>] [<number>]:
 
 				#勝利チームが同盟だった場合
 				loop {_top.team::*}:
-					if {ch-allianceid.%loop-value%} is not 0:
+					if {ch-alliance.%loop-value%} is not 0:
 						set {_n} to 1
+						set {_index} to 0
 						loop {country-now-number} times:
-							#国に当たるまで回す
-							while {ch-color.%{_n}%} is not set:
-								add 1 to {_n}
 							#同盟国なら勝利チームリストに入れる
-							if {ch-allianceid.%loop-value-1%} is {ch-allianceid.%{_n}%}:
+							if {ch-alliance.%{_index}%} is {ch-alliance.%{_n}%}:
 								add {_n} to {_top.team::*}
+							add 1 to {_index}
 
 				#占領していたチームを確定
 				set {_OT.win} to {OT.win.%arg-2%}
@@ -1001,14 +999,14 @@ command /ocptTotalization <text> [<number>] [<number>]:
 
 				#最後に占領していた国を変数に
 				add {_OT.win} to {_top.team::*}
-				if {ch-allianceid.%{_OT.win}%} is not 0:
+				if {ch-alliance.%{_OT.win}%} is not 0:
 					set {_n} to 1
 					loop {country-now-number} times:
 						#国に当たるまで回す
 						while {ch-color.%{_n}%} is not set:
 							add 1 to {_n}
 						#同盟国なら勝利チームリストに入れる
-						if {ch-allianceid.%{_OT.win}%} is {ch-allianceid.%{_n}%}:
+						if {ch-alliance.%{_OT.win}%} is {ch-alliance.%{_n}%}:
 							add {_n} to {_top.team::*}
 
 				#勝ったチームへのメッセージ

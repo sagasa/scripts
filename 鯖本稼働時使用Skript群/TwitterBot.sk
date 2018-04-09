@@ -30,10 +30,23 @@ command /ff:
 			#follow loop-value
 			send "%loop-value%"
 
-command /ocptTweet <number>:
+command /ocptTweet <text> <number> [<text>]:
 	permission: skript.op
 	trigger:
-		tweet "【ServerStats】%newline%%{OT.name.%arg-1%}%にて占領戦を開始しました。"
+		if arg-1 is "start":
+			tweet "【ServerStats】%newline%%{OT.name.%arg-2%}%にて占領戦を開始しました。"
+
+		if arg-1 is "win":
+			if arg-3 is set:
+				add arg-3 to {_ocpt.winTweet::*}
+
+		if arg-1 is "end":
+			if arg-3 is set:
+				loop  {_ocpt.winTweet::*}:
+					
+				tweet "【ServerStats】%newline%%{OT.name.%arg-2%}%の占領戦が終了しました。%newline%最多ポイント獲得国："
+
+
 
 on command "/restart":
 	tweet "【ServerStats】%newline%サーバを再起動します(%now%)"

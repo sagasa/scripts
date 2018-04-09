@@ -51,6 +51,8 @@ on rightclick with clock of fortune 0:
 	execute console command "ch-admin menu 0 0 0 %player%"
 		
 on rightclick with nether quartz item of fortune 0:
+	if event-block is ender chest or chest or trapped chest:
+		stop
 	if name of player's tool is "&a[clanhome]&bビルドコア":
 		open chest with 1 rows named "&a[clanhome]&bビルドコア" to player
 		wait a tick
@@ -62,6 +64,8 @@ on rightclick with nether quartz item of fortune 0:
 		format slot 8 of player with map named "&dチャンクを確認する" to close then run "ch-build chunk 4 %player%"
 
 on rightclick with nether quartz item of fortune 0:
+	if event-block is ender chest or chest or trapped chest:
+		stop
 	if name of player's tool is "&a[clanhome]&bビルドコア[隣接]":
 		open chest with 1 rows named "&a[clanhome]&bビルドコア[隣接]" to player
 		wait a tick

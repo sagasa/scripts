@@ -5,6 +5,14 @@ on join:
 			execute console command "/hide %player%"
 		else:
 			execute console command "/show %player%"
+<<<<<<< HEAD
+=======
+	loop {hidelist::*}:
+		if {hide.%loop-index%} is 1:
+			set {_hide} to loop-index parsed as player
+			hide {_hide} from player
+
+>>>>>>> 2133b39439e636fe2b3ec487aefe8b0fd402ab34
 	
 		
 command /hidelist <text> [<player>]:
@@ -47,7 +55,11 @@ command /show [<player>]:
 		if arg-1 is set:
 			if {hideList::%arg-1%} is 1:
 				clear {hide.%arg-1%}
+<<<<<<< HEAD
 				reveal player from all players
+=======
+				reveal arg-1 from all players
+>>>>>>> 2133b39439e636fe2b3ec487aefe8b0fd402ab34
 				
 		if arg-1 is not set:
 			if {hideList::%player%} is 1:
