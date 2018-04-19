@@ -154,15 +154,10 @@ command /ocpt [<player>] [<text>] [<number>]:
 on chat:
 	if {ocpt.setting.%player%::type} is "OTname":
 		cancel event
-		set {OT.name.%{ocpt.setting.%player%::Number}%} to message
+		set {ocpt.ot.%{ocpt.setting.%player%::Number}%::name} to message
 		message "&d[ocpt]&6占領地No.&d%{ocpt.setting.%player%::Number}%&6の名称を&f%message%&6に変更しました"
 		clear {ocpt.setting.%player%::*}
 
-	if {ocpt.setting.%player%::type} is "OC_reward_name":
-		cancel event
-		set {cap.name.%{ocpt.setting.%player%::Number}%} to message
-		message "&d[ocpt]&6占領戦No.&d%{ocpt.setting.%player%::Number}%&6の名称を&f%message%&6に変更しました"
-		clear {ocpt.setting.%player%::*}
 
 #リログしたら時にキャプチャをキャンセル
 on join:
@@ -297,7 +292,7 @@ command /ocptcommon [<text>] [<number>] [<player>] :
 				#タイマーを呼ぶ
 				execute console command "/ocpttimer %{_OTnum}% %{_top.team}% %{_top.number}%"
 
-#/ocpttimer <占領地ID> <チームID> <人数> <同盟ID>
+#/ocpttimer <占領地ID> <チームID> <人数> 
 command /ocpttimer <number> <number> <number>:
 	permission: console.console
 	trigger:
@@ -309,6 +304,9 @@ command /ocpttimer <number> <number> <number>:
 		set {_basewait} to 6
 		#係数
 		set {_coefficient} to 1
+
+		if {ch-alliance.%arg-2%} is not 0:
+			set {_alliance} to {ch-alliance.%arg-2%}
 
 		#ローカルデータの格納
 		set {_caping.team.%arg-1%} to arg-2
@@ -357,7 +355,7 @@ command /ocpttimer <number> <number> <number>:
 				if loop-number is 16:
 					loop all players:
 						#同盟国が占領した場合
-						if {ch-alliance.%{OT.win.%arg-1%}%} is {ch-alliance.%arg-2%}:
+						if {ch-alliance.%{OT.win.%arg-1%}%} is {_alliance}:
 							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&aを占領中" to loop-player
 						#占領された側
 						else if {ch-countryid.%loop-player%} is {OT.win.%arg-1%}:
@@ -402,7 +400,7 @@ command /ocpttimer <number> <number> <number>:
 				if loop-number is 43:
 					loop all players:
 						#同盟国が占領した場合
-						if {ch-alliance.%{OT.win.%arg-1%}%} is {ch-alliance.%arg-2%}:
+						if {ch-alliance.%{OT.win.%arg-1%}%} is {_alliance}:
 							message "&a===============================================" to loop-player
 							message "" to loop-player
 							message "&6[OCPT]&2%{ocpt.ot.%arg-1%::name}%&aの占領が完了しました" to loop-player
@@ -516,8 +514,17 @@ command /ocptTotalization <text> [<number>] [<number>]:
 					set {_list::*} to {ocpt.op.%arg-2%.ot_list::*}
 					loop {ocpt.op.%arg-2%::ot_type} times:
 						#ランダムに選択して保存
-						add random element of {_list::*} to {ocpt.op.%arg-2%.ot_run::*}
-
+						clear {_c}
+						while {_c} is not set:
+							set {_v} to random element of {_list::*}
+							clear {_c2}
+							loop {ocpt.op.%arg-2%.ot_run::*}:
+								if {_v} is loop-value-2:
+									set {_c2} to true
+							if {_c2} is not set:
+								add {_v} to {ocpt.op.%arg-2%.ot_run::*}
+								broadcast " &b%{ocpt.ot.%{_v}%::name}%&6で占領戦を開始しました"
+								set {_c} to true
 
 		if arg-1 is "point":
 			if arg-2 is set:
@@ -564,10 +571,12 @@ command /ocptTotalization <text> [<number>] [<number>]:
 				loop {ocpt.op.%arg-2%.points::*}:
 					set {_teams::%loop-index%} to loop-value
 					add loop-value to {_count}
-					#チームリストを制作
+
 					set {_index} to "%loop-index%"
 					set {_list::*} to {_index} split at "_"
-					set {_teamList::%loop-index%} to {_list::1}						
+					#チームリストを制作
+					
+					set {_teamList::%loop-index%} to {_list::1}
 
 				set {_num} to 1
 				loop 3 times:
@@ -584,38 +593,52 @@ command /ocptTotalization <text> [<number>] [<number>]:
 						if {_n} is 0:
 							#1番目を暫定で代入
 							add {_list::1} to {_%{_ot}%%{_num}%.team::*}
-							add loop-index to {_top.index::*}
-							set {_top.number} to loop-value-2
+							add loop-index to {_%{_ot}%top.index::*}
+							set {_%{_ot}%top.number} to loop-value-2
 						else:
 							#同立の場合チーム名を代入
-							if loop-value-2 = {_top.number}:
+							if loop-value-2 = {_%{_ot}%top.number}:
 								add {_list::1} to {_%{_ot}%%{_num}%.team::*}
-								add loop-index to {_top.index::*}
+								add loop-index to {_%{_ot}%top.index::*}
 								#clear {_top.number}
 							#多い場合代入
-							if loop-value-2 > {_top.number}:
+							if loop-value-2 > {_%{_ot}%top.number}:
 								#broadcast "&5topset"
-								clear {_top.team::*}
-								clear {_top.index::*}
-								add {_list::1} to {_%{_ot}%%{_num}%.team::*}
-								set {_top.number} to loop-value-2
+								clear {_%{_ot}%top.index::*}
+								clear {_%{_ot}%%{_num}%.team::*}
+								set {_%{_ot}%top.number} to loop-value-2
 						add 1 to {_n}
 					#リストから削除
-					loop {_top.index::*}:
-						clear {_teams::%loop-value-2%}
+					if {ocpt.op.%arg-2%::cap_type} is 0:
+						loop {ocpt.op.%arg-2%.ot_run::*}:
+							loop {_%loop-value-2%.top.index::*}:
+								clear {_teams::%loop-value-3%}
+					else:
+						loop {_top.index::*}:
+							clear {_teams::%loop-value-2%}
 					add 1 to {_num}
 
+				#メッセージ
+				broadcast "&6-----------------------------------------------"
+				broadcast "&3      %{ocpt.op.%arg-2%::cap_name}%&bが終了しました"
 				#勝利チーム
 				if {ocpt.op.%arg-2%::cap_type} is 0:
 					loop {ocpt.op.%arg-2%.ot_run::*}:
 						add {_%loop-value%.1.team::*} to {_op.win::*}
+						loop {_%loop-value%.1.team::*}:
+							broadcast "       &a最多獲得ポイント &6%{ch-name.%loop-value-2%}%&3国"
 						if {ocpt.op.%arg-2%::reward_type} is 0:
 							add {OT.win.%loop-value%} to {_op.win::*}
+							broadcast "     &a最後に占領していた国 &6%{ch-name.%{OT.win.%loop-value%}%}%&3国"
 				else if {ocpt.op.%arg-2%::cap_type} is 1:
 					loop {ocpt.op.%arg-2%.ot_run::*}:
 						add {_1.team::*} to {_op.win::*}
+						loop {_1.team::*}:
+							broadcast "       &a最多獲得ポイント &6%{ch-name.%loop-value-2%}%&3国"
 						if {ocpt.op.%arg-2%::reward_type} is 0:
 							add {OT.win.%loop-value%} to {_op.win::*}
+							broadcast "     &a最後に占領していた国 &6%{ch-name.%{OT.win.%loop-value%}%}%&3国"					
+				broadcast "&6-----------------------------------------------"
 
 				#ポイント報酬なら
 				if {ocpt.op.%arg-2%::reward_type} is 0:
@@ -729,6 +752,7 @@ command /ocptTotalization <text> [<number>] [<number>]:
 						set {_list::*} to loop-value-2 split at "/"
 						execute console command "/addtogiftbox %loop-value-1% %{_list::3}% %{_list::2}% %{_list::1}%"
 
+				clear {ocpt.op.%arg-2%.ot_run::*}
 				loop {ocpt.op.run::*}:
 					if loop-value is arg-2:
 						clear {ocpt.op.run::%loop-index%}
