@@ -1,16 +1,15 @@
 
 
-
-#キル報酬
-/command /getEventPoint <string> <text>:
-	permission: console.console
-	trigger:
-
-
 #----------------------
 #      ポイント獲得
 #----------------------
-
+on death of player:
+	set {_attacker} to expand attacker
+	if {_attacker} is a player:
+		#キル報酬
+		add {event.killPoint} to {event.saves::%{_attacker}%-point}
+		if "%{_attacker}'s vehicle%" is not "entity":
+			if {event.weponPoint::%{_attacker}'s tool%} is set:
 #----------------------
 #      開発進捗等
 #----------------------
@@ -85,6 +84,9 @@ command /event_ui [<player>] [<text>] [<text>]:
 			#イベントアイテム登録
 			#add "Name/Lore/Slot/Item/Point_Reserch/Point_Make" to {event.items::*}
 
+			#各ポイント
+			set {event.killPoint} to 5
+			set {event.capPointPoint} to 2
 			#武器ごとのポイント設定
 			#set {event.weponPoint::Item} to Point
 
