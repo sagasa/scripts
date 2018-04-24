@@ -1,0 +1,103 @@
+
+
+#----------------------
+#      ポイント獲得
+#----------------------
+on death of player:
+	set {_attacker} to expand attacker
+	if {_attacker} is a player:
+		#キル報酬
+		add {event.killPoint} to {event.saves::%{_attacker}%-point}
+		if "%{_attacker}'s vehicle%" is not "entity":
+			if {event.weponPoint::%{_attacker}'s tool%} is set:
+#----------------------
+#      開発進捗等
+#----------------------
+#       /event_ui  [プレイヤー]   [動作]   [データ] :
+command /event_ui [<player>] [<text>] [<text>]:
+	permission: console.console
+	trigger:
+		#プレイヤーを変数に
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+		#======================
+		# ユーザー側GUI
+		if arg-2 is "gui_open":
+			open chest with 6 row named "%{event.name}%" to {_player}
+			wait 1 tick
+			execute console command "/event_ui %{_player}% gui_write"
+
+		if arg-2 is "gui_write":
+			play dig gravel at {_player} with pitch 0.8
+			#初期化
+			loop 54 times:
+				set slot loop-number-1 of {_player}'s open inventory to air
+			loop {event.items::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_name} to {_list::1}
+				set {_lore} to {_list::2}
+				set {_slot} to {_list::3} parsed as number
+				set {_item} to {_list::4} parsed as item
+				set {_point_reserch} to {_list::5} parsed as number
+				set {_point_make} to {_list::6} parsed as number
+				#研究済みか
+				set {_info} to "||&6開発に必要なイベントポイント : &3%{_point_reserch}%||&6製造に必要なイベントポイント : &3%{_point_make}%||&6所持しているイベントポイント : &3%{event.saves::%{_player}%-point}%"
+				if {event.saves::%{_player}%-item-%{_name}%} is true:
+					set {_info} to "%{_info}%||&a&l開発済み &2クリックでポイントを消費して製造する"
+				else:
+					set {_info} to "%{_info}%||&c&l未開発 &3クリックでポイントを消費して研究する"
+				format slot {_slot} of {_player} with {_item} named "%{_name}%" with lore "%{_lore}%%{_info}%" to run "event_ui %{_player}% event_item %loop-value%"
+
+		if arg-2 is "event_item":
+			set {_list::*} to arg-3 split at "/"
+			set {_name} to {_list::1}
+			set {_item} to {_list::4} parsed as item
+			set {_point_reserch} to {_list::5} parsed as number
+			set {_point_make} to {_list::6} parsed as number
+			#研究済みなら
+			if {event.saves::%{_player}%-item-%{_name}%} is true;
+				if {event.saves::%{_player}%-point} >=  {_point_make}:
+					drop {_item} at {_player}
+					remove {_point_make} from {event.saves::%{_player}%-point}
+					message "&6[%{event.name}%&6]&3%{_name}%&aを製造しました" to {_player}
+					execute console command "/event_ui %{_player}% gui_write"
+				else:
+					message "&6[%{event.name}%&6]&cポイントが足りません 不足分&3%{_point_make} - {event.saves::%{_player}%-point}%" to {_player}
+			else:
+				if {event.saves::%{_player}%-point} >=  {_point_reserch}:
+					set {event.saves::%{_player}%-item-%{_name}%} to true
+					remove {_point_reserch} from {event.saves::%{_player}%-point}
+					message "&6[%{event.name}%&6]&3%{_name}%&aを開発しました" to {_player}
+					execute console command "/event_ui %{_player}% gui_write"
+				else:
+					message "&6[%{event.name}%&6]&cポイントが足りません 不足分&3%{_point_reserch} - {event.saves::%{_player}%-point}%" to {_player}
+
+		#=====================
+		# 管理側
+		if arg-2 is "reload":
+			#イベント名定義
+			set {event.name} to "testEvent"
+			clear {event.items::*}
+			#イベントアイテム登録
+			#add "Name/Lore/Slot/Item/Point_Reserch/Point_Make" to {event.items::*}
+
+			#各ポイント
+			set {event.killPoint} to 5
+			set {event.capPointPoint} to 2
+			#武器ごとのポイント設定
+			#set {event.weponPoint::Item} to Point
+
+		if arg-2 is "resetPlayer":
+			loop {event.items::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_name} to {_list::1}
+				clear {event.saves::%arg-3%-item-%{_name}%}
+			clear {event.saves::%{_player}%-point}
+			message "&6[Event]&d%arg-3%のイベント進捗を削除しました"
+
+		if arg-2 is "resetAll":
+			clear {event.saves::*}
+			message "&6[Event]&d全てのイベント進捗を削除しました"
