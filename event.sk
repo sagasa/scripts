@@ -87,28 +87,38 @@ command /event_ui [<player>] [<text>] [<text>]:
 			#add "Name/Lore/Slot/Item/Point_Reserch/Point_Make" to {event.items::*}
 
 			#各ポイント
-			set {event.killPoint} to 2
-			set {event.capPointPoint} to 12
+			set {event.killPoint} to 1
+			set {event.capPointPoint} to 9
 			#武器ごとのポイント設定
 			#set {event.weponPoint::Item} to Point
-			set {event.weponPoint::flansmod m1897} to 4
-			set {event.weponPoint::flansmod type38} to 4
-			set {event.weponPoint::flansmod type38 bayonet} to 4
-			set {event.weponPoint::flansmod m1903} to 4
-			set {event.weponPoint::flansmod m1903b} to 4
-			set {event.weponPoint::flansmod m1903 scoped} to 4
-			set {event.weponPoint::flansmod mn1891} to 4
-			set {event.weponPoint::flansmod mosinnagant scoped} to 4
-			set {event.weponPoint::flansmod m1903b} to 4
-			set {event.weponPoint::flansmod m1903 scoped} to 4
-			set {event.weponPoint::flansmod c96} to 4
-			set {event.weponPoint::flansmod c96carbine} to 4
-			set {event.weponPoint::flansmod m1903pd} to 4
-			set {event.weponPoint::flansmod nm1895} to 4
-			set {event.weponPoint::flansmod m1911} to 4
-			set {event.weponPoint::flansmod m1917rv} to 4
-			set {event.weponPoint::flansmod m1917rv} to 4
-			set {event.weponPoint::flansmod lewis} to 4
+			set {event.weponPoint::flansmod m1897} to 3
+			set {event.weponPoint::flansmod type38} to 3
+			set {event.weponPoint::flansmod type38 bayonet} to 3
+			set {event.weponPoint::flansmod m1903} to 3
+			set {event.weponPoint::flansmod m1903b} to 3
+			set {event.weponPoint::flansmod m1903 scoped} to 3
+			set {event.weponPoint::flansmod mn1891} to 3
+			set {event.weponPoint::flansmod mosinnagant scoped} to 3
+			set {event.weponPoint::flansmod m1903b} to 3
+			set {event.weponPoint::flansmod m1903 scoped} to 3
+			set {event.weponPoint::flansmod c96} to 3
+			set {event.weponPoint::flansmod c96carbine} to 3
+			set {event.weponPoint::flansmod m1903pd} to 3
+			set {event.weponPoint::flansmod nm1895} to 3
+			set {event.weponPoint::flansmod m1911} to 3
+			set {event.weponPoint::flansmod m1917rv} to 3
+			set {event.weponPoint::flansmod m1917rv} to 3
+			set {event.weponPoint::flansmod lewis} to 3
+			set {event.weponPoint::flansmod mp18} to 4
+			set {event.weponPoint::flansmod m1907} to 4
+			set {event.weponPoint::flansmod bm1918} to 4
+			set {event.weponPoint::flansmod m1918bar} to 4
+			set {event.weponPoint::flansmod chauchat} to 4
+			set {event.weponPoint::flansmod fm1916} to 4
+			set {event.weponPoint::flansmod r1918} to 4
+			set {event.weponPoint::flansmod mhmk4} to 4
+			set {event.weponPoint::flansmod cm1891} to 4
+			set {event.weponPoint::flansmod henrypistol} to 4
 
 		if arg-2 is "resetPlayer":
 			loop {event.items::*}:
