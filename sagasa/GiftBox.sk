@@ -1,0 +1,227 @@
+#アイテム限定のメールっぽい何か
+
+#{RewardBox.%[player]%::*}
+#{RewardBox.lore.%[player]%::*}
+
+command /giftbox:
+	trigger:
+		execute console command "/giftbox_ui %player% gui_open"
+
+#インターフェース
+command /addtogiftbox <text> <text> <text>:
+	permission: console.console
+	trigger:
+		set {_target} to arg-1
+
+		if arg-3 parsed as item is set:
+			set {_count} to 0
+			while {GiftBox.%{_target}%::%{_count}%} is set:
+				add 1 to {_count}
+			set {_txt} to "%arg-2%/%arg-3%/%{_count}%"
+			broadcast "%{_txt}%"
+			set {GiftBox.%{_target}%::%{_count}%} to {_txt}
+		else:
+			log "%arg-3%をアイテムとして認識できませんでした"
+
+
+command /giftbox_ui [<player>] [<text>] [<number>] [<text>]:
+	permission: console.console
+	trigger:
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+		#個人ボックス
+		if arg-2 is "gui_open":
+			wait 2 tick
+			open chest with 6 row named "&1GiftBox" to {_player}
+			execute console command "/giftbox_ui %{_player}% gui_white"
+
+		#国のボックス
+		if arg-2 is "gui_open_faction":
+			wait 2 tick
+			open chest with 6 row named "&3GiftBox &6[&b%{ch-name.%{ch-countryid.%{_player}%}%}%&6]" to {_player}
+			execute console command "/giftbox_ui %{_player}% gui_white faction"
+		
+		#GUIの描画
+		#arg-3が描画開始のポインター
+		if arg-2 is "gui_white":
+			#国か個人か
+			if arg-4 is "faction":
+				set {_target} to {ch-countryid.%{_player}%}
+				set {_faction} to "faction"
+			else:
+				set {_target} to {_player}
+				set {_faction} to ""
+
+			wait 1 tick
+
+			#旧データのサルベージ
+			#=======================================================================
+			set {_count} to 0
+			clear {RewardBox.cache.%{_target}%::*}
+			#リストの中身を整理
+			loop {RewardBox.%{_target}%::*}:
+				set {RewardBox.cache.%{_target}%::%{_count}%} to loop-value
+				add 1 to {_count}
+
+			set {_count} to 0
+			clear {RewardBox.lore.cache.%{_target}%::*}
+			#リストの中身を整理
+			loop {RewardBox.lore.%{_target}%::*}:
+				set {RewardBox.lore.cache.%{_target}%::%{_count}%} to loop-value
+				add 1 to {_count}
+
+			set {_n} to 0
+			while {RewardBox.cache.%{_target}%::%{_n}%} is set:
+				execute console command "/addtogiftbox %{_target}% %{RewardBox.lore.cache.%{_target}%::%{_n}%}% %{RewardBox.cache.%{_target}%::%{_n}%}%"
+				add 1 to {_n}
+
+			clear {RewardBox.%{_target}%::*}
+			clear {RewardBox.lore.%{_target}%::*}
+			clear {RewardBox.cache.%{_target}%::*}
+			clear {RewardBox.lore.cache.%{_target}%::*}
+
+			#=======================================================================
+
+			set {_n} to 0
+			set {_slot} to 9
+			#内容描画
+			loop {GiftBox.%{_target}%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_lore} to {_list::1}
+				set {_item} to {_list::2} parsed as item
+				set {_count} to {_list::3} parsed as number
+				if {_n} <= 45:
+					format slot {_slot} of {_player} with {_item} named "&6%{_lore}%" with lore "&dクリックで受け取り" to run "giftbox_ui %{_player}% receive_one %{_count}% %{_faction}%"
+				add 1 to {_slot}
+				add 1 to {_n}
+
+			loop 45-{_n} times:
+				set slot {_slot} of {_player}'s open inventory to air
+				add 1 to {_slot}
+
+			#すべて表示したかの判別
+			if 45 < {_n}:
+				#表示しきれない場合
+				format slot 8 of {_player} with ender pearl named "&6表示しきれていません" to run "giftbox_ui %{_player}% gui_white 0 %{_faction}%"
+
+			
+			#全体量の表示
+			format slot 0 of {_player} with gray glass pane named "&bアイテムの個数" with lore "&eボックス内に&6%{_n}%&e個のアイテムがあります" to run "giftbox_ui %{_player}% gui_white %{_faction}%"
+
+			#インベントリ分の受け取り
+			format slot 1 of {_player} with gray glass pane named "&3インベントリに入る分受け取りる" with lore "&6インベントリに入りきる量を受け取ります" to close then run "giftbox_ui %{_player}% receive_fullInventory %{_faction}%"
+
+			#すべて受け取り
+			format slot 3 of {_player} with gray glass pane named "&3すべて受け取る" with lore "&6インベントリからあふれた分はその場にドロップされます" to close then run "giftbox_ui %{_player}% receive_all %{_faction}%"
+
+			#現在のページ分受け取り
+			format slot 2 of {_player} with gray glass pane named "&3現在表視されている分を受け取る" with lore "&6インベントリからあふれた分はその場にドロップされます" to run "giftbox_ui %{_player}% receive_display %{_pointer}% %{_faction}%"
+
+		#個別受け取り
+		if arg-2 is "receive_one":
+			#国か個人か
+			if arg-4 is "faction":
+				set {_target} to {ch-countryid.%{_player}%}
+				set {_faction} to "faction"
+			else:
+				set {_target} to {_player}
+				set {_faction} to ""
+
+			set {_list::*} to {GiftBox.%{_target}%::%arg-3%} split at "/"
+			set {_lore} to {_list::1}
+			set {_item} to {_list::2} parsed as item
+			set {_count} to {_list::3} parsed as number
+			#持てるならgiveでなければdrop
+			if {_player} has enough space for {_item}:
+				give {_item} to {_player}
+			else:
+				drop {_item} at {_player}
+			message "&6[Gift]&5%{_item}%&dを受け取りました" to {_player}
+			clear {GiftBox.%{_target}%::%arg-3%}
+
+			execute console command "/giftbox_ui %{_player}% gui_white %{_faction}%"
+
+		#インベントリに入る分受け取り
+		if arg-2 is "receive_fullInventory":
+			#国か個人か
+			if arg-4 is "faction":
+				set {_target} to {ch-countryid.%{_player}%}
+				set {_faction} to "faction"
+			else:
+				set {_target} to {_player}
+				set {_faction} to ""
+
+
+			loop {GiftBox.%{_target}%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_lore} to {_list::1}
+				set {_item} to {_list::2} parsed as item
+				set {_count} to {_list::3} parsed as number
+				if {_player} has enough space for {_item}:
+					give {_item} to {_player}
+					clear {GiftBox.%{_target}%::%{_count}%}
+					message "&6[Gift]&5%{_item}%&dを受け取りました" to {_player}
+				else:
+					message "&6[Gift]&cインベントリが埋まりました" to {_player}
+					stop
+			message "&6[Gift]&bすべて受け取りました" to {_player}
+
+
+		#現在の表示分を受け取り
+		arg-2 is "receive_display":
+			#国か個人か
+			if arg-4 is "faction":
+				set {_target} to {ch-countryid.%{_player}%}
+				set {_faction} to "faction"
+			else:
+				set {_target} to {_player}
+				set {_faction} to ""
+
+			set {_n} to 0
+			#内容描画
+			loop {GiftBox.%{_target}%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_lore} to {_list::1}
+				set {_item} to {_list::2} parsed as item
+				set {_count} to {_list::3} parsed as number
+				if {_n} < 45:
+					clear {GiftBox.%{_target}%::%{_count}%}
+					if {_player} has enough space for {_item}:
+						give {_item} to {_player}
+					else:
+						drop {_item} at {_player}
+					message "&6[Gift]&5%{_item}%&dを受け取りました" to {_player}
+				else:
+					message "&6[Gift]&d1ページ分受け取りました"
+					execute console command "/giftbox_ui %{_player}% gui_white %{_faction}%"
+					stop
+				add 1 to {_n}
+
+			message "&6[Gift]&bすべて受け取りました" to {_player}
+			execute console command "/giftbox_ui %{_player}% gui_white %{_faction}%"
+
+		#すべて受け取り
+		if arg-2 is "receive_all":
+			#国か個人か
+			if arg-4 is "faction":
+				set {_target} to {ch-countryid.%{_player}%}
+				set {_faction} to "faction"
+			else:
+				set {_target} to {_player}
+				set {_faction} to ""
+
+			#内容描画
+			loop {GiftBox.%{_target}%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_lore} to {_list::1}
+				set {_item} to {_list::2} parsed as item
+				set {_count} to {_list::3} parsed as number
+				clear {GiftBox.%{_target}%::%{_count}%}
+				if {_player} has enough space for {_item}:
+					give {_item} to {_player}
+				else:
+					drop {_item} at {_player}
+				message "&6[Gift]&5%{_item}%&dを受け取りました" to {_player}

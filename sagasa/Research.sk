@@ -1,0 +1,458 @@
+#====================================================================================================
+#                                          研究システム
+#====================================================================================================
+options:
+	fastpoint : 800
+
+
+#add "[slot]/[name]/[lore]/[item]/[point_research]/[point_make]" to {research.data.[国ID].[Air|Army]::*}
+command /researchreset [<text>] [<player>]:
+	permission: console.console
+	trigger:
+		if arg-1 is not set:
+			message "&6[Research]&3/researchreset resetall -- &2全プレイヤーの研究リセット(国家研究は無理ぞ"
+			message "&6[Research]&3/researchreset reset [player] -- &2全プレイヤーの研究リセット"
+		if arg-1 is "resetall":
+			set {_count} to 1
+			loop {ch-number} times:
+				if {ch-name.%{_count}%} is set:
+					clear {RP.%{_count}%.0}
+					clear {RP.%{_count}%.1}
+					clear {research.saves.%{_count}%::*}
+				add 1 to {_count}
+				
+			loop {research.player.list::*}:
+				clear {RP.%loop-value%.0}
+				clear {RP.%loop-value%.1}
+				clear {research.saves.%loop-value%::*}
+			clear {research.player.list::*}
+			message "&6[Research]&4全プレイヤーの研究を削除しました"
+		if arg-1 is "reset":
+			if arg-2 is not set:
+				message "&6[Research]&cプレイヤーを指定してください"
+			else:
+				set {RP.%arg-2%.0} to {@fastpoint}
+				set {RP.%arg-2%.1} to {@fastpoint}
+				clear {research.saves.%arg-2%::*}
+				message "&6[Research]&4%arg-2%&cの研究を削除しました"
+
+#----------------------
+#        GUIアイテム
+#----------------------
+on rightclick with strad disc:
+	if player is holding strad disc named "&d研究確認":
+		cancel event
+		execute console command "/research_ui %player% open"
+
+#クラッシュした人対策
+on join:
+	#プレイヤー名変更に対応
+	#UUID登録
+	if {research.UUID.%uuid of player%} is not set:
+		set {research.UUID.%uuid of player%} to player
+
+	#UUIDと照合
+	if "%{research.UUID.%uuid of player%}%" is not "%player%":
+		message "&5[&6researchBackUp&5]&d以前のユーザー名が見つかりました、データを移行します"
+		#データの移行
+		remove {research.UUID.%uuid of player%} from {research.player.list::*}
+		set {research.saves.%player%::*} to {research.saves.%{research.UUID.%uuid of player%}%::*}
+		set {RP.%player%.0} to {RP.%{research.UUID.%uuid of player%}%.0}
+		set {RP.%player%.1} to {RP.%{research.UUID.%uuid of player%}%.1}
+
+		#過去データの削除
+		clear {research.saves.%{research.UUID.%uuid of player%}%::*}
+		clear {RP.%{research.UUID.%uuid of player%}%.0}
+		clear {RP.%{research.UUID.%uuid of player%}%.1}
+
+		#UUIDの更新
+		set {research.UUID.%uuid of player%} to player
+
+	#プレイヤーリスト
+	loop {research.player.list::*}:
+		if loop-value = name of player:
+			set {_c} to true
+	if {_c} is not set:
+		add name of player to {research.player.list::*}
+		set {RP.%player%.0} to {@fastpoint}
+		set {RP.%player%.1} to {@fastpoint}
+
+
+
+#----------------------
+#         本体
+#----------------------
+#       /research_ui  [プレイヤー]   [動作]  [動作補助]  [国ID]    [陸軍|空軍] [データ] :
+command /research_ui [<player>] [<text>] [<text>] [<number>] [<number>] [<text>]:
+	permission: console.console
+	trigger:
+		#プレイヤーを変数に
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+		#ツール
+		if arg-2 is "item":
+			give strad disc named "&d研究確認" to {_player}
+
+		#GUIを開く
+		if arg-2 is "open":
+			if {research.saves.%{_player}%::first_research} is not set:
+				execute console command "/research_ui %{_player}% selectfaction"
+			else:
+				execute console command "/research_ui %{_player}% research_tree_open"
+
+		#初期選択
+		if arg-2 is "selectfaction":
+			wait 2 tick
+			#選択GUIを開く
+			open chest with 1 row named "&1研究する国の選択" to {_player}
+			play dig gravel at {_player} with pitch 0.8
+			wait 1 tick
+			set {_n} to 0
+			set {_p} to 0
+			loop {research.faction::number} times:
+				#重複させないように
+				if {research.saves.%{_player}%::research_start_%{_n}%} is true:
+					format slot {_p} of {_player} with gray glass pane named "&7すでに研究が開始されています" with lore "" to run [set {_dummy} to 0]
+				else:
+					format slot {_p} of {_player} with orange glass pane named "%{research.faction::name.%{_n}%}%" with lore "%{research.faction::name.%{_n}%}%&dの研究ツリーを見る" to close then run "research_ui %{_player}% pre_open dummy %{_n}% 0"
+				add 1 to {_n}
+				add 1 to {_p}
+			format slot 8 of {_player} with compass named "&c戻る" with lore "&6Tree選択に戻る" to close then run "research_ui %{_player}% open"
+
+		#プレビュー描画
+		if arg-2 is "pre_open":
+			if arg-5 is 0:
+				set {_type.name} to "陸軍"
+			if arg-5 is 1:
+				set {_type.name} to "空軍"
+			wait 2 tick
+			open chest with 6 row named "%{research.faction::name.%arg-4%}%&3%{_type.name}%&2の研究プレビュー" to {_player}
+			execute console command "/research_ui %{_player}% pre_write %arg-3% %arg-4% %arg-5%"
+
+		#プレビュー描画
+		if arg-2 is "pre_write":
+			#バックポイント
+			clear {research.saves.%{_player}%::ui_backpoint}
+			wait 1 tick
+			play dig gravel at {_player} with pitch 0.8
+			loop {research.data.%arg-4%.%arg-5%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_name} to {_list::1}
+				set {_lore} to {_list::2}
+				set {_slot} to {_list::3} parsed as number
+				set {_item_view} to {_list::4} parsed as item
+				set {_item_make} to {_list::5} parsed as item
+				set {_point_research} to {_list::6} parsed as number
+				set {_point_make} to {_list::7} parsed as number
+				set {_type} to {_list::8}
+				set {_n} to 9
+				clear {_pre::*}
+				set {_pre} to ""
+				while {_list::%{_n}%} is set:
+					add {_list::%{_n}%} to {_pre::*}	
+					set {_pre} to "%{_pre}%||&6前提研究:&3%{_list::%{_n}%}%"
+					add 1 to {_n}
+				if {_type} starts with "P":
+					format slot {_slot} of {_player} with {_item_view} named "&f%{_name}%" with lore "&6説明:&f%{_lore}%||&6研究に必要なポイント:&3%{_point_research}%||&6製造に必要なポイント:&3%{_point_make}%%{_pre}%" to run [set {_dummy} to 0]
+				if {_type} starts with "F":
+					format slot {_slot} of {_player} with {_item_view} named "&f%{_name}%" with lore "&6説明:&f%{_lore}%||&6研究に必要なポイント:&3%{_point_research}%||&5これは国家研究です%{_pre}%" to run [set {_dummy} to 0]
+
+			format slot 53 of {_player} with compass named "&c戻る" with lore "&6国家選択に戻る" to close
+			if arg-5 is 0:
+				format slot 52 of {_player} with feather named "&6空軍へ" with lore "&6空軍ツリーへ移動" to close then run "research_ui %{_player}% pre_open %arg-3% %arg-4% 1"
+			if arg-5 is 1:
+				format slot 51 of {_player} with light green glass pane named "&6この国を研究する" with lore "&c決定後の変更はできません" to close then run "research_ui %{_player}% selectfaction_set dummy %arg-4%"
+
+			wait 1 tick
+			#バックポイントを登録
+			set {research.saves.%{_player}%::ui_backpoint} to "/research_ui %{_player}% selectfaction"
+
+		#研究選択
+		if arg-2 is "selectfaction_set":
+			#バックポイント
+			clear {research.saves.%{_player}%::ui_backpoint}
+			wait 1 tick
+			if {research.saves.%{_player}%::research_start_%arg-4%} is true:
+				message "&6[research]&cすでに研究を開始しています" to {_player}
+				play lava pop at location of {_player} with pitch 0.3
+			else:
+				#初回なら
+				if {research.saves.%{_player}%::first_research} is not set:
+					set {research.saves.%{_player}%::first_research} to true
+					set {research.saves.%{_player}%::research_start_%arg-4%} to true
+					clear {_lock}
+					loop {research.data.%arg-4%.0::*}:
+						set {_list::*} to loop-value split at "/"
+						if {_list::8} starts with "P":
+							if {_list::8} ends with "L":
+								set {_lock} to true
+							else:
+								set {research.saves.%{_player}%::research_%arg-4%_0_%{_list::1}%} to true
+						if {_list::8} starts with "F":
+							if {_list::8} ends with "L":
+							else:
+								set {research.saves.%{ch-countryid.%{_player}%}%::research_%{_list::1}%} to true
+					loop {research.data.%arg-4%.1::*}:
+						set {_list::*} to loop-value split at "/"
+						if {_list::8} starts with "P":
+							if {_list::8} ends with "L":
+								set {_lock} to true
+							else:
+								set {research.saves.%{_player}%::research_%arg-4%_1_%{_list::1}%} to true
+						if {_list::8} starts with "F":
+							if {_list::8} ends with "L":
+							else:
+								set {research.saves.%{ch-countryid.%{_player}%}%::research_%{_list::1}%} to true
+					#全部終わっているなら次をアンロック
+					if {_lock} is not set:
+						add 1 to {research.saves.%{_player}%::research_start_number}
+						message "&6[research]&a次に研究する国家を選択できます" to {_player}
+
+					play door open at location of {_player} with pitch 1.5
+					wait 1 tick
+					play level up at location of {_player} with pitch 1.5
+					wait 1 tick
+					play door open at location of {_player} with pitch 1.5
+					wait 1 tick
+					play level up at location of {_player} with pitch 1.5
+					execute console command "/research_ui %{_player}% research_tree_open"
+
+				else:
+					#研究が終わっているか
+					if {research.saves.%{_player}%::research_start_number} >= 1:
+						set {research.saves.%{_player}%::research_start_%arg-4%} to true
+						play level up at location of {_player} with pitch 1.5
+						remove 1 from {research.saves.%{_player}%::research_start_number}
+						execute console command "/research_ui %{_player}% research_tree"
+					else:
+						play lava pop at location of {_player} with pitch 0.3
+						message "&6[research]&c先に研究を完了してください" to {_player}
+					
+			
+		#描画
+		if arg-2 is "research_tree_open":
+		#開くツリーの選択
+			clear {research.saves.%{_player}%::ui_backpoint}
+			wait 2 tick
+			play dig gravel at {_player} with pitch 0.8
+			#サブリーダー以上なら国の編集可能GUIを
+			if {ch-rank.%{_player}%} = 1 or 2:
+				open chest with 3 row named "&2Tree選択 &5[国家研究の研究可]" to {_player}
+				execute console command "/research_ui %{_player}% research_tree_write faction_editierbare" 
+			else:
+				open chest with 3 row named "&2Tree選択 &5[国家研究の研究不可]" to {_player}
+				execute console command "/research_ui %{_player}% research_tree_write faction_uneditable" 
+			play dig gravel at {_player} with pitch 0.8
+
+			
+		#描画
+		if arg-2 is "research_tree_write":	
+			wait 1 tick
+			#個人用GUI
+			#陸軍
+			set {_p} to 0
+			set {_n} to 0
+			loop {research.faction::number} times:
+				#ロックがかかっているか
+				if {research.saves.%{_player}%::research_start_%{_p}%} is true:
+					format slot {_n} of {_player} with light blue glass pane named "&2研究ツリー%{research.faction::name.%{_p}%}%&5陸軍" with lore "%{research.faction::name.%{_p}%}%&5陸軍&6の研究ツリーを開く" to close then run "research_ui %{_player}% research_open %arg-3% %{_p}% 0"
+				else:
+					format slot {_n} of {_player} with gray glass pane named "&7研究ツリー%{research.faction::name.%{_p}%}%陸軍" with lore "&7ロックされています" to run [set {_dummy} to 0]
+				add 2 to {_n}
+				add 1 to {_p}
+			#空軍
+			set {_p} to 0
+			set {_n} to 9
+			loop {research.faction::number} times:
+				#ロックがかかっているか
+				if {research.saves.%{_player}%::research_start_%{_p}%} is true:
+					format slot {_n} of {_player} with light blue glass pane named "&2研究ツリー%{research.faction::name.%{_p}%}%&5空軍" with lore "%{research.faction::name.%{_p}%}%&5空軍&6の研究ツリーを開く" to close then run "research_ui %{_player}% research_open %arg-3% %{_p}% 1"
+				else:
+					format slot {_n} of {_player} with gray glass pane named "&7研究ツリー%{research.faction::name.%{_p}%}%空軍" with lore "&7ロックされています" to run [set {_dummy} to 0]
+				add 2 to {_n}
+				add 1 to {_p}
+
+			if {research.saves.%{_player}%::research_start_number} >= 1:
+				format slot 26 of {_player} with orange glass pane named "&2次に研究する国家を選択する" with lore "" to run "research_ui %{_player}% selectfaction"
+
+
+		#研究画面
+		if arg-2 is "research_open":
+			clear {research.saves.%{_player}%::ui_backpoint}
+			if arg-5 is 0:
+				set {_type.name} to "陸軍"
+			if arg-5 is 1:
+				set {_type.name} to "空軍"
+
+			if arg-3 is "faction_editierbare":
+				set {_canedit} to "&5[研究可]"
+
+			else if arg-3 is "faction_uneditable":
+				set {_canedit} to "&5[研究不可]"
+
+			wait 2 tick
+			
+			play dig gravel at {_player} with pitch 0.8
+			open chest with 6 row named "%{research.faction::name.%arg-4%}%&5%{_type.name}%&3Tree%{_canedit}%" to {_player}
+			execute console command "/research_ui %{_player}% research_write %arg-3% %arg-4% %arg-5%"
+
+
+		#研究画面
+		if arg-2 is "research_write":
+			wait 1 tick
+			set {research.saves.%{_player}%::ui_backpoint} to "/research_ui %{_player}% research_tree_open"
+			#１番上のTier表示
+			set {_n} to 0
+			loop 4 times:
+				format slot {_n} of {_player} with light green glass pane named "&2Tier1" with lore "このTierのすべての研究完了でTier2が解放されます" to run [set {_dummy} to 0]
+				add 1 to {_n}
+			loop 3 times:
+				format slot {_n} of {_player} with blue glass pane named "&3Tier2" with lore "このTierのすべての研究完了でTier3が解放されます" to run [set {_dummy} to 0]
+				add 1 to {_n}
+			loop 2 times:
+				format slot {_n} of {_player} with magenta glass pane named "&5Tier3" with lore "このTierのすべての研究完了で他国Tier1が解放されます" to run [set {_dummy} to 0]
+				add 1 to {_n}
+
+			#一番下のメニュー
+			format slot 53 of {_player} with compass named "&c戻る" with lore "&6Tree選択に戻る" to close then run "research_ui %{_player}% research_tree_open"
+			if arg-5 is 0:
+				format slot 52 of {_player} with feather named "&6空軍へ" with lore "&6空軍ツリーへ移動" to close then run "research_ui %{_player}% research_open %arg-3% %arg-4% 1"
+			if arg-5 is 1:
+				format slot 52 of {_player} with iron helmet named "&6陸軍へ" with lore "&6陸軍ツリーへ移動" to close then run "research_ui %{_player}% research_open %arg-3% %arg-4% 0"
+
+
+			loop {research.data.%arg-4%.%arg-5%::*}:
+				set {_list::*} to loop-value split at "/"
+				set {_name} to {_list::1}
+				set {_lore} to {_list::2}
+				set {_slot} to {_list::3} parsed as number + 9
+				set {_item_view} to {_list::4} parsed as item
+				set {_item_make} to {_list::5} parsed as item
+				set {_point_research} to {_list::6} parsed as number
+				set {_point_make} to {_list::7} parsed as number
+				set {_type} to {_list::8}
+				set {_n} to 9
+				clear {_pre::*}
+				set {_pre} to ""
+				while {_list::%{_n}%} is set:
+					#前提研究の判定
+					set {_list2::*} to {research.data.%arg-4%.%arg-5%::%{_list::%{_n}%}%} split at "/"
+
+					if {_list2::8} starts with "P":
+						if {research.saves.%{_player}%::research_%arg-4%_%arg-5%_%{_list::%{_n}%}%} is true:
+							set {_pre} to "%{_pre}%||&6前提研究:&a%{_list::%{_n}%}% &2研究済み"
+						else:
+							set {_pre} to "%{_pre}%||&6前提研究:&c%{_list::%{_n}%}% &4未研究"
+					if {_list2::8} starts with "F":
+						if {research.saves.%{ch-countryid.%{_player}%}%::research_%{_list::%{_n}%}%} is true:
+							set {_pre} to "%{_pre}%||&6前提研究:&a%{_list::%{_n}%}% &2研究済み"
+						else:
+							set {_pre} to "%{_pre}%||&6前提研究:&c%{_list::%{_n}%}% &4未研究"
+					add 1 to {_n}
+
+				if {_type} starts with "P":
+					if {research.saves.%{_player}%::research_%arg-4%_%arg-5%_%{_name}%} is true:
+						format slot {_slot} of {_player} with {_item_make} named "&f%{_name}%" with lore "&6説明:&f%{_lore}%||&a&l研究済み||&6研究に必要なポイント:&3%{_point_research}%||&6製造に必要なポイント:&3%{_point_make}%||&6所持している個人技術ポイント:&2%{RP.%{_player}%.%arg-5%}%%{_pre}%" to run "research_ui %{_player}% research_item %arg-3% %arg-4% %arg-5% %loop-value%"
+					else:
+						format slot {_slot} of {_player} with {_item_view} named "&f%{_name}%" with lore "&6説明:&f%{_lore}%||&c&l未研究||&6研究に必要なポイント:&3%{_point_research}%||&6製造に必要なポイント:&3%{_point_make}%||&6所持している個人技術ポイント:&2%{RP.%{_player}%.%arg-5%}%%{_pre}%" to run "research_ui %{_player}% research %arg-3% %arg-4% %arg-5% %loop-value%"
+			
+				if {_type} starts with "F":
+					if {research.saves.%{ch-countryid.%{_player}%}%::research_%{_name}%} is true:
+						format slot {_slot} of {_player} with {_item_view} named "&f%{_name}%" with lore "&6説明:&f%{_lore}%||&a&l研究済み||&6研究に必要なポイント:&3%{_point_research}%||&6所持している国家技術ポイント:&2%{RP.%{ch-countryid.%{_player}%}%.0}%||&6製造に必要なポイント:&3%{_point_make}%||&6所持している個人技術ポイント:&2%{RP.%{_player}%.%arg-5%}%||&5これは国家研究です%{_pre}%" to run "research_ui %{_player}% research_item %arg-3% %arg-4% %arg-5% %loop-value%"
+					else:
+						format slot {_slot} of {_player} with {_item_view} named "&f%{_name}%" with lore "&6説明:&f%{_lore}%||&c&l未研究||&6研究に必要なポイント:&3%{_point_research}%||&6所持している国家技術ポイント:&2%{RP.%{ch-countryid.%{_player}%}%.0}%||&6製造に必要なポイント:&3%{_point_make}%||&6所持している個人技術ポイント:&2%{RP.%{_player}%.%arg-5%}%||&5これは国家研究です%{_pre}%" to run "research_ui %{_player}% research %arg-3% %arg-4% %arg-5% %loop-value%"
+
+		#研究処理
+		if arg-2 is "research":
+			set {_list::*} to arg-6 split at "/"
+			set {_name} to {_list::1}
+			set {_point_research} to {_list::6} parsed as number
+			set {_type} to {_list::8}
+			if {research.saves.%{_player}%::research_%arg-4%_%arg-5%_%{_name}%} is true:
+				message "&6[research]&eすでに研究済みです" to {_player}
+			else:
+				#通常研究なら
+				if {_type} starts with "P":
+					message "&6[research]&a研究！！！" to {_player}
+					if {RP.%{_player}%.%arg-5%} < {_point_research}:
+						play dig sand at location of {_player} with pitch 3
+						message "&6[research]&4%{_point_research} - {RP.%{_player}%.%arg-5%}%&c技術ポイントが足りません" to {_player}
+					else:
+						remove {_point_research} from {RP.%{_player}%.%arg-5%}
+						set {research.saves.%{_player}%::research_%arg-4%_%arg-5%_%{_name}%} to true
+						clear {_c::*}
+						clear {_c}
+						loop {research.data.%arg-4%.%arg-5%::*}:
+							loop {_c::*}:
+								if loop-value-2 is {_list::1}:
+									set {_c} to true
+							if {_c} is not set:
+								#国家研究を除外
+								if {_list::8} starts with "P":
+									add {_list::1} to {_c::*}
+									if {research.saves.%{_player}%::research_%arg-4%_%arg-5%_%{_list::1}%} is not set:
+										set {_c1} to true
+
+						if {_c1} is not set:
+							add 1 to {research.saves.%{_player}%::research_start_number}
+							message "&6[research]&a次に研究する国家を選択できます" to {_player}
+
+						execute console command "/research_ui %{_player}% research_write %arg-3% %arg-4% %arg-5%"
+						play level up at location of {_player} with pitch 6
+						message "&6[research]&2%{_name}%&aを開発しました" to {_player}
+				#国家研究なら
+				else:
+					if arg-3 is "faction_editierbare":
+						if {RP.%{ch-countryid.%{_player}%}%.0} < {_point_research}:
+							play dig sand at location of {_player} with pitch 3
+							message "&6[research]&4%{_point_research} - {RP.%{ch-countryid.%{_player}%}%.0}%&c国家技術ポイントが足りません" to {_player}
+						else:
+							remove {_point_research} from {RP.%{ch-countryid.%{_player}%}%.0}
+							set {research.saves.%{ch-countryid.%{_player}%}%::research_%{_name}%} to true
+							execute console command "/research_ui %{_player}% research_write %arg-3% %arg-4% %arg-5%"
+							play level up at location of {_player} with pitch 6
+							message "&6[research]&2%{_name}%&aを開発しました" to {_player}
+
+					if arg-3 is "faction_uneditable":
+						message "&6[research]&cサブリーダー以上の権限が必要です" to {_player}
+
+
+
+		#アイテムを渡す
+		if arg-2 is "research_item":
+			set {_list::*} to arg-6 split at "/"
+			set {_name} to {_list::1}
+			set {_item_make} to {_list::5} parsed as item
+			set {_point_make} to {_list::7} parsed as number
+			set {_type} to {_list::8}
+			if {_type} starts with "P":
+				if {RP.%{_player}%.%arg-5%} < {_point_make}:
+					message "&6[research]&4%{_point_make} - {RP.%{_player}%.%arg-5%}%&c技術ポイントが足りません" to {_player}
+				else:
+					remove {_point_make} from {RP.%{_player}%.%arg-5%}
+					drop {_item_make} at {_player}
+					execute console command "/research_ui %{_player}% research_write %arg-3% %arg-4% %arg-5%"
+					play dig gravel at {_player} with pitch 1.3
+					message "&6[research]&2%{_name}%&aを作成しました" to {_player}
+			
+			if {_type} starts with "F":
+				if {RP.%{_player}%.%arg-5%} < {_point_make}:
+					message "&6[research]&4%{_point_make} - {RP.%{_player}%.%arg-5%}%&c技術ポイントが足りません" to {_player}
+				else:
+					remove {_point_make} from {RP.%{_player}%.%arg-5%}
+					drop {_item_make} at {_player}
+					execute console command "/research_ui %{_player}% research_write %arg-3% %arg-4% %arg-5%"
+					play dig gravel at {_player} with pitch 1.3
+					message "&6[research]&2%{_name}%&aを作成しました" to {_player}
+
+on inventory close:
+	wait a tick
+	if {research.saves.%player%::ui_backpoint} is set:
+		execute console command {research.saves.%player%::ui_backpoint}
+		clear {research.saves.%player%::ui_backpoint}
+
+on join:
+	clear {research.saves.%player%::ui_backpoint}

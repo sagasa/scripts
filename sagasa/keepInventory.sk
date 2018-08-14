@@ -1,0 +1,39 @@
+#ロスト防止アイテム
+
+on death of player:
+	if {keepinventory::%player%} is set:
+		set {_n} to 0
+		loop 40 times:
+			set {inventory.%player%::%{_n}%} to slot {_n} of player's inventory
+			add 1 to {_n}
+		clear drops
+
+on player respawn:
+	if {inventory.%player%::*} is set:
+		set {_n} to 0
+		loop 40 times:
+			set slot {_n} of player's inventory to {inventory.%player%::%{_n}%}
+			add 1 to {_n}
+		clear {inventory.%player%::*}
+
+command /keepinventory [<player>] [<text>]:
+	permission: console.console
+	trigger:
+		if arg-1 is set:
+			set {_player} to arg-1
+		else if player is set:
+			set {_player} to player
+		else:
+			stop
+		
+		if arg-2 is not set:
+			if {keepinventory::%{_player}%} is set:
+				clear {keepinventory::%{_player}%}
+				message "&5[KeepInventory]&cインベントリの保護を解除"
+			else:
+				set {keepinventory::%{_player}%} to true
+				message "&5[KeepInventory]&aインベントリを保護"
+
+		if arg-2 is "clear":
+			clear {keepinventory::*}
+			message "&5[KeepInventory]&3全員のインベントリ保護を解除"
