@@ -1,9 +1,0 @@
-#----------DiscordBot----------
-on skript load:
-	#トークン設定※必須
-	login to user with token "token key" with name "my name"
-
-command /discord <text>:
-	permission: skript.op
-	trigger:
-		private message sent to arg-1

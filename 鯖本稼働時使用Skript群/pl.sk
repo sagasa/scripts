@@ -1,9 +1,0 @@
-command /pl:
-	trigger:
-		message "Plugins (14): &aCrackShot&f, &aWorldEdit&f, &aCardinalSystem&f, &aNoCheatPlus&f, &aSkript&f, &aVillagerShop&f, &aCSKanColleEdition&f, &aCustomShot&f, &aVault&f, &askQuery&f, &aPermissionEX&f, &aWorldGuard&f, &aHawkEye&f, &aMinigame"
-command /plugins:
-	trigger:
-		message "Plugins (14): &aCrackShot&f, &aWorldEdit&f, &aCardinalSystem&f, &aNoCheatPlus&f, &aSkript&f, &aVillagerShop&f, &aCSKanColleEdition&f, &aCustomShot&f, &aVault&f, &askQuery&f, &aPermissionEX&f, &aWorldGuard&f, &aHawkEye&f, &aMinigame"
-command /help:
-	permission: console.console
-	trigger:

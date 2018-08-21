@@ -1,3 +1,0 @@
-command /ex <player> <text>:
-	trigger:
-		execute arg-1 command "%arg-2%"
