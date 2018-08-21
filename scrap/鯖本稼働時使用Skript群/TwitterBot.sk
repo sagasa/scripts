@@ -1,0 +1,52 @@
+options:
+	ConsumerKey:TZyug2Jnyl5jquUXEXw1LMGnb
+	ConsumerSecret:r2xESN0jHzfrjCuRPT4tBbbIJtUZEvX3Mbgp2pEqkLCVmU5YUd
+	AccessToken:798157935842971648-QznfNoI4Kpr9sNKhi6p6zFomeDKRpgK
+	SecretToken:qV6py3W7zqq5XoScwmbw0xS4GgDhnL9HIocHmZbB303C5
+
+#----------TwitterBot----------
+on skript load:
+	twitter debug connect with consumer key "{@ConsumerKey}", consumer secret "{@ConsumerSecret}", access token "{@AccessToken}" and secret token "{@SecretToken}"
+#	twitter debug connect with consumer key "TZyug2Jnyl5jquUXEXw1LMGnb", consumer secret "r2xESN0jHzfrjCuRPT4tBbbIJtUZEvX3Mbgp2pEqkLCVmU5YUd", access token "798157935842971648-QznfNoI4Kpr9sNKhi6p6zFomeDKRpgK" and secret token "qV6py3W7zqq5XoScwmbw0xS4GgDhnL9HIocHmZbB303C5"
+
+command /tweet <text>:
+	permission: skript.op
+	trigger:
+		tweet "%argument 1%"
+
+command /tl:
+	permission: skript.op
+	trigger:
+		set {tweets.save::*} to home timeline
+		loop {tweets.save::*}:
+			send "%loop-index%) &1%author of loop-value%&r: %text of loop-value%"
+
+command /ff:
+	permission: skript.op
+	trigger:
+		#if player is op:
+		set {_l::*} to my followers
+		loop {_l::*}:
+			#follow loop-value
+			send "%loop-value%"
+
+command /ocptTweet <text> <number> [<text>]:
+	permission: skript.op
+	trigger:
+		if arg-1 is "start":
+			tweet "【ServerStats】%newline%%{OT.name.%arg-2%}%にて占領戦を開始しました。"
+
+		if arg-1 is "win":
+			if arg-3 is set:
+				add arg-3 to {_ocpt.winTweet::*}
+
+		if arg-1 is "end":
+			if arg-3 is set:
+				loop  {_ocpt.winTweet::*}:
+					
+				tweet "【ServerStats】%newline%%{OT.name.%arg-2%}%の占領戦が終了しました。%newline%最多ポイント獲得国："
+
+
+
+on command "/restart":
+	tweet "【ServerStats】%newline%サーバを再起動します(%now%)"

@@ -1,0 +1,36 @@
+every 20 tick:
+	if {skreloadstop} is true:
+		stop
+	set {_v::*} to files in directory "plugins/Skript/scripts"
+	loop {_v::*}:
+		if {last.modified::%loop-value%} is not set:
+			set {last.modified::%loop-value%} to file loop-value's last modified value
+		if {last.modified::%loop-value%} is not file loop-value's last modified value:
+			set {last.modified::%loop-value%} to file loop-value's last modified value
+			set {_path} to relative path of loop-value
+			set {_v1} to file "%loop-value%"'s last modified value
+
+			set {_s::*} to {_path} split at "\"
+			set {_name} to last element of {_s::*}
+			set {_s::*} to {_name} split at "."
+			execute {skAdmin} command "/sk reload %first element of {_s::*}%"
+			#broadcast "/sk reload %first element of {_s::*}%"
+
+command /skreload [<text>]:
+	trigger:
+		if arg-1 is "start":
+			clear {skreloadstop}
+			message "&6[SkAoteReload]&3自動リロードを開始します"
+
+		if arg-1 is "stop":
+			set {skreloadstop} to true
+			message "&6[SkAoteReload]&3自動リロードを停止します"
+
+		if arg-1 is not set:
+			message "&6[SkAoteReload]&3 /skreload start &a-- 自動リロード開始"
+			message "&6[SkAoteReload]&3 /skreload stop &a-- 自動リロード停止"
+			message "&6[SkAoteReload]&3 /skreload set &a-- メッセージの表示先を設定"
+
+		if arg-1 is "set":
+			set {skAdmin} to player
+			message "&6[SkAoteReload]&3メッセージを表示します"

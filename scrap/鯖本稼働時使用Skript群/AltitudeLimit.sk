@@ -1,0 +1,8 @@
+every 2 second:
+	loop all players:
+		if y-coordinate of loop-player > 500:
+			message "&6[AltitudeLimit]&c高度を下げろ" to loop-player
+			remove blindness from loop-player
+			apply potion of blindness 0 to the loop-player for 3 seconds
+		if y-coordinate of loop-player > 700:
+			damage loop-player by 2 hearts

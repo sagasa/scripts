@@ -1,0 +1,403 @@
+
+#{mute}
+
+
+on chat:
+	#例外処理
+	if {facility.setting.type::%player%} is "sign" or "lore":
+		stop
+	if {addcraft.moment.%player%::start} is true:
+		stop
+	if {shop.setting.type::%player%} is "new_shop" or "set_name":
+		stop
+
+	cancel event
+	#称号の読み込み
+	if {titleList.%player%::%{titleNumber.%player%}%} is set:
+		set {_title} to "&3<&f%{titleList.%player%::%{titleNumber.%player%}%}%&3>"
+
+	else:
+		set {_title} to ""
+
+	if {tc.admin.%player%} is true:
+		broadcast "&6[&dAdmin&6]%{_title}%&5<%player%>&f%message%"
+		stop
+	if {ch-countryid.%player%} is 0:
+		broadcast "&3[NewFace]&a<&f%player's name%&a>&f%message%"
+	else:
+		if {tc.mode.%player%} is not set:
+			set {tc.mode.%player%} to "team"
+
+		if {tc.mode.%player%} is "global":
+			if {mute.%player%} = true:
+				send "&d[GlobalChat]&4あなたは管理者によってミュートされています" to player
+				stop
+			loop all players:
+				if loop-player = player:
+
+					send "&d[GlobalChat]%{_title}%&7<%player's name%>&f %message%" to loop-player
+				else if {tc.MuteGlobalChat.%loop-player%} is true:
+				
+				else if {tc.Mute.%loop-player%::%player%} is not set:
+					send "&d[GlobalChat][&6%{ch-name.%{ch-countryid.%player%}%}%&d]%{_title}%&7<%player's name%>&f %message%" to loop-player
+			log "Global <%{ch-name.%{ch-countryid.%player%}%}%> <%player's name%> %message%"
+
+		else if message starts with "!":
+			if {mute.%player%} = true:
+				send "&d[GlobalChat]&4あなたは管理者によってミュートされています" to player
+				stop
+			loop all players:
+				if loop-player = player:
+
+					send "&d[GlobalChat]%{_title}%&7<%player's name%>&f %substring of message between index 2 to (length of message)%" to loop-player
+				else if {tc.MuteGlobalChat.%loop-player%} is true:
+				
+				else if {tc.Mute.%loop-player%::%player%} is not set:
+					send "&d[GlobalChat][&6%{ch-name.%{ch-countryid.%player%}%}%&d]%{_title}%&7<%player's name%>&f %substring of message between index 2 to (length of message)%" to loop-player
+			log "Global <%{ch-name.%{ch-countryid.%player%}%}%> <%player's name%> %message%"
+		else if {tc.mode.%player%} is "team":
+			loop all players:
+				if {ch-countryid.%player%} = {ch-countryid.%loop-player%}:
+					message "&6[TeamChat]%{_title}%&7<%player's name%>&f %message%" to loop-value
+					log "Team <%{ch-name.%{ch-countryid.%player%}%}%> <%player's name%> %message%"
+
+			loop {tc.admins::*}:
+				message "&d[Admin]&2[%{ch-name.%{ch-countryid.%player%}%}%国Chat]%{_title}%&f<%player's name%>&8 %message%" to loop-value
+		
+		else if {tc.mode.%player%} is "alliance":
+			loop all players:
+				if {ch-alliance.%{ch-countryid.%player%}%} = {ch-alliance.%{ch-countryid.%loop-player%}%}:
+					message "&3[AllianceChat]%{_title}%&7<%player's name%>&f %message%" to loop-value
+					log "Alliance <%{ch-name.%{ch-countryid.%player%}%}%> <%player's name%> %message%"
+
+			loop {tc.admins::*}:
+				message "&d[Admin]&6[%{ch-name.%{ch-countryid.%player%}%}%国同盟Chat]%{_title}%&7<%player's name%>&f %message%" to loop-value
+	
+		else:
+			send "&d[PrivateChat]&6from&d[&6%{ch-name.%{ch-countryid.%player%}%}%&d]%{_title}%&7<%player's name%>&f %message%" to {tc.mode.%player%}
+			send "&d[PrivateChat]&6to&d[&6%{ch-name.%{ch-countryid.%{tc.mode.%player%}%}%}%&d]%{_title1}%&7<%{tc.%player%.toggle}%>&f %message%"
+			log "Private <from.%player's name%,to.%{tc.mode.%player%}%> %message%"
+			loop {tc.admins::*}:
+				message "&d[Admin]&6[from.%player's name%,to.%{tc.mode.%player%}%]&f %message%" to loop-value
+
+on join:
+	#プレイヤー名変更に対応
+	#UUID登録
+	if {tc.UUID.%uuid of player%} is not set:
+		set {tc.UUID.%uuid of player%} to player
+
+	#UUIDと照合
+	if "%{tc.UUID.%uuid of player%}%" is not "%player%":
+		message "&5[&6KRBackUp&5]&d以前のユーザー名が見つかりました、データを移行します"
+		#データの移行
+		set {titleList.%player%::*} to {titleList.%{tc.UUID.%uuid of player%}%::*}
+		set {titleNumber.%player%} to {titleNumber.%{tc.UUID.%uuid of player%}%}
+
+		#過去データの削除
+		clear {titleList.%{tc.UUID.%uuid of player%}%::*}
+		clear {titleNumber.%{tc.UUID.%uuid of player%}%}
+		remove name of player from {tx.players::*}
+
+		remove {tc.UUID.%uuid of player%} from {kr.players::*}
+
+		#UUIDの更新
+		set {tc.UUID.%uuid of player%} to player
+
+	loop {tx.players::*}:
+		if loop-value is name of player:
+			stop
+	add name of player to {tx.players::*}
+
+command /ch [<text>] [<player>] [<player>]:
+	trigger:
+		if {ch-countryid.%player%} is not 0:
+			if arg-1 is not set:
+				#チーム
+				#(同盟)
+				#全体
+				if {tc.mode.%player%} is "team":
+					#同盟に参加しているなら
+					if {ch-alliance.%player%} is 0:
+						set {tc.mode.%player%} to "global"
+						send "&6[Chat]&a現在、グローバルチャットモードです。"
+					else:
+						set {tc.mode.%player%} to "alliance"
+						send "&6[Chat]&a現在、同盟チャットモードです。"
+				else if {tc.mode.%player%} is "alliance":
+					set {tc.mode.%player%} to "global"
+					send "&6[Chat]&a現在、グローバルチャットモードです。"
+
+				else:
+					set {tc.mode.%player%} to "team"
+					send "&6[Chat]&a現在、チームチャットモードです。"
+			if arg-1 is "t":
+				set {tc.mode.%player%} to "team"
+				send "&6[Chat]&a現在、チームチャットモードです。"
+			if arg-1 is "g":
+				set {tc.mode.%player%} to "global"
+				send "&6[Chat]&a現在、グローバルチャットモードです。"
+			if arg-1 is "a":
+				set {tc.mode.%player%} to "alliance"
+				send "&6[Chat]&a現在、同盟チャットモードです。"
+			if arg-1 is "p":
+				if arg-2 is set:
+					if player is set:
+						set {tc.mode.%player%} to arg-2
+						send "&6[Chat]&a現在、%arg-2%とのプライベートチャットモードです。"
+					else:
+						set {tc.mode.%arg-2%} to arg-3
+						send "&6[Chat]&a現在、%arg-3%とのプライベートチャットモードです。" to arg-2
+
+#======================================================
+
+#称号追加
+command /settitle [<player>] [<text>] [<player>] [<text>] [<text>]:
+	permission: console.console
+	trigger:
+		if player is set:
+			set {_player} to player
+		else:
+			set {_player} to arg-1
+
+		if arg-2 is not set:
+			message "&6[Title]&d/settitle add [対象プレイヤー] [称号] &6-- 称号を追加" to {_player}
+			message "&6[Title]&d/settitle remove [対象プレイヤー] &6-- 称号を削除" to {_player}
+			message "&6[Title]&d/settitle list [対象プレイヤー] &6-- 称号リストを表示" to {_player}
+
+		if arg-2 is "add":
+			if arg-3 is not set:
+				message "&d[Title]&c対象プレイヤーを入力してください" to {_player}
+				stop
+
+			if arg-4 is not set:
+				message "&d[Title]&c称号を入力してください" to {_player}
+				stop
+
+			if arg-5 is not set:
+				wait 2 tick
+				open chest with 2 row named "&1称号を追加" to {_player}
+				wait 1 tick
+				format slot 0 of {_player} with black glass pane named "&6称号の色を&0&lblack&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &0"
+				format slot 1 of {_player} with blue glass pane named "&6称号の色を&1&ldark blue&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &1"
+				format slot 2 of {_player} with green glass pane named "&6称号の色を&2&ldark green&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &2"
+				format slot 3 of {_player} with light blue glass pane named "&6称号の色を&3&ldark aqua&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &3"
+				format slot 4 of {_player} with red glass pane named "&6称号の色を&4&ldark red&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &4"
+				format slot 5 of {_player} with purple glass pane named "&6称号の色を&5&ldark purple&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &5"
+				format slot 6 of {_player} with orange glass pane named "&6称号の色を&6&lgold&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &6"
+				format slot 7 of {_player} with light gray glass pane named "&6称号の色を&7&lglay&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &7"
+				format slot 8 of {_player} with gray glass pane named "&6称号の色を&8&ldark glay&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &8"
+				format slot 9 of {_player} with cyan glass pane named "&6称号の色を&9&lblue&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &9"
+				format slot 10 of {_player} with light green glass pane named "&6称号の色を&a&lgreen&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &a"
+				format slot 11 of {_player} with light blue glass pane named "&6称号の色を&b&laqua&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &b"
+				format slot 12 of {_player} with pink glass pane named "&6称号の色を&c&lred&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &c"
+				format slot 13 of {_player} with magenta glass pane named "&6称号の色を&d&llight purple&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &d"
+				format slot 14 of {_player} with yellow glass pane named "&6称号の色を&e&lyellow&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &e"
+				format slot 15 of {_player} with white glass pane named "&6称号の色を&f&lwhite&6にする" with lore "" to close then run "settitle %{_player}% add %arg-3% %arg-4% &f"
+			else:
+				add "%arg-5%%arg-4%" to {titleList.%arg-3%::*}	
+				message "&6[Title]&2%arg-5%%arg-4%&aを&2%arg-3%&aの称号にに追加しました" to {_player}
+
+		if arg-2 is "remove":
+			if arg-3 is not set:
+				message "&d[Title]&c対象プレイヤーを入力してください" to {_player}
+				stop
+
+			if arg-4 is not set:
+				wait 2 tick
+				open chest with 3 row named "&c称号を削除" to {_player}
+				wait 1 tick
+				#称号リスト
+				set {_n} to 1
+				set {_slot} to 0
+				loop {titleList.%arg-3%::*}:
+					loop 30 times:
+						if {titleList.%arg-3%::%{_n}%} is set:
+							exit loop
+						add 1 to {_n}
+
+					format slot {_slot} of {_player} with red glass pane named "&dTitle:&6%{titleList.%arg-3%::%{_n}%}%" with lore "&cこの称号を削除する" to close then run "settitle %{_player}% remove %arg-3% %{titleList.%arg-3%::%{_n}%}%"
+					add 1 to {_slot}
+					add 1 to {_n}
+
+			else:
+				remove arg-4 from {titleList.%arg-3%::*}
+
+		if arg-2 is "list":
+			if arg-3 is not set:
+				message "&d[Title]&c対象プレイヤーを入力してください" to {_player}
+				stop
+
+			message "&3[Title] &6%arg-3%&dの称号" to {_player}
+			set {_n} to 1
+			loop {titleList.%arg-3%::*}:
+				loop 30 times:
+					if {titleList.%arg-3%::%{_n}%} is set:
+						exit loop
+					add 1 to {_n}
+				message "&3[Title] &dNo.&6%{_n}%&d:Title.&6%{titleList.%arg-3%::%{_n}%}%" to {_player}
+				add 1 to {_n}
+
+
+#Adminリスト制作
+command /CTAdmin [<text>] [<player>]:
+	permission: console.console
+	trigger:
+		if arg-2 is set:
+			set {_player} to arg-2
+		else if player is set:
+			set {_player} to player
+		else:
+			stop
+
+		arg-1 is not set:
+			message "&d[Chat]&6/CTAdmin add [<player>] でCTAdminに追加"
+			message "&d[Chat]&6/CTAdmin remove [<player>] でCTAdminから削除"
+			message "&d[Chat]&6/CTAdmin list でCTAdminの一覧を表示"
+
+		arg-1 is "add":
+			loop {tc.admins::*}:
+				if loop-value = {_player}:
+					set {_c} to true
+			if {_c} is not set:
+				add {_player} to {tc.admins::*}
+				set {tc.admin.%{_player}%} to true
+				message "&d[Chat]&6%{_player}%をTCAdminに追加しました"
+				message "&d[Chat]&6TCAdminに追加されました" to {_player}
+			else:
+				message "&d[Chat]&cもう既に追加されています"
+
+		arg-1 is "remove":
+			loop {tc.admins::*}:
+				if loop-value = {_player}:
+					set {_c} to true
+			if {_c} is set:
+				remove {_player} from {tc.admins::*}
+				clear {tc.admin.%{_player}%}
+				message "&d[Chat]&6%{_player}%をTCAdminから削除しました"
+				message "&d[Chat]&6TCAdminから削除されました" to {_player}
+			else:
+				message "&d[Chat]&cもう既に削除されています"
+
+		arg-1 is "list":
+			loop {tc.admins::*}:
+				message "&d[Chat]&6TCadmin %loop-value%"
+
+
+
+command /chat:
+	trigger:
+		if {ch-countryid.%player%} is not 0:
+			execute console command "/chat_ui %player%"
+
+#利用者GUI
+command /chat_ui [<player>] [<text>] [<offline player>] [<number>]:
+	permission: console
+	trigger:
+		#プレイヤーを変数に
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+
+		if arg-2 is not set:
+			wait 2 tick
+			open chest with 6 row named "チャットメニュー" to {_player}
+			execute console command "/chat_ui %{_player}% write"
+
+		if arg-2 is "write":
+			wait 1 tick
+			format slot 0 of {_player} with light green glass pane named "GlobalChat" with lore "全体チャットを使用する" to run [execute {_player} command "/ch g"]
+			format slot 1 of {_player} with light blue glass pane named "TeamChat" with lore "チームチャットを使用する" to run [execute {_player} command "/ch t"]
+			if {ch-alliance.%player%} is not 0:
+				format slot 2 of {_player} with blue glass pane named "AllianceChat" with lore "同盟チャットを使用する" to run [execute {_player} command "/ch a"]
+
+			if {tc.MuteGlobalChat.%{_player}%} is not set:
+				format slot 3 of {_player} with light green glass pane named "&4MuteGlobalChat" with lore "&c全体チャットをミュート||(管理者メッセージやシステムログは見えます)||&6現在:&aミュートしていません" to run "chat_ui %{_player}% MuteGlobalChat"
+			else:
+				format slot 3 of {_player} with red glass pane named "&2MuteGlobalChat" with lore "&a全体チャットのミュートを解除||&6現在:&cミュートしています" to run "chat_ui %{_player}% MuteGlobalChat"
+
+			format slot 5 of {_player} with light green glass pane named "Title" with lore "称号を表示・選択" to run "chat_ui %{_player}% title"
+			
+			#プレイヤーリストの表示 オンラインのみ
+			set {_n} to 9
+			loop all players:
+				#自分自身をs除外
+				if loop-player is not {_player}:
+					if {tc.Mute.%{_player}%::%loop-player%} is true:
+						format slot {_n} of {_player} with red glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
+					else:
+						format slot {_n} of {_player} with light green glass pane named "%loop-player%" with lore "個チャ・ミュート" to run "chat_ui %{_player}% playerSetting %loop-player%"
+					add 1 to {_n}
+
+		if arg-2 is "MuteGlobalChat":
+			if {tc.MuteGlobalChat.%{_player}%} is true:
+				clear {tc.MuteGlobalChat.%{_player}%}
+				format slot 3 of {_player} with light green glass pane named "&4MuteGlobalChat" with lore "&c全体チャットをミュート||(管理者メッセージやシステムログは見えます)||&6現在:&aミュートしていません" to run "chat_ui %{_player}% MuteGlobalChat"
+			else:
+				set {tc.MuteGlobalChat.%{_player}%} to true
+				format slot 3 of {_player} with red glass pane named "&2MuteGlobalChat" with lore "&a全体チャットのミュートを解除||&6現在:&cミュートしています" to run "chat_ui %{_player}% MuteGlobalChat"
+		if arg-2 is "title":
+			wait 2 tick
+			open chest with 3 row named "称号を表示・選択" to {_player}
+			wait 1 tick
+			#称号リスト
+			set {_n} to 1
+			set {_slot} to 0
+			loop {titleList.%{_player}%::*}:
+				loop 30 times:
+					if {titleList.%{_player}%::%{_n}%} is set:
+						exit loop
+					add 1 to {_n}
+				format slot {_slot} of {_player} with light green glass pane named "&dNo.&6%{_n}%&d:Title.&6%{titleList.%{_player}%::%{_n}%}%" with lore "この称号をセットする" to close then run "chat_ui %{_player}% title_set dummy %{_n}%"
+				add 1 to {_slot}
+				add 1 to {_n}
+			#称号を使用しない
+			format slot {_slot} of {_player} with light green glass pane named "称号を使用しない" with lore "" to close then run "chat_ui %{_player}% title_set dummy -1"
+
+			format slot 26 of {_player} with compass named "&a前のページに戻る" with lore "" to close then run "chat_ui %{_player}%"
+
+		#こちゃ・ミュート用
+		if arg-2 is "playerSetting":
+			wait 2 tick
+			open chest with 1 row named "&3%arg-3%" to {_player}
+			wait 1 tick
+			if {tc.Mute.%{_player}%::%arg-3%} is true:
+				format slot 2 of {_player} with red glass pane named "&3%arg-3%&aのミュートを解除" with lore "&6現在:&cミュートしています" to run "chat_ui %{_player}% MutePlayer %arg-3%"
+			else:
+				format slot 2 of {_player} with light green glass pane named "&3%arg-3%&cをミュート" with lore "&6現在:&aミュートしていません" to run "chat_ui %{_player}% MutePlayer %arg-3%"
+
+			format slot 6 of {_player} with arrow named "&3%arg-3%&bと個人チャットを開始" with lore "" to close then run [execute {_player} command "/ch p %arg-3%"]
+		
+			format slot 8 of {_player} with wood door item named "&a前のページに戻る" with lore "" to close then run "chat_ui %{_player}%"
+
+		#個人ミュート
+		if arg-2 is "MutePlayer":
+			wait 1 tick
+			if {tc.Mute.%{_player}%::%arg-3%} is true:
+				clear {tc.Mute.%{_player}%::%arg-3%}
+				message "&6[Chat]&2%arg-3%&aのミュートを解除しました" to {_player}
+				format slot 2 of {_player} with light green glass pane named "&3%arg-3%&cをミュート" with lore "&6現在:&aミュートしていません" to run "chat_ui %{_player}% MutePlayer %arg-3%"
+
+			else:
+				set {tc.Mute.%{_player}%::%arg-3%} to true
+				message "&6[Chat]&4%arg-3%&cをミュートしました" to {_player}
+				format slot 2 of {_player} with red glass pane named "&3%arg-3%&aのミュートを解除" with lore "&6現在:&cミュートしています" to run "chat_ui %{_player}% MutePlayer %arg-3%"
+
+
+		if arg-2 is "title_set":
+			if arg-4 is -1:
+				clear {titleNumber.%{_player}%}	
+				message "&d[Title]&d称号を&6使用しない&dに変更しました。" to {_player}
+			else if {titleList.%{_player}%::%arg-4%} is set:
+				set {titleNumber.%{_player}%} to arg-4
+				message "&d[Title]&d称号を&6「%{titleList.%{_player}%::%{titleNumber.%{_player}%}%}%&6」&dに変更しました。" to {_player}
+			else: 
+				message "&d[Title]&c無効な番号です。" to {_player}
+
+
+
+
+command /fuckfuckshit <player>:
+	permission: console.console
+	trigger:
+		set {tc.mode.%arg%} to "g"

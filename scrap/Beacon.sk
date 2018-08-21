@@ -1,0 +1,286 @@
+#スポーン変更＋キット
+
+#変数リスト
+
+#{Beacon.Faction::%player%}
+#{Beacon.%player%.kit::*}
+#{Beacon.Setting.%player%::*}
+
+#{Beacon.spawnLocation::0}
+#{Beacon.spawnLocation::1}
+#{Beacon.spawnLocation::2}
+
+#{Beacon.spawnLocation::5}
+#{Beacon.spawnLocation::6}
+#{Beacon.spawnLocation::7}
+
+#{Beacon.kit.%name%::*}
+#{Beacon.kits::*}
+
+#{Beacon.kits.%name%::*}
+#{Beacon.kit.cate::*}
+
+on rightclick with bedrock:
+	cancel event
+	set {_name} to "%slot 0 of player's inventory%"
+	set {_item} to {_name} parsed as item
+	
+	broadcast "%{_name}% %{_item}%"
+
+on death of player:
+	clear drops
+
+#===========
+# チームチャット
+#===========
+on chat:
+	cancel event
+	if {Beacon.Faction::%player%} is not set: 
+		broadcast "&6[Chat]&7<%player%>&f%message%"
+	else:
+		loop all players:
+			if {Beacon.Faction::%loop-player%} is {Beacon.Faction::%player%}:
+				message "&6[TeamChat]&7<%player%>&f%message%" to loop-player
+
+
+on rightclick with strad disc:
+	if player is holding strad disc named "&d位置設定":
+		execute console command "/Beacon %player% setLocationGUI"
+
+	if player is holding strad disc named "&d武器追加":
+		if player is sneaking:
+			execute console command "/Beacon %player% selectCate"
+		else:
+			execute console command "/Beacon %player% addWepon"
+
+	set {Beacon.text::Team0} to "&b青&6チーム"
+	set {Beacon.text::Team1} to "&c赤&6チーム"
+	clear {Beacon.kit.cate::*}
+	add "AR" to {Beacon.kit.cate::*}
+	add "SMG" to {Beacon.kit.cate::*}
+	add "AT" to {Beacon.kit.cate::*}
+	add "EXP" to {Beacon.kit.cate::*}
+	add "SR" to {Beacon.kit.cate::*}
+	add "BR" to {Beacon.kit.cate::*}
+	add "SAR" to {Beacon.kit.cate::*}
+	add "HG" to {Beacon.kit.cate::*}
+	add "Knife" to {Beacon.kit.cate::*}
+	add "Food" to {Beacon.kit.cate::*}
+
+on rightclick on ender chest:
+	cancel event
+	execute console command "/Beacon %player% openFactionGUI"
+
+command /Beacon [<player>] [<text>] [<number>] [<text>]:
+	permission: console.console
+	trigger:
+		if arg-1 is set:
+			set {_player} to arg-1
+		else:
+			set {_player} to player
+		if arg-2 is "item":
+			give strad disc named "&d位置設定" to {_player}
+			give strad disc named "&d武器追加" to {_player}
+
+		if arg-2 is "deleteAll":
+			loop {Beacon.kits::*}:
+				clear {Beacon.kit.%loop-value%::*}
+				clear {Beacon.kits::*}
+
+			loop {Beacon.kit.cate::*}:
+				clear {Beacon.kits.%loop-value%::*}
+				clear {Beacon.kit.cate::*}
+
+		if arg-2 is "setLocationGUI":
+			wait 2 tick
+			open chest with 1 row named "&1スポーンポイント設定" to {_player}
+			wait 1 tick
+			format slot 0 of {_player} with light blue glass pane named "%{Beacon.text::Team0}%のスポーンポイントを設置" with lore "No.0||&3%{Beacon.spawnLocation::0}%" to close then run "Beacon %{_player}% setLocation 0"
+			format slot 1 of {_player} with light blue glass pane named "%{Beacon.text::Team0}%のスポーンポイントを設置" with lore "No.1||&3%{Beacon.spawnLocation::1}%" to close then run "Beacon %{_player}% setLocation 1"
+			format slot 3 of {_player} with red glass pane named "%{Beacon.text::Team1}%のスポーンポイントを設置" with lore "No.0||&3%{Beacon.spawnLocation::5}%" to close then run "Beacon %{_player}% setLocation 5"
+			format slot 4 of {_player} with red glass pane named "%{Beacon.text::Team1}%のスポーンポイントを設置" with lore "No.1||&3%{Beacon.spawnLocation::6}%" to close then run "Beacon %{_player}% setLocation 6"
+
+		if arg-2 is "selectCate":
+			wait 2 tick
+			open chest with 2 row named "&1追加するカテゴリ設定" to {_player}
+			wait 1 tick
+			set {_n} to 0
+			loop {Beacon.kit.cate::*}:
+				if {Beacon.Setting.%{_player}%::cate} is loop-value:
+					format slot {_n} of {_player} with light green glass pane named "&6%loop-value%&eを設定中" with lore "" to run ""
+				else:
+					format slot {_n} of {_player} with light blue glass pane named "&6%loop-value%&eを設定" with lore "" to close then run "Beacon %{_player}% setCate 0 %loop-value%"
+				
+				add 1 to {_n}
+			format slot {_n} of {_player} with red glass pane named "&4変数リセット" with lore "" to close then run "Beacon %{_player}%　deleteAll"
+
+		if arg-2 is "setCate":
+			message "&d[Beacon]&6%arg-4%&eを設定します" to {_player}
+			set {Beacon.Setting.%{_player}%::cate} to arg-4
+
+		if arg-2 is "addWepon":
+			if slot 0 of {_player}'s inventory is not air:
+				set {_name} to "%slot 0 of {_player}'s inventory%"
+				set {_list::*} to {_name} split at " "
+				if {_list::1} is "flansmod":
+					clear {_list::1}
+				set {_name} to "%first element of {_list::*}%"
+				remove first element of {_list::*} from {_list::*}
+				while {_list::*} is set:
+					set {_name} to "%{_name}% %first element of {_list::*}%"
+					remove first element of {_list::*} from {_list::*}
+
+				set {_c} to false
+				loop {Beacon.kits::*}:
+					if loop-value is {_name}:
+						set {_c} to true
+				if {_c} is false:
+					add {_name} to {Beacon.kits::*}
+					message "&d[Beacon]&6キットを追加しました" to {_player}
+				else:
+					message "&d[Beacon]&6キットを上書きしました %{_name}%" to {_player}
+
+				set {_c} to false
+				loop {Beacon.kits.%{Beacon.Setting.%{_player}%::cate}%::*}:
+					if loop-value is {_name}:
+						set {_c} to true
+				if {_c} is false:
+					add {_name} to {Beacon.kits.%{Beacon.Setting.%{_player}%::cate}%::*}
+					message "&d[Beacon]&6%{Beacon.Setting.%{_player}%::cate}%にキットを追加しました" to {_player}
+
+				clear {Beacon.kit.%{_name}%::*}
+				set {Beacon.kit.%{_name}%::set} to true
+				set {_n} to 0
+				loop 9 times:
+					if slot {_n} of {_player}'s inventory is not air or strad disc:
+						set {Beacon.kit.%{_name}%::%{_n}%} to "%slot {_n} of {_player}'s inventory%"
+						message "&d[Beacon]&6Slot&e%{_n}% &6Item&e%slot {_n} of {_player}'s inventory%" to {_player}
+					add 1 to {_n}
+				
+		if arg-2 is "removeWepon":
+			#loop {Beacon.kit.cate::*}:
+
+
+
+		if arg-2 is "setLocation":
+			set {Beacon.spawnLocation::%arg-3%} to location of {_player}
+			message "&d[Beacon]&6%arg-3%&3の座標を設定しました" to {_player}
+
+		if arg-2 is "openFactionGUI":
+			if {Beacon.faction::%{_player}%} is not set:
+				execute console command "/Beacon %{_player}% openFactionChooser"
+				stop
+
+			wait 2 tick
+			open chest with 1 row named "&1出撃先を選択" to {_player}
+			wait 2 tick
+			format slot 0 of {_player} with cyan glass pane named "&3出撃する" with lore "No0" to close then run "Beacon %{_player}% spawnToMap %{Beacon.faction::%{_player}%}*5%"
+			format slot 1 of {_player} with cyan glass pane named "&3出撃する" with lore "No1" to close then run "Beacon %{_player}% spawnToMap %{Beacon.faction::%{_player}%}*5 + 1%"
+
+			format slot 8 of {_player} with beacon named "&6国家を変更" with lore "" to close then run "Beacon %{_player}% openFactionChooser"
+			format slot 5 of {_player} with iron sword named "&6使用武器を変更" with lore "" to close then run "Beacon %{_player}% kitEdit"
+
+		if arg-2 is "openFactionChooser":
+			wait 2 tick
+			open chest with 1 row named "&1所属国家選択 &3##後から変更可能です" to {_player}
+			wait 2 tick
+			format slot 0 of {_player} with light blue glass pane named "%{Beacon.text::Team0}%に所属" with lore "" to close then run "Beacon %{_player}% choseFaction 0"
+			format slot 1 of {_player} with red glass pane named "%{Beacon.text::Team1}%に所属" with lore "" to close then run "Beacon %{_player}% choseFaction 1"
+
+		if arg-2 is "choseFaction":
+			if arg-3 is set:
+
+				set {Beacon.faction::%{_player}%} to arg-3
+				message "&6[Beacon]%{Beacon.text::Team%arg-3%}%&3に所属しました" to {_player}
+				
+				set "0" team color to "Blue"
+				set "1" team color to "Red"
+				
+				execute console command "/scoreboard teams leave %{_player}%"
+				execute console command "/scoreboard teams join %arg-3% %{_player}%"
+
+		if arg-2 is "spawnToMap":
+			teleport {_player} to {Beacon.spawnLocation::%arg-3%}
+			message "&6[Beacon]&3戦場にテレポートしました" to {_player}
+
+			set {_n} to 0
+			set {_n2} to 9
+			set {_p} to {Beacon.%player%.kit::slot} * 9
+			loop 7 times:
+				if {Beacon.%{_player}%.kit::%{_p}%} is set:
+					set {_name} to {Beacon.%{_player}%.kit::%{_p}%}
+					clear {_item}
+					set {_item} to {Beacon.kit.%{_name}%::0} parsed as item
+					set slot {_n} of {_player}'s inventory to {_item}
+					add 1 to {_n}
+
+					set {_n3} to 1
+					loop 8 times:
+						clear {_item}
+						set {_item} to {Beacon.kit.%{_name}%::%{_n3}%} parsed as item
+						if {_item} is set:
+							set slot {_n2} of {_player}'s inventory to {_item}
+							add 1 to {_n2}
+						add 1 to {_n3}
+					add 1 to {_p}
+
+
+
+		if arg-2 is "kitEdit":
+			wait 2 tick
+			open chest with 3 row named "&1キットを編集" to {_player}
+			wait 2 tick
+			set {_p} to 0
+			loop 3 times:
+				loop 7 times:
+					if {Beacon.kit.%{Beacon.%{_player}%.kit::%{_p}%}%::set} is true:
+						set {_item} to {Beacon.kit.%{Beacon.%{_player}%.kit::%{_p}%}%::0} parsed as item
+						format slot {_p} of {_player} with {_item} named "&e%{Beacon.%{_player}%.kit::%{_p}%}% &6武器を変更" with lore "" to close then run "Beacon %{_player}% selectWeponCate %{_p}%"
+					else:
+						format slot {_p} of {_player} with gray glass pane named "&6武器を設定" with lore "No0" to close then run "Beacon %{_player}% selectWeponCate %{_p}%"
+
+					add 1 to {_p}
+				add 2 to {_p}
+
+			set {_n} to 0
+			set {_p} to 8
+			loop 3 times:
+				if {_n} is {Beacon.%player%.kit::slot}:
+					format slot {_p} of {_player} with light green glass pane named "&3スロットを使用中" with lore "&6Slot&e%{_n}%" to run "Beacon %{_player}% setSlot %{_n}%"
+				else:
+					format slot {_p} of {_player} with light blue glass pane named "&3このスロットを使用する" with lore "&6Slot&e%{_n}%" to run "Beacon %{_player}% setSlot %{_n}%"
+				add 9 to {_p}
+				add 1 to {_n}
+
+		if arg-2 is "setSlot":
+			set {Beacon.%player%.kit::slot} to arg-3
+			message "&6[Beacon]&2slot&a%arg-3%&3を使用します" to {_player}
+
+		if arg-2 is "selectWeponCate":
+			wait 2 tick
+			open chest with 3 row named "&1キットを編集" to {_player}
+			wait 2 tick
+			set {_p} to 0
+			loop {Beacon.kit.cate::*}:
+				format slot {_p} of {_player} with blue glass pane named "&e%loop-value%" with lore "" to close then run "Beacon %{_player}% selectWepon %arg-3% %loop-value%"
+				add 1 to {_p}
+			format slot {_p} of {_player} with paper named "&e使用しない" with lore "" to close then run "Beacon %{_player}% setWepon %arg-3% null"
+
+		if arg-2 is "selectWepon":
+			wait 2 tick
+			open chest with 3 row named "&1キットを編集" to {_player}
+			wait 2 tick
+			set {_p} to 0
+			loop {Beacon.kits.%arg-4%::*}:
+				set {_item} to {Beacon.kit.%loop-value%::0} parsed as item
+				format slot {_p} of {_player} with {_item} named "&e%loop-value%" with lore "" to close then run "Beacon %{_player}% setWepon %arg-3% %loop-value%"
+				add 1 to {_p}
+
+		if arg-2 is "setWepon":
+			if arg-4 is not "null":
+				set {Beacon.%{_player}%.kit::%arg-3%} to arg-4
+
+			else:
+				clear {Beacon.%{_player}%.kit::%arg-3%}
+
+

@@ -1,0 +1,198 @@
+#41行目から実行させたいコマンドを書いていく
+
+#skriptを読み込ませて2分間は動かないので注意
+on script load:
+	wait 40 tick
+	set {double.load} to 0
+	execute console command "/timezeroset"
+	execute console command "/skweek"
+#時間取得(skriptが読み込まれた2分で時間を完全測定)
+command /timezeroset:
+	permission: console.console
+	trigger:
+		#execute console command "/timec"
+		#大まかに計測
+		wait 20 tick
+		set {time.losscount} to 0
+		execute console command "/gettime"
+		set {time.stop} to 0
+		set {s-count} to {time.minute0}
+		while {s-count} = {time.minute0}:
+			wait 40 tick
+			execute console command "/gettime"
+		#0.1sの精度で計測
+		wait 1 seconds
+		execute console command "/gettime"
+		set {s-count} to {time.minute0}
+		wait 55 seconds
+		while {s-count} = {time.minute0}:
+			wait 2 tick
+			execute console command "/gettime"
+		execute console command "/timecontrolstart"
+#時間取得
+command /gettime: 
+	permission: console.console
+	trigger:
+		set {time.minute0} to minute
+		set {time.hour0} to hour
+		set {time.day0} to day
+		set {time.month0} to month
+		set {time.year0} to year
+		#execute console command "/timec"
+
+#command /gettime2 <number>/<number>/<number> <number>:<number> <text>: 
+#	permission: console.console
+#	trigger:
+#		set {time.minute0} to argument 5
+#		set {time.hour0} to argument 4
+#		set {time.day0} to argument 2
+#		set {time.month0} to argument 1
+#		set {time.year0} to argument 3
+		#execute console command "/timec"
+
+#実行コマンド
+command /skweek:
+	permission: console.console
+	trigger:
+		execute console command "/gettime"
+		#ツェラーの公式
+		add 2000 to {time.year0}
+		if {time.month0} = 1:
+			add -1 to {time.year0}
+			add 13 to {time.month0}
+		else if {time.month0} = 2:
+			add -1 to {time.year0}
+			add 13 to {time.month0}
+		set {_cul-y} to {time.year0} + {time.year0}/4
+		add -1*{time.year0}/100 to {_cul-y}
+		add {time.year0}/400 to {_cul-y}
+		set {_cul-m} to {time.month0}*13
+		add 8 to {_cul-m}
+		set {_cul-m} to {_cul-m}/5
+		set {_ans} to {_cul-y} + {_cul-m}
+		add {time.day0} to {_ans}
+		set {_ans} to {_ans}/7
+		while {_ans} is more than 1:
+			add -1 to {_ans}
+		set {_ans} to {_ans}*7
+		if {_ans} is more than 6:
+			set {0week} to 6
+#			broadcast "土曜日"
+		else if {_ans} is more than 5:
+			set {week} to 5
+#			broadcast "金曜日"
+		else if {_ans} is more than 4:
+			set {week} to 4
+#			broadcast "木曜日"
+		else if {_ans} is more than 3:
+			set {week} to 3
+#			broadcast "水曜日"
+		else if {_ans} is more than 2:
+			set {week} to 2
+#			broadcast "火曜日"
+		else if {_ans} is more than 1:
+			set {week} to 1
+#			broadcast "月曜日"
+		else if {_ans} is more than 0:
+			set {week} to 6
+#			broadcast "日曜日"
+
+#実行コマンド
+command /timecontrolstart:
+	permission: console.console
+	trigger:
+		execute console command "/ocptTotalization point"
+		execute console command "/mthidetime"
+		execute console command "/facility time"
+		#ここから以下を編集していく
+		#if {time.hour0} = 実行する時間(このskriptには記述済み):
+		#	if {time.minute0} = 実行する分(今書いてる例を見ればわかるはず):
+		#		execute console command "実行するコマンド"
+		if {time.hour0} = 0:
+			if {time.minute0} = 0:
+				execute console command "/facilitystop"
+				execute console command "/ch-admin daycount"
+				execute console command "/mthidestop"
+				execute console command "/ItemCompression clear"
+				execute console command "/minelimitreset"
+				execute console command "/MineLimitChange"
+			if {time.minute0} = 1:
+				execute console command "/skweek"#0:01に曜日取得
+		if {time.hour0} = 1:
+		if {time.hour0} = 2:
+		if {time.hour0} = 3:
+			if {time.minute0} = 30:
+				broadcast "&6[Wipe]&330分後&2に設置されている兵器を削除します"
+			if {time.minute0} = 40:
+				broadcast "&6[Wipe]&320分後&2に設置されている兵器を削除します"
+			if {time.minute0} = 50:
+				broadcast "&6[Wipe]&310分後&2に設置されている兵器を削除します"
+			if {time.minute0} = 59:
+				execute console command "/wipe"
+		if {time.hour0} = 4:
+		if {time.hour0} = 5:
+		if {time.hour0} = 6:
+		if {time.hour0} = 7:
+		if {time.hour0} = 8:
+		if {time.hour0} = 9:
+		if {time.hour0} = 10:
+		if {time.hour0} = 11:
+		if {time.hour0} = 12:
+		if {time.hour0} = 13:
+		if {time.hour0} = 14:
+		if {time.hour0} = 15:
+		if {time.hour0} = 16:
+		if {time.hour0} = 17:
+			if {time.minute0} = 0:
+				execute console command "/facilitystart"
+				execute console command "/mthiderset"
+				execute console command "/MineLimitChange"
+		if {time.hour0} = 18:
+			if {time.minute0} = 0:
+				execute console command "/mthiderset"
+		if {time.hour0} = 19:
+			if {time.minute0} = 0:
+				execute console command "/mthiderset"
+		if {time.hour0} = 20:
+			if {time.minute0} = 0:
+				execute console command "/ocptTotalization start_l 0"
+				execute console command "/mthiderset"
+			if {time.minute0} = 30:
+				execute console command "/ocptTotalization End"
+		if {time.hour0} = 21:
+			if {time.minute0} = 0:
+				execute console command "/ocptTotalization start_l 1"
+				execute console command "/mthiderset"
+			if {time.minute0} = 30:
+				execute console command "/ocptTotalization End"
+				execute console command "/ocptTotalization start_l 2"
+		if {time.hour0} = 22:
+			if {time.minute0} = 0:
+				execute console command "/ocptTotalization End"
+				execute console command "/mthiderset"
+			if {time.minute0} = 30:
+				execute console command "/ocptTotalization start_l 3"
+		if {time.hour0} = 23:
+			if {time.minute0} = 0:
+				execute console command "/ocptTotalization End"
+				execute console command "/mthiderset"
+		execute console command "/mthidetime"
+#ここまで
+		set {double.load} to 1
+
+
+		execute console command "/gettime"
+		set {s-count} to {time.minute0}		
+		wait 55 seconds
+		if {double.load} = 0:
+			stop
+		while {s-count} = {time.minute0}:
+			wait 5 tick
+			execute console command "/gettime"
+		execute console command "/timecontrolstart"
+
+command /broadcasttime:
+	permission: console.console
+	trigger:
+		broadcast "&6[TCL]&f%{time.hour0}%:%{time.minute0}%識別番号=>%{week}%"
+		

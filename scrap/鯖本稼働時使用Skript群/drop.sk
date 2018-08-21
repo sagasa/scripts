@@ -1,0 +1,16 @@
+on drop of helmet:
+	cancel event
+on drop of chestplate:
+	cancel event
+on drop of legs:
+	cancel event
+on drop of boots:
+	cancel event
+
+on spawn of horse:
+	cancel event
+on spawn of chicken:
+	cancel event
+on spawn of wolf:
+	cancel event
+
