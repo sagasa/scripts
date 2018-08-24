@@ -3,6 +3,12 @@
 #{RewardBox.%[player]%::*}
 #{RewardBox.lore.%[player]%::*}
 
+command /cleargift <text>:
+	permission: console.console
+	trigger:
+		clear {GiftBox.%arg-1%::*}
+		broadcast "&6[Gift]&f%arg-1%&4のギフトボックスを初期化しました"
+
 command /giftbox:
 	trigger:
 		execute console command "/giftbox_ui %player% gui_open"
@@ -56,34 +62,6 @@ command /giftbox_ui [<player>] [<text>] [<number>] [<text>]:
 				set {_faction} to ""
 
 			wait 1 tick
-
-			#旧データのサルベージ
-			#=======================================================================
-			set {_count} to 0
-			clear {RewardBox.cache.%{_target}%::*}
-			#リストの中身を整理
-			loop {RewardBox.%{_target}%::*}:
-				set {RewardBox.cache.%{_target}%::%{_count}%} to loop-value
-				add 1 to {_count}
-
-			set {_count} to 0
-			clear {RewardBox.lore.cache.%{_target}%::*}
-			#リストの中身を整理
-			loop {RewardBox.lore.%{_target}%::*}:
-				set {RewardBox.lore.cache.%{_target}%::%{_count}%} to loop-value
-				add 1 to {_count}
-
-			set {_n} to 0
-			while {RewardBox.cache.%{_target}%::%{_n}%} is set:
-				execute console command "/addtogiftbox %{_target}% %{RewardBox.lore.cache.%{_target}%::%{_n}%}% %{RewardBox.cache.%{_target}%::%{_n}%}%"
-				add 1 to {_n}
-
-			clear {RewardBox.%{_target}%::*}
-			clear {RewardBox.lore.%{_target}%::*}
-			clear {RewardBox.cache.%{_target}%::*}
-			clear {RewardBox.lore.cache.%{_target}%::*}
-
-			#=======================================================================
 
 			set {_n} to 0
 			set {_slot} to 9
